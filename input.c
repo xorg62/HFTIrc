@@ -9,6 +9,7 @@ const InputStruct input_struct[] =
      { "kick",  input_kick },
      { "names", input_names },
      { "topic", input_topic },
+     { "query", input_query },
      { "me",    input_me },
      { "whois", input_whois },
      { "help",  input_help },
@@ -180,3 +181,22 @@ input_whois(const char *input)
 
      return;
 }
+
+void
+input_query(const char *input)
+{
+     DSINPUT(input);
+
+     if(strlen(input) > 0)
+     {
+          ++hftirc->nbuf;
+          strcpy(hftirc->cb[hftirc->nbuf - 1].name, input);
+          ui_buf_set(hftirc->nbuf - 1);
+          ui_print_buf(hftirc->nbuf - 1, "  .:. Query with %s", input);
+     }
+     else
+          WARN("Error", "Usage: /query <nick>");
+
+     return;
+}
+

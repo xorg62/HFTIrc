@@ -135,11 +135,11 @@ void input_part(const char *input);
 void input_me(const char *input);
 void input_kick(const char *input);
 void input_whois(const char *input);
+void input_query(const char *input);
 
 /* util.c */
 void update_date(void);
 int find_bufid(const char *str);
-
 
 /* main.c */
 void signal_handler(int signal);

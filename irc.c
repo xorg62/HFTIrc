@@ -173,11 +173,16 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
                return;
 
      for(i = j = 0; i < hftirc->nbuf + 1; ++i)
-          if(!strstr(nick, hftirc->cb[i].names))
+          if(!strstr(nick, hftirc->cb[i].names)
+                    || !strcmp(nick, hftirc->cb[i].name))
                c[j++] = i;
 
      for(i = 0; i < j; ++i)
           ui_print_buf(c[i], "  .:. %s is now %s", nick, params[0]);
+
+     for(i = 0; i < hftirc->nbuf + 1; ++i)
+          if(!strcmp(nick, hftirc->cb[i].name))
+               strcpy(hftirc->cb[i].name, params[0]);
 
      return;
 }
@@ -281,7 +286,8 @@ irc_event_quit(irc_session_t *session, const char *event, const char *origin, co
      for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
      for(i = j = 0; i < hftirc->nbuf + 1; ++i)
-          if(!strstr(nick, hftirc->cb[i].names))
+          if(!strstr(nick, hftirc->cb[i].names)
+                    || !strcmp(nick, hftirc->cb[i].name))
                c[j++] = i;
 
      if(i == MAXBUF)
