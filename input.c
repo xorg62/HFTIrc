@@ -6,6 +6,7 @@ const InputStruct input_struct[] =
      { "nick",  input_nick },
      { "quit",  input_quit },
      { "part",  input_part },
+     { "kick",  input_kick },
      { "names", input_names },
      { "topic", input_topic },
      { "me",    input_me },
@@ -126,6 +127,39 @@ input_me(const char *input)
           WARN("Error", "Can't send action message");
      else
           ui_print_buf(hftirc->selbuf, " * %s %s", hftirc->nick, input);
+
+     return;
+}
+
+void
+input_kick(const char *input)
+{
+     int i;
+     char nick[64] = { 0 };
+     char reason[BUFSIZE] = { 0 };
+
+     for(; input[0] == ' '; ++input);
+
+     if(strlen(input) > 0)
+     {
+          for(i = 0; input[i] != ' ' && input[i]; nick[i] = input[i], ++i);
+
+          if(input[i] == ' ')
+          {
+               input += strlen(nick);
+               for(; input[0] == ' '; ++input);
+               for(i = 0; input[i]; reason[i] = input[i], ++i);
+          }
+     }
+     else
+     {
+          WARN("Error", "Usage: /kick <nick> <reason(optional)>");
+
+          return;
+     }
+
+     if(irc_cmd_kick(hftirc->session, nick, hftirc->cb[hftirc->selbuf].name, reason))
+          WARN("Error", "Can't kick");
 
      return;
 }

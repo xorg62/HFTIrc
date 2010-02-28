@@ -12,7 +12,7 @@ irc_init(void)
      hftirc->callbacks.event_part        = irc_event_part;
      hftirc->callbacks.event_mode        = irc_event_mode;
      hftirc->callbacks.event_topic       = irc_event_topic;
-     hftirc->callbacks.event_kick        = irc_dump_event;
+     hftirc->callbacks.event_kick        = irc_event_kick;
      hftirc->callbacks.event_channel     = irc_event_channel;
      hftirc->callbacks.event_privmsg     = irc_event_privmsg;
      hftirc->callbacks.event_notice      = irc_event_notice;
@@ -63,8 +63,8 @@ irc_nick(const char *nick)
      if(irc_cmd_nick(hftirc->session, nick))
           WARN("Error", "Can't change nick or invalid nick");
 
-     ui_print_buf(0, "Your nick is now %s", nick);
-     ui_print_buf(hftirc->selbuf, "Your nick is now %s", nick);
+     ui_print_buf(0, "  .:. Your nick is now %s", nick);
+     ui_print_buf(hftirc->selbuf, "  .:. Your nick is now %s", nick);
 
      return;
 }
@@ -155,8 +155,20 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
 void
 irc_event_nick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
+     int i, j, c[64];
+     char nick[64] = { 0 };
 
+     for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
+     if(!strcmp(params[0], hftirc->nick))
+               return;
+
+     for(i = j = 0; i < hftirc->nbuf + 1; ++i)
+          if(!strstr(nick, hftirc->cb[i].names))
+               c[j++] = i;
+
+     for(i = 0; i < j; ++i)
+          ui_print_buf(c[i], "  .:. %s is now %s", nick, params[0]);
 
      return;
 }
@@ -165,10 +177,26 @@ void
 irc_event_mode(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i;
+     char nick[64] = { 0 };
+     char nicks[BUFSIZE] = { 0 };
+
+     for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
+
+     for(i = 2; i < count; ++i)
+     {
+          if(i)
+               strcat(nicks, "|");
+
+          strcat(nicks, params[i]);
+     }
+
+     for(i = 0; nicks[i]; ++i)
+          if(nicks[i] == '|')
+               nicks[i] = ' ';
 
      i = find_bufid(params[0]);
 
-     ui_print_buf(i, "  .:. Mode [%s] set for %s", params[1], params[0]);
+     ui_print_buf(i, "  .:. Mode %s [%s %s] set by %s", params[0], params[1], nicks + 1, nick);
 
      return;
 }
@@ -351,15 +379,29 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
 void
 irc_event_action(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j;
+     int i;
      char nick[64] = { 0 };
 
-     i = find_bufid(params[0]);
+     for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
+     i = find_bufid(params[0]);
 
      ui_print_buf(i, " * %s %s", nick, params[1]);
 
      return;
 }
 
+void
+irc_event_kick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+{
+     int i;
+     char ornick[64] = { 0 };
+
+     for(i = 0; origin[i] != '!'; ornick[i] = origin[i], ++i);
+
+     i = find_bufid(params[0]);
+
+     ui_print_buf(i, "  .:. %s kicked by %s from %s [%s]", params[1], ornick, params[0], params[2]);
+
+     return;
+}

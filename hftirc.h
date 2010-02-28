@@ -119,6 +119,7 @@ void irc_event_notice(irc_session_t *session, const char *event, const char *ori
 void irc_event_topic(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_names(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_action(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_kick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 
 
 /* input.c */
@@ -131,6 +132,7 @@ void input_names(const char *input);
 void input_topic(const char *input);
 void input_part(const char *input);
 void input_me(const char *input);
+void input_kick(const char *input);
 
 /* util.c */
 void update_date(void);
