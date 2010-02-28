@@ -125,7 +125,15 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
 
                ui_print_buf(0, "[%s] .:. %s", origin, buf + 1);
                break;
-
+          /* Whois */
+          case 307:
+          case 311:
+          case 312:
+          case 317:
+          case 318:
+          case 319:
+               irc_event_whois(session, event, origin, params, count);
+               break;
           /* Topic */
           case 332:
           case 333:
@@ -406,3 +414,41 @@ irc_event_kick(irc_session_t *session, const char *event, const char *origin, co
 
      return;
 }
+
+void
+irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count)
+{
+     switch(event)
+     {
+          case 307:
+               ui_print_buf(0, "  .:.           %s: %s", params[1], params[2]);
+               break;
+
+          /* Whois user */
+          case 311:
+               ui_print_buf(0, "  .:. %s (%s@%s)", params[1], params[2], params[3]);
+               ui_print_buf(0, "  .:. IRCNAME:  %s", params[5]);
+               break;
+
+          /* Whois server */
+          case 312:
+               ui_print_buf(0, "  .:. SERVER:   %s (%s)", params[2], params[3]);
+               break;
+          /* Whois idle */
+          case 317:
+               ui_print_buf(0, "  .:. IDLE:     seconds idle: %s signon time: %s", params[2], params[3]);
+               break;
+          /* End of whois */
+          case 318:
+               ui_print_buf(0, "  .:. %s", params[2]);
+               break;
+          /* Whois channel */
+          case 319:
+               ui_print_buf(0, "  .:. CHANNELS: %s", params[2]);
+               break;
+
+     }
+
+     return;
+}
+

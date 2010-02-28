@@ -10,6 +10,7 @@ const InputStruct input_struct[] =
      { "names", input_names },
      { "topic", input_topic },
      { "me",    input_me },
+     { "whois", input_whois },
      { "help",  input_help },
 };
 
@@ -39,7 +40,7 @@ input_manage(const char *input)
 void
 input_join(const char *input)
 {
-     for(; input[0] == ' '; ++input);
+     DSINPUT(input);
 
      if(input[0] != '#')
      {
@@ -56,7 +57,6 @@ input_join(const char *input)
 void
 input_nick(const char *input)
 {
-     for(; input[0] == ' '; ++input);
 
      irc_nick(input);
 
@@ -66,7 +66,7 @@ input_nick(const char *input)
 void
 input_quit(const char *input)
 {
-     for(; input[0] == ' '; ++input);
+     DSINPUT(input);
 
      hftirc->running = 0;
 
@@ -95,7 +95,7 @@ input_help(const char *input)
 void
 input_topic(const char *input)
 {
-     for(; input[0] == ' '; ++input);
+     DSINPUT(input);
 
      if(strlen(input) > 0)
      {
@@ -121,7 +121,7 @@ input_part(const char *input)
 void
 input_me(const char *input)
 {
-     for(; input[0] == ' '; ++input);
+     DSINPUT(input);
 
      if(irc_cmd_me(hftirc->session, hftirc->cb[hftirc->selbuf].name, input))
           WARN("Error", "Can't send action message");
@@ -138,7 +138,8 @@ input_kick(const char *input)
      char nick[64] = { 0 };
      char reason[BUFSIZE] = { 0 };
 
-     for(; input[0] == ' '; ++input);
+     DSINPUT(input);
+
 
      if(strlen(input) > 0)
      {
@@ -147,7 +148,7 @@ input_kick(const char *input)
           if(input[i] == ' ')
           {
                input += strlen(nick);
-               for(; input[0] == ' '; ++input);
+               DSINPUT(input);
                for(i = 0; input[i]; reason[i] = input[i], ++i);
           }
      }
@@ -164,3 +165,18 @@ input_kick(const char *input)
      return;
 }
 
+void
+input_whois(const char *input)
+{
+     DSINPUT(input);
+
+     if(strlen(input) > 0)
+     {
+          if(irc_cmd_whois(hftirc->session, input))
+               WARN("Error", "Can't use WHOIS");
+     }
+     else
+          WARN("Error", "Usage: /whois <nick>");
+
+     return;
+}
