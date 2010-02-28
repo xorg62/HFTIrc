@@ -115,6 +115,8 @@ input_part(const char *input)
 {
      if(irc_cmd_part(hftirc->session, hftirc->cb[hftirc->selbuf].name))
           WARN("Error", "While using PART command");
+     else
+          ui_buf_close(hftirc->selbuf);
 
      return;
 }

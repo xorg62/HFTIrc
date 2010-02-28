@@ -51,6 +51,8 @@ irc_join(const char *chan)
      ++hftirc->nbuf;
      strcpy(hftirc->cb[hftirc->nbuf - 1].name, chan);
 
+     ui_buf_set(hftirc->nbuf - 1);
+
      ui_print_buf(0, "Join %s", chan);
 
      return;

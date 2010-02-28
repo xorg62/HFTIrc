@@ -98,6 +98,7 @@ void ui_update_statuswin(void);
 void ui_update_infowin(void);
 void ui_print_buf(int id, char *format, ...);
 void ui_draw_buf(int id);
+void ui_buf_close(int buf);
 void ui_buf_set(int buf);
 void ui_get_input(void);
 

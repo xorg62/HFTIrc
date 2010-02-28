@@ -167,6 +167,26 @@ ui_buf_set(int buf)
 }
 
 void
+ui_buf_close(int buf)
+{
+     int i;
+
+     if(buf <= 0 || buf > hftirc->nbuf - 1)
+          return;
+
+     if(hftirc->selbuf == buf)
+          ui_buf_set(--hftirc->selbuf);
+
+     if(buf != hftirc->nbuf - 1)
+          for(i = buf; i < hftirc->nbuf - 1; ++i)
+               hftirc->cb[i] = hftirc->cb[i + 1];
+
+     --hftirc->nbuf;
+
+     return;
+}
+
+void
 ui_get_input(void)
 {
      int i, t;
