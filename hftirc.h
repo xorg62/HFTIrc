@@ -134,9 +134,12 @@ void input_names(const char *input);
 void input_topic(const char *input);
 void input_part(const char *input);
 void input_me(const char *input);
+void input_msg(const char *input);
 void input_kick(const char *input);
 void input_whois(const char *input);
 void input_query(const char *input);
+void input_close(const char *input);
+
 
 /* util.c */
 void update_date(void);

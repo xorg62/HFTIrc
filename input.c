@@ -11,7 +11,9 @@ const InputStruct input_struct[] =
      { "topic", input_topic },
      { "query", input_query },
      { "me",    input_me },
+     { "msg",   input_msg },
      { "whois", input_whois },
+     { "close", input_close },
      { "help",  input_help },
 };
 
@@ -135,6 +137,40 @@ input_me(const char *input)
 }
 
 void
+input_msg(const char *input)
+{
+     int i, b = 0;
+     char nick[64] = { 0 };
+     char msg[BUFSIZE] = { 0 };
+
+     DSINPUT(input);
+
+     if(strlen(input) > 0)
+     {
+          for(i = 0; input[i] != ' ' && input[i]; nick[i] = input[i], ++i);
+
+          if(input[i] == ' ')
+          {
+               input += strlen(nick);
+               DSINPUT(input);
+               for(i = 0; input[i]; msg[i] = input[i], ++i);
+               ++b;
+          }
+     }
+
+     if(!b)
+     {
+          WARN("Error", "Usage: /msg <nick/channel> <message>");
+
+          return;
+     }
+     else
+          irc_cmd_msg(hftirc->session, nick, msg);
+
+     return;
+}
+
+void
 input_kick(const char *input)
 {
      int i;
@@ -202,3 +238,17 @@ input_query(const char *input)
      return;
 }
 
+void
+input_close(const char *input)
+{
+
+     if(hftirc->selbuf == 0)
+          return;
+
+     if(hftirc->cb[hftirc->selbuf].name[0] == '#')
+          input_part(NULL);
+
+     ui_buf_close(hftirc->selbuf);
+
+     return;
+}

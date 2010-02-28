@@ -50,6 +50,7 @@ thread_process(void *arg)
               ui_update_statuswin();
 
               refresh();
+              wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
               wrefresh(hftirc->ui->inputwin);
          }
 
