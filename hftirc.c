@@ -49,8 +49,7 @@ thread_process(void *arg)
               update_date();
               ui_update_statuswin();
 
-              /* Cursor stay in the inputwin. */
-              wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
+              refresh();
               wrefresh(hftirc->ui->inputwin);
          }
 
