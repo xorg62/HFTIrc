@@ -28,7 +28,7 @@ input_manage(const char *input)
      else
      {
           if(irc_cmd_msg(hftirc->session, hftirc->cb[hftirc->selbuf].name, input))
-               WARN("Error:", "Can't send message");
+               WARN("Error", "Can't send message");
           else
                ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->nick, input);
      }

@@ -18,7 +18,7 @@ ui_init(void)
 
                strcpy(hftirc->cb[i].name, "status");
 
-               for(j = 0; j < 256; ++j)
+               for(j = 0; j < BUFLINES; ++j)
                     memset(hftirc->cb[i].buffer[j], 0, sizeof(hftirc->cb[i].buffer[j]));
 
                hftirc->cb[i].bufpos = 0;
@@ -40,7 +40,7 @@ ui_init(void)
                     "Minimal size : 15x35\n", LINES, COLS);
           free(hftirc);
           exit(EXIT_FAILURE);
-     }
+}
      else
           hftirc->running = 2;
 
@@ -116,7 +116,7 @@ ui_print_buf(int id, char *format, ...)
      waddstr(hftirc->ui->mainwin, buf);
 
      if(id == hftirc->selbuf)
-          ui_draw_buf(id);
+          wrefresh(hftirc->ui->mainwin);
 
      free(buf);
      free(p);
@@ -139,12 +139,14 @@ ui_draw_buf(int id)
           i = hftirc->cb[id].bufpos - MAINWIN_LINES;
 
           for(; i < hftirc->cb[id].bufpos; ++i)
-               if(i < BUFLINES - 1)
-                    wprintw(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
+               if(i < BUFLINES - 1 &&
+                         hftirc->cb[id].buffer[i])
+                    waddnstr(hftirc->ui->mainwin, hftirc->cb[id].buffer[i], BUFSIZE);
      }
      else
           for(i = 0; i < hftirc->cb[id].bufpos; ++i)
-               wprintw(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
+               if(hftirc->cb[id].buffer[i])
+                    waddnstr(hftirc->ui->mainwin, hftirc->cb[id].buffer[i], BUFSIZE);
 
      wrefresh(hftirc->ui->mainwin);
 

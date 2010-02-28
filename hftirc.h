@@ -22,7 +22,7 @@
 #define HFTIRC_VERSION    "0.01"
 #define BUFSIZE           4096
 #define MAXBUF            64
-#define BUFLINES          256
+#define BUFLINES          512
 #define HFTIRC_KEY_ENTER  10
 #define MAINWIN_LINES     LINES - 1
 

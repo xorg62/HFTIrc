@@ -27,13 +27,14 @@ irc_init(void)
 
      strcpy(hftirc->nick, IRC_NICK);
 
-     irc_connect(hftirc->session,
-               IRC_SERV,
-               IRC_PORT,
-               0,
-               IRC_NICK,
-               IRC_USERNAME,
-               IRC_REALNAME);
+     if(irc_connect(hftirc->session,
+                    IRC_SERV,
+                    IRC_PORT,
+                    0,
+                    IRC_NICK,
+                    IRC_USERNAME,
+                    IRC_REALNAME))
+          WARN("Error", "Can't connect");
 
      return;
 }

@@ -7,13 +7,14 @@ signal_handler(int signal)
      {
           case SIGWINCH:
                endwin();
+               sleep(1);
                ui_init();
                waddwstr(hftirc->ui->inputwin, hftirc->ui->ib.buffer);
                ui_buf_set(hftirc->selbuf);
                break;
           case SIGSEGV:
-               /* endwin();
-                  fprintf(stderr, "HFTirc: Segmentation fault.\n"); */
+               endwin();
+               fprintf(stderr, "HFTirc: Segmentation fault.\n");
                break;
      }
 
@@ -29,20 +30,19 @@ thread_process(void *arg)
 
     if(!(int*)arg)
     {
-         irc_run(hftirc->session);
-
-         pthread_exit(0);
+         if(irc_run(hftirc->session))
+              WARN("Error", "irc_run failed");
     }
     else
     {
          while(hftirc->running)
          {
               timeout.tv_sec = 0;
-              timeout.tv_usec = 100000;
+              timeout.tv_usec = 10000;
               FD_ZERO(&fd);
               FD_SET(STDIN_FILENO, &fd);
 
-              if(select(FD_SETSIZE, &fd, NULL, NULL, &timeout))
+              if(select(STDIN_FILENO + 1, &fd, NULL, NULL, &timeout))
                    if(FD_ISSET(STDIN_FILENO, &fd))
                         ui_get_input();
 
@@ -56,6 +56,8 @@ thread_process(void *arg)
 
          pthread_exit(0);
     }
+
+    return NULL;
 }
 
 int
