@@ -2,13 +2,14 @@
 
 const InputStruct input_struct[] =
 {
-     { "join", input_join },
-     { "nick", input_nick },
-     { "quit", input_quit },
-     { "part", input_part },
+     { "join",  input_join },
+     { "nick",  input_nick },
+     { "quit",  input_quit },
+     { "part",  input_part },
      { "names", input_names },
      { "topic", input_topic },
-     { "help", input_help },
+     { "me",    input_me },
+     { "help",  input_help },
 };
 
 void
@@ -25,8 +26,10 @@ input_manage(const char *input)
      }
      else
      {
-          irc_cmd_msg(hftirc->session, hftirc->cb[hftirc->selbuf].name, input);
-          ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->nick, input);
+          if(irc_cmd_msg(hftirc->session, hftirc->cb[hftirc->selbuf].name, input))
+               WARN("Error:", "Can't send message");
+          else
+               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->nick, input);
      }
 
      return;
@@ -46,7 +49,7 @@ input_join(const char *input)
 
      irc_join(input);
 
-    return;
+     return;
 }
 
 void
@@ -62,6 +65,8 @@ input_nick(const char *input)
 void
 input_quit(const char *input)
 {
+     for(; input[0] == ' '; ++input);
+
      hftirc->running = 0;
 
      irc_cmd_quit(hftirc->session, input);
@@ -72,7 +77,8 @@ input_quit(const char *input)
 void
 input_names(const char *input)
 {
-     irc_cmd_names(hftirc->session, hftirc->cb[hftirc->selbuf].name);
+     if(irc_cmd_names(hftirc->session, hftirc->cb[hftirc->selbuf].name))
+          WARN("Error", "Can't get names list");
 
      return;
 }
@@ -91,7 +97,10 @@ input_topic(const char *input)
      for(; input[0] == ' '; ++input);
 
      if(strlen(input) > 0)
-          irc_cmd_topic(hftirc->session, hftirc->cb[hftirc->selbuf].name, input);
+     {
+          if(irc_cmd_topic(hftirc->session, hftirc->cb[hftirc->selbuf].name, input))
+               WARN("Error", "Can't change topic");
+     }
      else
           ui_print_buf(hftirc->selbuf, "  .:. Topic of %s: %s",
                     hftirc->cb[hftirc->selbuf].name,
@@ -102,7 +111,22 @@ input_topic(const char *input)
 void
 input_part(const char *input)
 {
-     irc_cmd_part(hftirc->session, hftirc->cb[hftirc->selbuf].name);
+     if(irc_cmd_part(hftirc->session, hftirc->cb[hftirc->selbuf].name))
+          WARN("Error", "While using PART command");
 
      return;
 }
+
+void
+input_me(const char *input)
+{
+     for(; input[0] == ' '; ++input);
+
+     if(irc_cmd_me(hftirc->session, hftirc->cb[hftirc->selbuf].name, input))
+          WARN("Error", "Can't send action message");
+     else
+          ui_print_buf(hftirc->selbuf, " * %s %s", hftirc->nick, input);
+
+     return;
+}
+
