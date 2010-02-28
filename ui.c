@@ -170,6 +170,14 @@ void
 ui_buf_close(int buf)
 {
      int i;
+     ChanBuf cbnull;
+
+     /* Set a empty Chanbuf to set at the last buf if
+      * it is closed */
+      for(i = 0; i < BUFLINES; ++i)
+           memset(cbnull.buffer[i], 0, sizeof(cbnull.buffer[i]));
+      cbnull.bufpos = 0;
+
 
      if(buf <= 0 || buf > hftirc->nbuf - 1)
           return;
@@ -180,6 +188,8 @@ ui_buf_close(int buf)
      if(buf != hftirc->nbuf - 1)
           for(i = buf; i < hftirc->nbuf - 1; ++i)
                hftirc->cb[i] = hftirc->cb[i + 1];
+     else
+          hftirc->cb[hftirc->nbuf - 1] = cbnull;
 
      --hftirc->nbuf;
 
