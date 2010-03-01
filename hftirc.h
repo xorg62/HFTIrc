@@ -82,6 +82,7 @@ typedef struct
 /* Server information struct */
 typedef struct
 {
+     char name[256];
      char adress[256];
      char password[128];
      int port;
@@ -175,7 +176,7 @@ void input_close(const char *input);
 
 /* util.c */
 void update_date(void);
-int find_bufid(const char *str);
+int find_bufid(unsigned id, const char *str);
 int find_sessid(irc_session_t *session);
 
 /* main.c */

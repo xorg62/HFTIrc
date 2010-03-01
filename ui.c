@@ -83,7 +83,8 @@ ui_update_statuswin(void)
      /* Print date */
      mvwprintw(hftirc->ui->statuswin, 0, 0, "%s", hftirc->date.str);
 
-     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 1, "[%d]%s", hftirc->selbuf, hftirc->cb[hftirc->selbuf].name);
+     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 1, "[%s]%s",
+               hftirc->conf.serv[hftirc->selses].name, hftirc->cb[hftirc->selbuf].name);
 
      /* Print hftirc version */
      mvwprintw(hftirc->ui->statuswin, 0,

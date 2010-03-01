@@ -7,7 +7,7 @@ config_server(char *src)
      int i, j, n = 0;
      char *tmp;
      opt_type *buf;
-     ServInfo defsi = { "irc.hft-community", "", 6667, "hftircuser", "HFTIrcuser", ""};
+     ServInfo defsi = { "Hft", "irc.hft-community", "", 6667, "hftircuser", "HFTIrcuser", ""};
 
      cfg_set_sauv(src);
 
@@ -28,6 +28,7 @@ config_server(char *src)
           cfg_set_sauv(tmp);
 
           strcpy(hftirc->conf.serv[i].adress,   get_opt(tmp, "irc.hft-community.org", "adress").str);
+          strcpy(hftirc->conf.serv[i].name,     get_opt(tmp, hftirc->conf.serv[i].adress, "name").str);
           strcpy(hftirc->conf.serv[i].password, get_opt(tmp, " ", "password").str);
           strcpy(hftirc->conf.serv[i].nick,     get_opt(tmp, "hftircuser", "nickname").str);
           strcpy(hftirc->conf.serv[i].username, get_opt(tmp, " ", "username").str);

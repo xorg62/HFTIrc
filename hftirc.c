@@ -12,10 +12,6 @@ signal_handler(int signal)
                waddwstr(hftirc->ui->inputwin, hftirc->ui->ib.buffer);
                ui_buf_set(hftirc->selbuf);
                break;
-          case SIGSEGV:
-               endwin();
-               fprintf(stderr, "HFTirc: Segmentation fault.\n");
-               break;
      }
 
      return;
@@ -39,7 +35,6 @@ main(int argc, char **argv)
     sig.sa_handler = signal_handler;
     sig.sa_flags   = 0;
     sigaction(SIGWINCH, &sig, NULL);
-    sigaction(SIGSEGV, &sig, NULL);
 
     hftirc->running = 1;
 

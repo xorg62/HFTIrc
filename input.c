@@ -60,6 +60,8 @@ input_join(const char *input)
 void
 input_nick(const char *input)
 {
+     DSINPUT(input);
+
      irc_nick(hftirc->session[hftirc->selses], input);
 
      return;
