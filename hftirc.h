@@ -11,7 +11,6 @@
 #include <time.h>
 #include <signal.h>
 #include <locale.h>
-#include <pthread.h>
 
 #include <libircclient.h>
 #include <libirc_events.h>
@@ -59,6 +58,7 @@ typedef struct
      int bufpos;
 
      /* For irc info */
+     unsigned int sessid;
      char name[128];
      char names[BUFSIZE];
      char topic[BUFSIZE];
@@ -114,6 +114,12 @@ typedef struct
      DateStruct date;
 } HFTIrc;
 
+/* Ctx struct */
+typedef struct
+{
+     unsigned int id;
+} irc_ctx_t;
+
 /* Prototypes */
 
 /* config.c */
@@ -167,10 +173,10 @@ void input_whois(const char *input);
 void input_query(const char *input);
 void input_close(const char *input);
 
-
 /* util.c */
 void update_date(void);
 int find_bufid(const char *str);
+int find_sessid(irc_session_t *session);
 
 /* main.c */
 void signal_handler(int signal);

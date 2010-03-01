@@ -28,10 +28,10 @@ config_server(char *src)
           cfg_set_sauv(tmp);
 
           strcpy(hftirc->conf.serv[i].adress,   get_opt(tmp, "irc.hft-community.org", "adress").str);
-          strcpy(hftirc->conf.serv[i].password, get_opt(tmp, "", "password").str);
+          strcpy(hftirc->conf.serv[i].password, get_opt(tmp, " ", "password").str);
           strcpy(hftirc->conf.serv[i].nick,     get_opt(tmp, "hftircuser", "nickname").str);
-          strcpy(hftirc->conf.serv[i].username, get_opt(tmp, "", "username").str);
-          strcpy(hftirc->conf.serv[i].realname, get_opt(tmp, "", "realname").str);
+          strcpy(hftirc->conf.serv[i].username, get_opt(tmp, " ", "username").str);
+          strcpy(hftirc->conf.serv[i].realname, get_opt(tmp, " ", "realname").str);
           hftirc->conf.serv[i].port = get_opt(tmp, "6667", "port").num;
 
           buf = get_list_opt(tmp, "", "channel_autojoin", &n);

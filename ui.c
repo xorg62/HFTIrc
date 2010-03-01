@@ -17,6 +17,7 @@ ui_init(void)
                memset(hftirc->cb[i].topic, 0, sizeof(hftirc->cb[i].topic));
 
                strcpy(hftirc->cb[i].name, "status");
+               hftirc->cb[i].sessid = 0;
 
                for(j = 0; j < BUFLINES; ++j)
                     memset(hftirc->cb[i].buffer[j], 0, sizeof(hftirc->cb[i].buffer[j]));
@@ -162,6 +163,7 @@ ui_buf_set(int buf)
           return;
 
      hftirc->selbuf = buf;
+     hftirc->selses = hftirc->cb[buf].sessid;
 
      ui_draw_buf(buf);
 

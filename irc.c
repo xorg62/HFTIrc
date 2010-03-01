@@ -4,6 +4,7 @@ void
 irc_init(void)
 {
      int i;
+     irc_ctx_t ctx = { .id = 0 };
 
      memset(&hftirc->callbacks, 0, sizeof(hftirc->callbacks));
 
@@ -40,7 +41,11 @@ irc_init(void)
                          hftirc->conf.serv[i].username,
                          hftirc->conf.serv[i].realname))
                ui_print_buf(0, "Error: Can't connect to %s", hftirc->conf.serv[i].adress);
+
+          ctx.id = (unsigned int)i;
+          irc_set_ctx(hftirc->session[i], &ctx);
      }
+
 
      return;
 }
@@ -48,6 +53,10 @@ irc_init(void)
 void
 irc_join(irc_session_t *session, const char *chan)
 {
+     int s;
+
+     s = find_sessid(session);
+
      if(irc_cmd_join(session, chan, NULL))
      {
           WARN("Error", "Can't join this channel");
@@ -56,6 +65,7 @@ irc_join(irc_session_t *session, const char *chan)
 
      ++hftirc->nbuf;
      strcpy(hftirc->cb[hftirc->nbuf - 1].name, chan);
+     hftirc->cb[hftirc->nbuf - 1].sessid = s;
 
      ui_buf_set(hftirc->nbuf - 1);
 
@@ -69,9 +79,7 @@ irc_nick(irc_session_t *session, const char *nick)
 {
      int i;
 
-     for(i = 0; i < hftirc->conf.nserv; ++i)
-          if(session == hftirc->session[i])
-               break;
+     i = find_sessid(session);
 
      strcpy(hftirc->conf.serv[i].nick, nick);
 
@@ -168,6 +176,9 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 482:
                 ui_print_buf(hftirc->selbuf, "  .:. <%s> You're not channel operator", params[1]);
                break;
+          case 470:
+               ui_print_buf(0, "[%s] .:. %s %s %s", origin, params[0], params[1], params[2]);
+               break;
           default:
                irc_dump_event(session, num, origin, params, count);
                break;
@@ -237,17 +248,14 @@ irc_event_mode(irc_session_t *session, const char *event, const char *origin, co
 void
 irc_event_connect(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i;
+     int c, i;
 
-     for(i = 0; i < hftirc->conf.nserv; ++i)
-          if(session == hftirc->session[i])
-               break;
-
+     c = find_sessid(session);
 
      irc_event_numeric(session, 123456, origin, params, count);
 
-     for(i = 0; i < hftirc->conf.serv[0].nautojoin; ++i)
-          irc_join(session, hftirc->conf.serv[0].autojoin[i]);
+     for(i = 0; i < hftirc->conf.serv[c].nautojoin; ++i)
+          irc_join(session, hftirc->conf.serv[c].autojoin[i]);
 
      return;
 }
