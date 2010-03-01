@@ -12,8 +12,8 @@ SRC= confparse/util.c      \
      input.c  \
      hftirc.h
 
-CFLAGS+=-Wall -g -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES
-LDFLAGS+=-lncursesw /usr/lib/libircclient.a -I/usr/include/libircclient
+CFLAGS+=-Wall -g -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES -I/usr/include/libircclient
+LDFLAGS+=-lncursesw /usr/lib/libircclient.a
 
 OBJ=$(SRC:.c=.o)
 UNAME=$(shell uname)
