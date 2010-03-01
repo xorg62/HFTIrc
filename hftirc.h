@@ -25,6 +25,8 @@
 #define BUFLINES          512
 #define HFTIRC_KEY_ENTER  10
 #define MAINWIN_LINES     LINES - 1
+#define CONFPATH          "hftirc.conf"
+
 
 #define LEN(x) (sizeof(x)/sizeof(x[0]))
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
@@ -77,20 +79,45 @@ typedef struct
      void (*func)(const char *arg);
 } InputStruct;
 
+/* Server information struct */
+typedef struct
+{
+     char adress[256];
+     char password[128];
+     int port;
+     char nick[128];
+     char username[256];
+     char realname[256];
+     char autojoin[128][128];
+     int nautojoin;
+} ServInfo;
+
+/* Config struct */
+typedef struct
+{
+     char path[512];
+     int nserv;
+     ServInfo *serv;
+
+} ConfStruct;
+
 /* Global struct */
 typedef struct
 {
      int ft, running;
-     int nbuf, selbuf;
-     char nick[64];
-     irc_session_t *session;
+     int nbuf, selbuf, selses;
+     irc_session_t **session;
      irc_callbacks_t callbacks;
+     ConfStruct conf;
      ChanBuf cb[MAXBUF];
      Ui *ui;
      DateStruct date;
 } HFTIrc;
 
 /* Prototypes */
+
+/* config.c */
+void config_parse(char *file);
 
 /* ui.c */
 void ui_init(void);
@@ -104,8 +131,8 @@ void ui_get_input(void);
 
 /* irc.c */
 void irc_init(void);
-void irc_join(const char *chan);
-void irc_nick(const char *nick);
+void irc_join(irc_session_t *session, const char *chan);
+void irc_nick(irc_session_t *session, const char *nick);
 
 void irc_dump_event(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count);

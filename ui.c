@@ -113,10 +113,12 @@ ui_print_buf(int id, char *format, ...)
 
      hftirc->cb[id].bufpos = (hftirc->cb[id].bufpos < BUFLINES - 1) ? hftirc->cb[id].bufpos + 1 : 0;
 
-     waddstr(hftirc->ui->mainwin, buf);
-
      if(id == hftirc->selbuf)
+     {
+
+          waddstr(hftirc->ui->mainwin, buf);
           wrefresh(hftirc->ui->mainwin);
+     }
 
      free(buf);
      free(p);

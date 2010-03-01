@@ -25,14 +25,16 @@ signal_handler(int signal)
 void*
 thread_process(void *arg)
 {
-    fd_set fd;
-    static struct timeval timeout;
+     int i;
+     fd_set fd;
+     static struct timeval timeout;
 
-    if(!(int*)arg)
-    {
-         if(irc_run(hftirc->session))
-              WARN("Error", "irc_run failed");
-    }
+     if(!(int*)arg)
+     {
+          for(i = 0; i < hftirc->conf.nserv; ++i)
+               if(irc_run(hftirc->session[i]))
+                    ui_print_buf(0, "Error: irc_run(%s) failed", hftirc->conf.serv[i].adress);
+     }
     else
     {
          while(hftirc->running)
@@ -80,7 +82,7 @@ main(int argc, char **argv)
     hftirc->running = 1;
 
     ui_init();
-
+    config_parse(CONFPATH);
     irc_init();
 
     pthread_create(&uit, NULL, thread_process, "1");

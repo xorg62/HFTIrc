@@ -1,14 +1,18 @@
 # HFTIRC Makefile
 
 EXEC=hftirc
-SRC= ui.c     \
+SRC= confparse/util.c      \
+     confparse/confparse.c \
+     confparse/confparse.h \
+     config.c \
+     ui.c     \
      irc.c    \
      hftirc.c \
      util.c   \
      input.c  \
      hftirc.h
 
-CFLAGS+=-Wall -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES
+CFLAGS+=-Wall -g -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES
 LDFLAGS+=-lncursesw -lpthread /usr/lib/libircclient.a
 
 OBJ=$(SRC:.c=.o)

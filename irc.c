@@ -3,6 +3,8 @@
 void
 irc_init(void)
 {
+     int i;
+
      memset(&hftirc->callbacks, 0, sizeof(hftirc->callbacks));
 
      hftirc->callbacks.event_connect     = irc_event_connect;
@@ -23,26 +25,30 @@ irc_init(void)
      hftirc->callbacks.event_unknown     = irc_dump_event;
      hftirc->callbacks.event_numeric     = irc_event_numeric;
 
-     hftirc->session = irc_create_session(&hftirc->callbacks);
+     hftirc->selses = 0;
+     hftirc->session = calloc(hftirc->conf.nserv, sizeof(irc_session_t *));
 
-     strcpy(hftirc->nick, IRC_NICK);
+     for(i = 0; i < hftirc->conf.nserv; ++i)
+     {
+          hftirc->session[i] = irc_create_session(&hftirc->callbacks);
 
-     if(irc_connect(hftirc->session,
-                    IRC_SERV,
-                    IRC_PORT,
-                    0,
-                    IRC_NICK,
-                    IRC_USERNAME,
-                    IRC_REALNAME))
-          WARN("Error", "Can't connect");
+          if(irc_connect(hftirc->session[i],
+                         hftirc->conf.serv[i].adress,
+                         hftirc->conf.serv[i].port,
+                         hftirc->conf.serv[i].password,
+                         hftirc->conf.serv[i].nick,
+                         hftirc->conf.serv[i].username,
+                         hftirc->conf.serv[i].realname))
+               ui_print_buf(0, "Error: Can't connect to %s", hftirc->conf.serv[i].adress);
+     }
 
      return;
 }
 
 void
-irc_join(const char *chan)
+irc_join(irc_session_t *session, const char *chan)
 {
-     if(irc_cmd_join(hftirc->session, chan, NULL))
+     if(irc_cmd_join(session, chan, NULL))
      {
           WARN("Error", "Can't join this channel");
           return;
@@ -59,11 +65,17 @@ irc_join(const char *chan)
 }
 
 void
-irc_nick(const char *nick)
+irc_nick(irc_session_t *session, const char *nick)
 {
-     strcpy(hftirc->nick, nick);
+     int i;
 
-     if(irc_cmd_nick(hftirc->session, nick))
+     for(i = 0; i < hftirc->conf.nserv; ++i)
+          if(session == hftirc->session[i])
+               break;
+
+     strcpy(hftirc->conf.serv[i].nick, nick);
+
+     if(irc_cmd_nick(session, nick))
           WARN("Error", "Can't change nick or invalid nick");
 
      ui_print_buf(0, "  .:. Your nick is now %s", nick);
@@ -150,6 +162,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           /* Errors */
           case 401:
           case 404:
+          case 412:
                ui_print_buf(0, "[%s] .:. %s", origin, params[2]);
                break;
           case 482:
@@ -171,7 +184,11 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
 
      for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     if(!strcmp(params[0], hftirc->nick))
+     for(i = 0; i < hftirc->conf.nserv; ++i)
+          if(session == hftirc->session[i])
+               break;
+
+     if(!strcmp(params[0], hftirc->conf.serv[i].nick))
                return;
 
      for(i = j = 0; i < hftirc->nbuf + 1; ++i)
@@ -220,9 +237,17 @@ irc_event_mode(irc_session_t *session, const char *event, const char *origin, co
 void
 irc_event_connect(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
+     int i;
+
+     for(i = 0; i < hftirc->conf.nserv; ++i)
+          if(session == hftirc->session[i])
+               break;
+
+
      irc_event_numeric(session, 123456, origin, params, count);
 
-     irc_join(IRC_CHAN);
+     for(i = 0; i < hftirc->conf.serv[0].nautojoin; ++i)
+          irc_join(session, hftirc->conf.serv[0].autojoin[i]);
 
      return;
 }
