@@ -1,5 +1,13 @@
 #include "hftirc.h"
 
+const CcharToAttr cta[] =
+{
+     { CTRL('B'), A_BOLD },
+     { '*',       A_BOLD },
+     { CTRL('_'), A_UNDERLINE },
+     { '_',       A_UNDERLINE }
+};
+
 void
 ui_init(void)
 {
@@ -106,6 +114,31 @@ ui_update_statuswin(void)
 }
 
 void
+ui_print(WINDOW *w, char *str)
+{
+     int i, j, mask = 0;
+
+     if(!str || !w)
+          return;
+
+     for(i = 0; i < strlen(str); ++i)
+     {
+          for(j = 0; j < LEN(cta); ++j)
+               if(str[i] == cta[j].c)
+               {
+                    mask ^= cta[j].a;
+
+                    if(CTRL(str[i]))
+                         ++i;
+               }
+
+          waddch(w, str[i] | mask);
+     }
+
+     return;
+}
+
+void
 ui_print_buf(int id, char *format, ...)
 {
      va_list ap;
@@ -125,8 +158,7 @@ ui_print_buf(int id, char *format, ...)
 
      if(id == hftirc->selbuf)
      {
-
-          waddstr(hftirc->ui->mainwin, buf);
+          ui_print(hftirc->ui->mainwin, buf);
           wrefresh(hftirc->ui->mainwin);
      }
 
@@ -153,12 +185,12 @@ ui_draw_buf(int id)
           for(; i < hftirc->cb[id].bufpos; ++i)
                if(i < BUFLINES - 1 &&
                          hftirc->cb[id].buffer[i])
-                    waddnstr(hftirc->ui->mainwin, hftirc->cb[id].buffer[i], BUFSIZE);
+                    ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
      }
      else
           for(i = 0; i < hftirc->cb[id].bufpos; ++i)
                if(hftirc->cb[id].buffer[i])
-                    waddnstr(hftirc->ui->mainwin, hftirc->cb[id].buffer[i], BUFSIZE);
+                    ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
 
      wrefresh(hftirc->ui->mainwin);
 
@@ -381,7 +413,6 @@ ui_get_input(void)
                                    for(i = (int)wcslen(hftirc->ui->ib.buffer);
                                              i != hftirc->ui->ib.pos - 1;
                                              hftirc->ui->ib.buffer[i] = hftirc->ui->ib.buffer[i - 1], --i);
-
                               hftirc->ui->ib.buffer[hftirc->ui->ib.pos] = c;
 
                               if(hftirc->ui->ib.cpos >= COLS - 1)
