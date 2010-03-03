@@ -128,7 +128,7 @@ ui_print(WINDOW *w, char *str)
                {
                     mask ^= cta[j].a;
 
-                    if(CTRL(str[i]))
+                    if(str[i] == CTRL('B') || str[i] == CTRL('_'))
                          ++i;
                }
 
@@ -413,6 +413,7 @@ ui_get_input(void)
                                    for(i = (int)wcslen(hftirc->ui->ib.buffer);
                                              i != hftirc->ui->ib.pos - 1;
                                              hftirc->ui->ib.buffer[i] = hftirc->ui->ib.buffer[i - 1], --i);
+
                               hftirc->ui->ib.buffer[hftirc->ui->ib.pos] = c;
 
                               if(hftirc->ui->ib.cpos >= COLS - 1)
