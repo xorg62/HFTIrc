@@ -26,7 +26,6 @@ main(int argc, char **argv)
     fd_set iset, oset;
     static struct timeval tv;
 
-
     hftirc     = malloc(sizeof(HFTIrc));
     hftirc->ui = malloc(sizeof(Ui));
     hftirc->ft = 1;
@@ -65,9 +64,7 @@ main(int argc, char **argv)
               else
                    for(i = 0; i < hftirc->conf.nserv; ++i)
                         if(irc_is_connected(hftirc->session[i]))
-                             if(irc_process_select_descriptors(hftirc->session[i], &iset, &oset))
-                                  ui_print_buf(0, "Error: irc_process_select failed with %s",
-                                            hftirc->conf.serv[i].adress);
+                             irc_process_select_descriptors(hftirc->session[i], &iset, &oset);
          }
 
          update_date();

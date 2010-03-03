@@ -72,9 +72,9 @@ input_quit(const char *input)
 {
      DSINPUT(input);
 
-     hftirc->running = 0;
-
      irc_cmd_quit(hftirc->session[hftirc->selses], input);
+
+     hftirc->running = 0;
 
      return;
 }

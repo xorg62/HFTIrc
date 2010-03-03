@@ -158,6 +158,10 @@ void irc_event_names(irc_session_t *session, const char *event, const char *orig
 void irc_event_action(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_kick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count);
+void irc_event_invite(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
+
+
+
 
 /* input.c */
 void input_manage(const char *input);
