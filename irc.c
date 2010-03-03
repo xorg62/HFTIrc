@@ -62,14 +62,10 @@ irc_join(irc_session_t *session, const char *chan)
           WARN("Error", "Can't join this channel");
           return;
      }
-
-     ++hftirc->nbuf;
-     strcpy(hftirc->cb[hftirc->nbuf - 1].name, chan);
-     hftirc->cb[hftirc->nbuf - 1].sessid = s;
+     else
+          ui_buf_new(chan, s);
 
      ui_buf_set(hftirc->nbuf - 1);
-
-     ui_print_buf(0, "Join %s", chan);
 
      return;
 }
@@ -146,6 +142,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
 
                ui_print_buf(0, "[%s] .:. %s", hftirc->conf.serv[find_sessid(session)].name, buf + 1);
                break;
+
           /* Whois */
           case 307:
           case 311:
@@ -155,17 +152,20 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 319:
                irc_event_whois(session, event, origin, params, count);
                break;
+
           /* Topic */
           case 332:
           case 333:
                irc_event_topic(session, num, origin, params, count);
                break;
+
           /* Names */
           case 353:
                irc_event_names(session, num, origin, params, count);
                break;
           case 366:
                break;
+
           /* Errors */
           case 401:
           case 404:
@@ -304,7 +304,8 @@ irc_event_part(irc_session_t *session, const char *event, const char *origin, co
           return;
      }
 
-     for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
+     if(strchr(origin, '!'))
+          for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
      ui_print_buf(i, "  <<<<- %s (%s) has left %s [%s]",
                nick, origin + strlen(nick) + 1, params[0], (params[1] ? params[1] : ""));
@@ -315,17 +316,20 @@ irc_event_part(irc_session_t *session, const char *event, const char *origin, co
 void
 irc_event_quit(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j, c[64];
+     int i, j, c[64], s;
      char nick[64] = { 0 };
 
 	irc_cmd_user_mode(session, "+i");
+
+     s = find_sessid(session);
 
      if(strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
      for(i = j = 0; i < hftirc->nbuf + 1; ++i)
-          if(!strstr(nick, hftirc->cb[i].names)
+          if((!strstr(nick, hftirc->cb[i].names)
                     || !strcmp(nick, hftirc->cb[i].name))
+                    && hftirc->cb[i].sessid == s)
                c[j++] = i;
 
      if(i == MAXBUF)
@@ -353,8 +357,7 @@ irc_event_channel(irc_session_t *session, const char *event, const char *origin,
      /* If the message is not from an old buffer, init a new one. */
      if(i > hftirc->nbuf)
      {
-          ++hftirc->nbuf;
-          strcpy(hftirc->cb[hftirc->nbuf - 1].name, params[0]);
+          ui_buf_new(params[0], i);
           i = hftirc->nbuf - 1;
      }
 
@@ -380,8 +383,7 @@ irc_event_privmsg(irc_session_t *session, const char *event, const char *origin,
      /* If the message is not from an old buffer, init a new one. */
      if(i > hftirc->nbuf)
      {
-          ++hftirc->nbuf;
-          strcpy(hftirc->cb[hftirc->nbuf - 1].name, nick);
+          ui_buf_new(nick, find_sessid(session));
           i = hftirc->nbuf - 1;
      }
 
@@ -401,18 +403,27 @@ irc_event_notice(irc_session_t *session, const char *event, const char *origin, 
 void
 irc_event_topic(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i;
+     int i, j;
+     char nick[64] = { 0 };
 
-     i = find_bufid(find_sessid(session), params[1]);
+
+     i = find_bufid(find_sessid(session), params[((event[0] == '3') ? 1 : 0)]);
 
      if(!strcmp(event, "333"))
           ui_print_buf(i, "  .:. Set by %s (%s)", params[2], params[3]);
+     else if(!strcmp(event, "332"))
+     {
+          ui_print_buf(i, "  .:. Topic of %s: %s", params[1], params[2]);
+          strcpy(hftirc->cb[i].topic, params[2]);
+     }
      else
      {
-          ui_print_buf(i, "  .:. Topic of %s: %s", params[0], params[1]);
+          if(strchr(origin, '!'))
+               for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
-          if(params[1])
-               strcpy(hftirc->cb[i].topic, params[1]);
+          ui_print_buf(i, "  .:. New topic of %s set by %s: %s", params[0], nick, params[1]);
+
+          strcpy(hftirc->cb[i].topic, params[1]);
      }
 
      return;
@@ -484,14 +495,17 @@ irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, 
           case 312:
                ui_print_buf(0, "  .:. SERVER:   %s (%s)", params[2], params[3]);
                break;
+
           /* Whois idle */
           case 317:
                ui_print_buf(0, "  .:. IDLE:     seconds idle: %s signon time: %s", params[2], params[3]);
                break;
+
           /* End of whois */
           case 318:
                ui_print_buf(0, "  .:. %s", params[2]);
                break;
+
           /* Whois channel */
           case 319:
                ui_print_buf(0, "  .:. CHANNELS: %s", params[2]);

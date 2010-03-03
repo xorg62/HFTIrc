@@ -172,6 +172,20 @@ ui_buf_set(int buf)
 }
 
 void
+ui_buf_new(const char *name, unsigned int id)
+{
+     if(!strlen(name))
+          strcpy(hftirc->cb[hftirc->nbuf].name, "???");
+
+     ++hftirc->nbuf;
+
+     strcpy(hftirc->cb[hftirc->nbuf - 1].name, name);
+     hftirc->cb[hftirc->nbuf - 1].sessid = id;
+
+     return;
+}
+
+void
 ui_buf_close(int buf)
 {
      int i;
