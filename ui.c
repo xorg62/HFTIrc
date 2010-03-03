@@ -53,6 +53,8 @@ ui_init(void)
      bg = (use_default_colors() == OK) ? -1 : COLOR_BLACK;
      init_pair(0, bg, bg);
      init_pair(1, COLOR_BLACK, COLOR_GREEN);
+     init_pair(2, COLOR_RED, COLOR_GREEN);
+
 
      /* Init main window and the borders */
      hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 0, 0);
@@ -80,18 +82,24 @@ ui_update_statuswin(void)
      /* Erase all window content */
      werase(hftirc->ui->statuswin);
 
+     wbkgd(hftirc->ui->statuswin, COLOR_PAIR(1));
+
      /* Print date */
      mvwprintw(hftirc->ui->statuswin, 0, 0, "%s", hftirc->date.str);
 
-     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 1, "[ %d-%s/%s ]",
-               hftirc->selbuf, hftirc->conf.serv[hftirc->selses].name, hftirc->cb[hftirc->selbuf].name);
+     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 1, "[ ");
+
+     wprintw(hftirc->ui->statuswin, "%d:",hftirc->selbuf);
+     PRINTATTR(hftirc->ui->statuswin, A_BOLD,  hftirc->conf.serv[hftirc->selses].name);
+     waddch(hftirc->ui->statuswin, '/');
+     PRINTATTR(hftirc->ui->statuswin, A_BOLD | A_UNDERLINE, hftirc->cb[hftirc->selbuf].name);
+     waddstr(hftirc->ui->statuswin, " ]");
 
      /* Print hftirc version */
      mvwprintw(hftirc->ui->statuswin, 0,
                COLS - strlen("HFTIrc "HFTIRC_VERSION),
                "HFTIrc "HFTIRC_VERSION);
 
-     wbkgd(hftirc->ui->statuswin, COLOR_PAIR(1));
      wrefresh(hftirc->ui->statuswin);
 
      return;

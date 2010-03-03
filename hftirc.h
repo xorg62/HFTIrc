@@ -30,6 +30,7 @@
 #define LEN(x) (sizeof(x)/sizeof(x[0]))
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
 #define DSINPUT(i) for(; i[0] == ' '; ++i)
+#define PRINTATTR(w, attr, s)  wattron(w, attr); waddstr(w, s); wattroff(w, attr);
 
 /* Structures */
 typedef struct
@@ -97,6 +98,7 @@ typedef struct
 typedef struct
 {
      char path[512];
+     char datef[256];
      int nserv;
      ServInfo *serv;
 
@@ -160,9 +162,6 @@ void irc_event_kick(irc_session_t *session, const char *event, const char *origi
 void irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count);
 void irc_event_invite(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 
-
-
-
 /* input.c */
 void input_manage(const char *input);
 void input_join(const char *input);
@@ -178,6 +177,8 @@ void input_kick(const char *input);
 void input_whois(const char *input);
 void input_query(const char *input);
 void input_close(const char *input);
+void input_raw(const char *input);
+void input_serv(const char *input);
 
 /* util.c */
 void update_date(void);

@@ -62,7 +62,13 @@ config_parse(char *file)
           buf = file_to_str(CONFPATH);
      }
 
+     cfg_set_sauv(buf);
+
+     strcpy(hftirc->conf.datef, get_opt(buf, "%H:%M:%S", "date_format").str);
+
      config_server(buf);
+
+     free(buf);
 
      return;
 }

@@ -14,6 +14,8 @@ const InputStruct input_struct[] =
      { "msg",   input_msg },
      { "whois", input_whois },
      { "close", input_close },
+     { "raw",   input_raw },
+     { "serv",  input_serv },
      { "help",  input_help },
 };
 
@@ -243,7 +245,6 @@ input_query(const char *input)
 void
 input_close(const char *input)
 {
-
      if(hftirc->selbuf == 0)
           return;
 
@@ -254,3 +255,49 @@ input_close(const char *input)
 
      return;
 }
+
+void
+input_raw(const char *input)
+{
+     DSINPUT(input);
+
+     if(strlen(input) > 0)
+     {
+          if(irc_send_raw(hftirc->session[hftirc->selses], "%s", input))
+               WARN("Error", "Can't use raw");
+     }
+     else
+          WARN("Error", "Usage: /raw <cmd>");
+
+     return;
+}
+
+void
+input_serv(const char *input)
+{
+     int i;
+
+     DSINPUT(input);
+
+     if(hftirc->selbuf != 0)
+          return;
+
+     if(strlen(input) > 0)
+     {
+          for(i = 0; i < hftirc->conf.nserv; ++i)
+               if(!strcasecmp(hftirc->conf.serv[i].name, input))
+                    hftirc->selses = i;
+     }
+     else
+     {
+          if(hftirc->selses + 1 >= hftirc->conf.nserv)
+               hftirc->selses = 0;
+          else
+               ++hftirc->selses;
+     }
+
+     refresh();
+
+     return;
+}
+

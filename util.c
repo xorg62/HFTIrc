@@ -6,7 +6,7 @@ update_date(void)
      hftirc->date.tm = localtime(&hftirc->date.lt);
      hftirc->date.lt = time(NULL);
 
-     strftime(hftirc->date.str, sizeof(hftirc->date.str), "[%r]", hftirc->date.tm);
+     strftime(hftirc->date.str, sizeof(hftirc->date.str), hftirc->conf.datef, hftirc->date.tm);
 
      return;
 }

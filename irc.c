@@ -123,8 +123,10 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 3:
           case 4:
           case 5:
+          case 250:
           case 251:
           case 252:
+          case 253:
           case 254:
           case 255:
           case 265:
@@ -153,12 +155,15 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
                irc_event_whois(session, event, origin, params, count);
                break;
 
-          /* Topic */
+          /* Topic / Channel */
           case 332:
           case 333:
                irc_event_topic(session, num, origin, params, count);
                break;
-
+          case 328:
+               ui_print_buf(find_bufid(find_sessid(session), params[1]),
+                         "  .:. Home page of %s: %s", params[1], params[2]);
+               break;
           /* Names */
           case 353:
                irc_event_names(session, num, origin, params, count);
@@ -170,6 +175,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 401:
           case 404:
           case 412:
+          case 421:
                ui_print_buf(0, "[%s] .:. %s", hftirc->conf.serv[find_sessid(session)].name, params[2]);
                break;
           case 482:
@@ -412,11 +418,10 @@ irc_event_notice(irc_session_t *session, const char *event, const char *origin, 
      char nick[64] = { 0 };
 
      if(strchr(origin, '!'))
-          for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
+          for(nick[0] = ' ', j = 0; origin[j] != '!'; nick[j + 1] = origin[j], ++j);
 
-     ui_print_buf(0, "[%s] .:. %s (%s)- %s",
-               hftirc->conf.serv[find_sessid(session)].name,
-               nick, origin + strlen(nick) + (strlen(nick) ? 1 : 0), params[1]);
+     ui_print_buf(0, "[%s] .:.%s (%s)- %s", hftirc->conf.serv[find_sessid(session)].name,
+               nick, origin + strlen(nick), params[1]);
 
      return;
 }
@@ -464,7 +469,7 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
      i = find_bufid(find_sessid(session), params[2]);
 
      ui_print_buf(i, "  .:. Users of %s:", params[2]);
-     ui_print_buf(i, "-> [ %s]", params[3]);
+     ui_print_buf(i, "-> [%s]", params[3]);
 
      strcpy(hftirc->cb[i].names, params[3]);
 
