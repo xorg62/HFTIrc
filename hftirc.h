@@ -88,6 +88,7 @@ typedef struct
      char password[128];
      int port;
      char nick[128];
+     char mode[24];
      char username[256];
      char realname[256];
      char autojoin[128][128];
@@ -151,7 +152,6 @@ void ui_get_input(void);
 /* irc.c */
 void irc_init(void);
 void irc_join(irc_session_t *session, const char *chan);
-void irc_nick(irc_session_t *session, const char *nick);
 
 void irc_dump_event(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count);

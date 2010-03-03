@@ -61,7 +61,7 @@ ui_init(void)
      bg = (use_default_colors() == OK) ? -1 : COLOR_BLACK;
      init_pair(0, bg, bg);
      init_pair(1, COLOR_BLACK, COLOR_GREEN);
-     init_pair(2, COLOR_RED, COLOR_GREEN);
+     init_pair(2, COLOR_YELLOW, bg);
 
 
      /* Init main window and the borders */
@@ -90,18 +90,25 @@ ui_update_statuswin(void)
      /* Erase all window content */
      werase(hftirc->ui->statuswin);
 
+     /* Update bg color */
      wbkgd(hftirc->ui->statuswin, COLOR_PAIR(1));
 
      /* Print date */
      mvwprintw(hftirc->ui->statuswin, 0, 0, "%s", hftirc->date.str);
 
-     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 1, "[ ");
+     /* Pseudo with mode */
+     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 1, "(");
+     PRINTATTR(hftirc->ui->statuswin, A_BOLD, hftirc->conf.serv[hftirc->selses].nick);
+     waddch(hftirc->ui->statuswin, '(');
+     PRINTATTR(hftirc->ui->statuswin, A_BOLD | A_UNDERLINE, hftirc->conf.serv[hftirc->selses].mode);
+     waddstr(hftirc->ui->statuswin, "))");
 
-     wprintw(hftirc->ui->statuswin, "%d:",hftirc->selbuf);
+     /* Info about current serv/channel */
+     wprintw(hftirc->ui->statuswin, " (%d:", hftirc->selbuf);
      PRINTATTR(hftirc->ui->statuswin, A_BOLD,  hftirc->conf.serv[hftirc->selses].name);
      waddch(hftirc->ui->statuswin, '/');
      PRINTATTR(hftirc->ui->statuswin, A_BOLD | A_UNDERLINE, hftirc->cb[hftirc->selbuf].name);
-     waddstr(hftirc->ui->statuswin, " ]");
+     waddch(hftirc->ui->statuswin, ')');
 
      /* Print hftirc version */
      mvwprintw(hftirc->ui->statuswin, 0,
@@ -120,6 +127,13 @@ ui_print(WINDOW *w, char *str)
 
      if(!str || !w)
           return;
+
+     /* Highlight line */
+     if(hftirc->conf.serv && hftirc->selbuf != 0
+               && strchr(str, '<') && strchr(str, '>')
+               && strstr(str + strlen(hftirc->date.str) + 4,
+                    hftirc->conf.serv[hftirc->selses].nick))
+               mask |= (COLOR_PAIR(2) | A_BOLD);
 
      for(i = 0; i < strlen(str); ++i)
      {

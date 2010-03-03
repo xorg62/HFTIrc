@@ -71,23 +71,6 @@ irc_join(irc_session_t *session, const char *chan)
 }
 
 void
-irc_nick(irc_session_t *session, const char *nick)
-{
-     int i;
-
-     i = find_sessid(session);
-
-     strcpy(hftirc->conf.serv[i].nick, nick);
-
-     if(irc_cmd_nick(session, nick))
-          WARN("Error", "Can't change nick or invalid nick");
-
-     ui_print_buf(0, "  .:. Your nick is now %s on %s", nick, hftirc->conf.serv[find_sessid(session)].name);
-
-     return;
-}
-
-void
 irc_dump_event(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      char buf[BUFSIZE] = { 0 };
@@ -178,6 +161,10 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 421:
                ui_print_buf(0, "[%s] .:. %s", hftirc->conf.serv[find_sessid(session)].name, params[2]);
                break;
+          case 433:
+               ui_print_buf(0, "[%s] .:. Nickname %c%s%c already in use",
+                         hftirc->conf.serv[find_sessid(session)].name, CTRL('B'), params[0], CTRL('B'));
+               break;
           case 482:
                 ui_print_buf(hftirc->selbuf, "  .:. <%s> You're not channel operator", params[1]);
                break;
@@ -206,12 +193,18 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
      if(strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     for(i = 0; i < hftirc->conf.nserv; ++i)
-          if(session == hftirc->session[i])
-               break;
+     i = find_sessid(session);
 
-     if(!strcmp(params[0], hftirc->conf.serv[i].nick))
+     if(!strcmp(nick, hftirc->conf.serv[i].nick))
+     {
+          strcpy(hftirc->conf.serv[i].nick, params[0]);
+
+          for(j = 0; j < hftirc->nbuf; ++j)
+               if(hftirc->cb[j].sessid == i && j != 0)
+                    ui_print_buf(j, "  .:. Your nick is now %s", hftirc->conf.serv[i].nick);
+
                return;
+     }
 
      for(i = j = 0; i < hftirc->nbuf + 1; ++i)
           if(!strstr(nick, hftirc->cb[i].names)
@@ -231,15 +224,18 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
 void
 irc_event_mode(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i;
+     int i, s;
      char nick[64] = { 0 };
      char nicks[BUFSIZE] = { 0 };
 
      /* User mode */
      if(count == 1)
      {
+          s = find_sessid(session);
           ui_print_buf(0, "[%s] .:. User mode of %s : [%s]",
-                    hftirc->conf.serv[find_sessid(session)].name, origin, params[0]);
+                    hftirc->conf.serv[s].name, origin, params[0]);
+
+          strcpy(hftirc->conf.serv[s].mode, params[0]);
 
           return;
      }

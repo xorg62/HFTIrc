@@ -64,7 +64,8 @@ input_nick(const char *input)
 {
      DSINPUT(input);
 
-     irc_nick(hftirc->session[hftirc->selses], input);
+     if(irc_cmd_nick(hftirc->session[hftirc->selses], input))
+          WARN("Error", "Can't change nick or invalid nick");
 
      return;
 }
