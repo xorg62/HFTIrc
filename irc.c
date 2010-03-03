@@ -406,11 +406,17 @@ irc_event_topic(irc_session_t *session, const char *event, const char *origin, c
      int i, j;
      char nick[64] = { 0 };
 
-
      i = find_bufid(find_sessid(session), params[((event[0] == '3') ? 1 : 0)]);
 
      if(!strcmp(event, "333"))
-          ui_print_buf(i, "  .:. Set by %s (%s)", params[2], params[3]);
+     {
+          if(strchr(params[2], '!'))
+               for(j = 0; params[2][j] != '!'; nick[j] = params[2][j], ++j);
+          else
+               strcpy(nick, params[2]);
+
+          ui_print_buf(i, "  .:. Set by %s (%s)", nick, params[3]);
+     }
      else if(!strcmp(event, "332"))
      {
           ui_print_buf(i, "  .:. Topic of %s: %s", params[1], params[2]);
