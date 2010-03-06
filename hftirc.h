@@ -15,18 +15,18 @@
 #include <libircclient.h>
 #include <libirc_events.h>
 
-#include "config.h"
-
 /* Macro */
 #define HFTIRC_VERSION    "0.01"
-#define BUFSIZE           4096
+#define BUFSIZE           8192
 #define MAXBUF            64
 #define BUFLINES          512
 #define HFTIRC_KEY_ENTER  10
-#define MAINWIN_LINES     LINES - 1
+#define MAINWIN_LINES     LINES - 2
+#define DATELEN           (strlen(hftirc->date.str))
 #define CONFPATH          "hftirc.conf"
+#define B                 C('B')
 
-#define CTRL(c) ((c) & 037)
+#define C(c) ((c) & 037)
 #define LEN(x) (sizeof(x)/sizeof(x[0]))
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
 #define DSINPUT(i) for(; i[0] == ' '; ++i)
@@ -39,6 +39,7 @@ typedef struct
      WINDOW *mainwin;
      WINDOW *inputwin;
      WINDOW *statuswin;
+     WINDOW *topicwin;
 
      /* Input buffer struct */
      struct
@@ -56,7 +57,7 @@ typedef struct
 {
      /* For ui use */
      char buffer[BUFLINES][BUFSIZE];
-     int bufpos;
+     int bufpos, naming;
 
      /* For irc info */
      unsigned int sessid;
@@ -93,6 +94,7 @@ typedef struct
      char realname[256];
      char autojoin[128][128];
      int nautojoin;
+     unsigned int bname;
 } ServInfo;
 
 /* Config struct */
@@ -104,13 +106,6 @@ typedef struct
      ServInfo *serv;
 
 } ConfStruct;
-
-/* Control char to char attribute */
-typedef struct
-{
-     char c;
-     unsigned int a;
-} CcharToAttr;
 
 /* Global struct */
 typedef struct
@@ -139,9 +134,10 @@ void config_parse(char *file);
 /* ui.c */
 void ui_init(void);
 void ui_update_statuswin(void);
+void ui_update_topicwin(void);
 void ui_update_infowin(void);
+void ui_manage_print_color(int i, char *str, int *mask);
 void ui_print(WINDOW *w, char *str);
-
 void ui_print_buf(int id, char *format, ...);
 void ui_draw_buf(int id);
 void ui_buf_new(const char *name, unsigned int id);
@@ -187,7 +183,9 @@ void input_whois(const char *input);
 void input_query(const char *input);
 void input_close(const char *input);
 void input_raw(const char *input);
+void input_umode(const char *input);
 void input_serv(const char *input);
+void input_redraw(const char *input);
 
 /* util.c */
 void update_date(void);

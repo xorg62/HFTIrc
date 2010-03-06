@@ -2,21 +2,23 @@
 
 const InputStruct input_struct[] =
 {
-     { "join",  input_join },
-     { "nick",  input_nick },
-     { "quit",  input_quit },
-     { "part",  input_part },
-     { "kick",  input_kick },
-     { "names", input_names },
-     { "topic", input_topic },
-     { "query", input_query },
-     { "me",    input_me },
-     { "msg",   input_msg },
-     { "whois", input_whois },
-     { "close", input_close },
-     { "raw",   input_raw },
-     { "serv",  input_serv },
-     { "help",  input_help },
+     { "join",   input_join },
+     { "nick",   input_nick },
+     { "quit",   input_quit },
+     { "part",   input_part },
+     { "kick",   input_kick },
+     { "names",  input_names },
+     { "topic",  input_topic },
+     { "query",  input_query },
+     { "me",     input_me },
+     { "msg",    input_msg },
+     { "whois",  input_whois },
+     { "close",  input_close },
+     { "raw",    input_raw },
+     { "umode",  input_umode },
+     { "serv",   input_serv },
+     { "redraw", input_redraw },
+     { "help",   input_help },
 };
 
 void
@@ -36,7 +38,7 @@ input_manage(const char *input)
           if(irc_cmd_msg(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't send message");
           else
-               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, input);
+               ui_print_buf(hftirc->selbuf, "<%c%s%c> %s", B, hftirc->conf.serv[hftirc->selses].nick, B, input);
      }
 
      return;
@@ -274,6 +276,19 @@ input_raw(const char *input)
 }
 
 void
+input_umode(const char *input)
+{
+     DSINPUT(input);
+
+     if(!strlen(input))
+          WARN("Error", "Usage: /umode <mode>");
+     else if(irc_cmd_user_mode(hftirc->session[hftirc->selses], input))
+          WARN("Error", "Can't set user mode");
+
+     return;
+}
+
+void
 input_serv(const char *input)
 {
      int i;
@@ -302,3 +317,12 @@ input_serv(const char *input)
      return;
 }
 
+void
+input_redraw(const char *input)
+{
+     endwin();
+     ui_init();
+     ui_buf_set(hftirc->selbuf);
+
+     return;
+}

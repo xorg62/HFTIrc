@@ -3,13 +3,17 @@
 void
 signal_handler(int signal)
 {
+     int b[2];
+
      switch(signal)
      {
           case SIGWINCH:
+               b[0] = LINES;
+               b[1] = COLS;
                endwin();
                sleep(1);
                ui_init();
-               waddwstr(hftirc->ui->inputwin, hftirc->ui->ib.buffer);
+               ui_print_buf(0, "Terminal resized: (%dx%d -> %dx%d)", b[0], b[1], LINES, COLS);
                ui_buf_set(hftirc->selbuf);
                break;
      }
@@ -69,6 +73,7 @@ main(int argc, char **argv)
 
          update_date();
          ui_update_statuswin();
+         ui_update_topicwin();
          refresh();
          wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
          wrefresh(hftirc->ui->inputwin);

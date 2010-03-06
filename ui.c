@@ -1,12 +1,17 @@
 #include "hftirc.h"
 
-const CcharToAttr cta[] =
-{
-     { CTRL('B'), A_BOLD },
-     { '*',       A_BOLD },
-     { CTRL('_'), A_UNDERLINE },
-     { '_',       A_UNDERLINE }
-};
+#define COLOR_SW    1
+#define COLOR_HL    2
+#define COLOR_DEF   3
+#define COLOR_ENCAD 4
+#define COLOR_JOIN  5
+#define COLOR_PART  6
+
+#define MASK_CONV     (1 << 2)
+#define MASK_DATEPOS  (1 << 3)
+#define MASK_ENCAD    (1 << 4)
+#define MASK_SYMINFO  (1 << 5)
+#define MASK_PARTJOIN (1 << 6)
 
 void
 ui_init(void)
@@ -38,6 +43,7 @@ ui_init(void)
 
      setlocale(LC_ALL,"");
      initscr();
+     raw();
      noecho();
      keypad(stdscr, TRUE);
 
@@ -47,9 +53,12 @@ ui_init(void)
           endwin();
           fprintf(stderr, "HFTIrc error: Terminal too small (%dx%d)\n"
                     "Minimal size : 15x35\n", LINES, COLS);
+          free(hftirc->session);
+          free(hftirc->ui);
           free(hftirc);
+
           exit(EXIT_FAILURE);
-}
+     }
      else
           hftirc->running = 2;
 
@@ -60,14 +69,22 @@ ui_init(void)
      start_color();
      bg = (use_default_colors() == OK) ? -1 : COLOR_BLACK;
      init_pair(0, bg, bg);
-     init_pair(1, COLOR_BLACK, COLOR_GREEN);
-     init_pair(2, COLOR_YELLOW, bg);
-
+     init_pair(COLOR_SW,    COLOR_BLACK, COLOR_GREEN);
+     init_pair(COLOR_HL,    COLOR_YELLOW, bg);
+     init_pair(COLOR_DEF,   COLOR_GREEN, bg);
+     init_pair(COLOR_ENCAD, COLOR_BLACK, bg);
+     init_pair(COLOR_JOIN,  COLOR_CYAN, bg);
+     init_pair(COLOR_PART,  COLOR_RED, bg);
 
      /* Init main window and the borders */
-     hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 0, 0);
+     hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
      scrollok(hftirc->ui->mainwin, TRUE);
      wrefresh(hftirc->ui->mainwin);
+
+     /* Init topic window */
+     hftirc->ui->topicwin = newwin(1, COLS, 0, 0);
+     wbkgd(hftirc->ui->topicwin, COLOR_PAIR(1));
+     wrefresh(hftirc->ui->statuswin);
 
      /* Init input window */
      hftirc->ui->inputwin = newwin(1, COLS, LINES - 1, 0);
@@ -78,6 +95,7 @@ ui_init(void)
      hftirc->ui->statuswin = newwin(1, COLS, LINES - 2, 0);
      wbkgd(hftirc->ui->statuswin, COLOR_PAIR(1));
      wrefresh(hftirc->ui->statuswin);
+
 
      refresh();
 
@@ -91,7 +109,7 @@ ui_update_statuswin(void)
      werase(hftirc->ui->statuswin);
 
      /* Update bg color */
-     wbkgd(hftirc->ui->statuswin, COLOR_PAIR(1));
+     wbkgd(hftirc->ui->statuswin, COLOR_PAIR(COLOR_SW));
 
      /* Print date */
      mvwprintw(hftirc->ui->statuswin, 0, 0, "%s", hftirc->date.str);
@@ -121,9 +139,78 @@ ui_update_statuswin(void)
 }
 
 void
+ui_update_topicwin(void)
+{
+     /* Erase all window content */
+     werase(hftirc->ui->topicwin);
+
+     /* Update bg color */
+     wbkgd(hftirc->ui->topicwin, COLOR_PAIR(COLOR_SW));
+
+     /* Write topic */
+     waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
+
+     wrefresh(hftirc->ui->topicwin);
+
+     return;
+}
+
+/* Set basic mainwin colors in mask to attribute it in ui_print */
+void
+ui_manage_print_color(int i, char *str, int *mask)
+{
+     /* Date special char [::] */
+     if(i <= DATELEN && (str[i] == ':' || str[i] == '[' || str[i] == ']'))
+          *mask |= COLOR_PAIR(COLOR_DEF);
+
+     /* Nicks <> */
+     if(i == DATELEN + 1 && str[i] == '<' && strchr(str + i + 1, '>'))
+          *mask |= (COLOR_PAIR(COLOR_ENCAD) | A_BOLD | MASK_DATEPOS | MASK_CONV);
+     else if(str[i] == '>' && (*mask & MASK_DATEPOS))
+          *mask |= (COLOR_PAIR(COLOR_ENCAD) | A_BOLD);
+     else if(str[i - 1] == '>' && (*mask & MASK_DATEPOS))
+          *mask &= ~(MASK_DATEPOS);
+
+     /* Info symbol .:. */
+     if(!(*mask & MASK_CONV) && i >= DATELEN + 2
+               && ((str[i] == '.' && str[i + 1] == ':' && str[i + 2] == '.')
+                    || (str[i - 1] == '.' && str[i] == ':' && str[i + 1] == '.')
+                    || (str[i - 2] == '.' && str[i - 1] == ':' && str[i] == '.')))
+     {
+          *mask |= (COLOR_PAIR(COLOR_DEF) | A_UNDERLINE | MASK_SYMINFO);
+          if(str[i] == ':')
+          {
+               *mask |= (A_BOLD);
+               *mask &= ~(A_UNDERLINE);
+          }
+     }
+     else if((*mask & MASK_SYMINFO) && str[i - 1] == '.')
+          *mask &= ~(MASK_SYMINFO);
+
+     /* Join & par/quit ->>>> / <<<<- */
+     if((*mask & MASK_PARTJOIN) || (i >= DATELEN + 3 && i <= DATELEN + 8 && !(*mask & MASK_CONV)
+                    && ((str[i] == '-' && str[i + 4] == '>')
+                         || (str[i] == '<' && str[i + 4] == '-'))))
+     {
+          *mask |= (COLOR_PAIR(str[DATELEN + 7] == '-' ? 6 : 5) | MASK_PARTJOIN);
+
+          if(str[i] == ' ' && (str[i - 1] == '>' || str[i - 1] == '-'))
+               *mask &= ~(COLOR_PAIR(COLOR_JOIN) | COLOR_PAIR(COLOR_PART) | MASK_PARTJOIN);
+     }
+
+
+     /* All []() */
+     if(!(*mask & MASK_CONV) && i > DATELEN && (str[i] == '['
+               || str[i] == ']' || str[i] == '(' || str[i] == ')'))
+          *mask |= (COLOR_PAIR(COLOR_ENCAD) | A_BOLD | MASK_ENCAD);
+
+     return;
+}
+
+void
 ui_print(WINDOW *w, char *str)
 {
-     int i, j, mask = 0;
+     int i, hmask = A_NORMAL, mask = A_NORMAL;
 
      if(!str || !w)
           return;
@@ -133,20 +220,31 @@ ui_print(WINDOW *w, char *str)
                && strchr(str, '<') && strchr(str, '>')
                && strstr(str + strlen(hftirc->date.str) + 4,
                     hftirc->conf.serv[hftirc->selses].nick))
-               mask |= (COLOR_PAIR(2) | A_BOLD);
+               mask |= (COLOR_PAIR(COLOR_HL) | A_BOLD);
 
      for(i = 0; i < strlen(str); ++i)
      {
-          for(j = 0; j < LEN(cta); ++j)
-               if(str[i] == cta[j].c)
-               {
-                    mask ^= cta[j].a;
+          /* Bold and underline */
+          if(str[i] == B || str[i] == C('_'))
+          {
+               hmask ^= (str[i] == B ? A_BOLD : A_UNDERLINE);
 
-                    if(str[i] == CTRL('B') || str[i] == CTRL('_'))
-                         ++i;
-               }
+               if(str[i + 1] != B && str[i + 1] != C('_'))
+                    ++i;
+          }
 
-          waddch(w, str[i] | mask);
+          /* Decoration stuff */
+          if(!(mask & COLOR_PAIR(COLOR_HL)))
+               ui_manage_print_color(i, str, &mask);
+
+          wattron(w, mask | hmask);
+          wprintw(w, "%c", str[i]);
+          wattroff(w, mask | hmask);
+
+          /* Clean mask */
+          mask &= ~(COLOR_PAIR(COLOR_DEF) | COLOR_PAIR(COLOR_ENCAD)
+                    | ((mask & MASK_DATEPOS || mask & MASK_ENCAD) ? A_BOLD : 0)
+                    | (mask & MASK_SYMINFO ? (A_UNDERLINE | A_BOLD) : 0));
      }
 
      return;
@@ -192,7 +290,7 @@ ui_draw_buf(int id)
 
      werase(hftirc->ui->mainwin);
 
-     if(hftirc->cb[id].bufpos > MAINWIN_LINES)
+     if(hftirc->cb[id].bufpos > MAINWIN_LINES + 1)
      {
           i = hftirc->cb[id].bufpos - MAINWIN_LINES;
 
@@ -275,9 +373,6 @@ ui_get_input(void)
      int i, t;
      wint_t c;
      char buf[BUFSIZE];
-
-     /* Make getch non-block */
-     halfdelay(1);
 
      switch((t = get_wch(&c)))
      {
