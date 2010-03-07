@@ -44,10 +44,7 @@ file_to_str(char *path)
           return NULL;
 
      if (!(fd = open(path, O_RDONLY)))
-     {
-          ui_print_buf(0, "HFTIrc configuration: %s", path);
           return NULL;
-     }
 
      /* Get the file size */
      stat(path, &st);
@@ -80,8 +77,6 @@ file_to_str(char *path)
      /* Unmap buffer, thanks linkdd. */
      munmap(buf, st.st_size);
      close(fd);
-
-     ui_print_buf(0, "HFTIrc configuration: %s read.", path);
 
      return ret;
 }

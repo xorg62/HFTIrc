@@ -96,7 +96,6 @@ ui_init(void)
      wbkgd(hftirc->ui->statuswin, COLOR_PAIR(1));
      wrefresh(hftirc->ui->statuswin);
 
-
      refresh();
 
      return;

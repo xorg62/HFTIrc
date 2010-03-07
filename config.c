@@ -7,18 +7,23 @@ config_server(char *src)
      int i, j, n = 0;
      char *tmp;
      opt_type *buf;
-     ServInfo defsi = { "Hft", "irc.hft-community", "", 6667, "hftircuser", "HFTIrcuser", ""};
+     ServInfo defsi = { "Hft", "irc.hft-community", "", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
 
      cfg_set_sauv(src);
 
      hftirc->conf.nserv = get_size_sec(src, "server");
-     hftirc->conf.serv = calloc(hftirc->conf.nserv + 1, sizeof(ServInfo));
 
      if(!hftirc->conf.nserv)
      {
           hftirc->conf.serv[0] = defsi;
 
           return;
+     }
+
+     if(hftirc->conf.nserv > NSERV)
+     {
+          ui_print_buf(0, "HFTIrc configuratin: Too much serv (limit: %d)", NSERV);
+          hftirc->conf.nserv = NSERV;
      }
 
      for(i = 0; i < hftirc->conf.nserv; ++i)

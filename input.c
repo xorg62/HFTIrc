@@ -2,23 +2,26 @@
 
 const InputStruct input_struct[] =
 {
-     { "join",   input_join },
-     { "nick",   input_nick },
-     { "quit",   input_quit },
-     { "part",   input_part },
-     { "kick",   input_kick },
-     { "names",  input_names },
-     { "topic",  input_topic },
-     { "query",  input_query },
-     { "me",     input_me },
-     { "msg",    input_msg },
-     { "whois",  input_whois },
-     { "close",  input_close },
-     { "raw",    input_raw },
-     { "umode",  input_umode },
-     { "serv",   input_serv },
-     { "redraw", input_redraw },
-     { "help",   input_help },
+     { "join",       input_join },
+     { "nick",       input_nick },
+     { "quit",       input_quit },
+     { "part",       input_part },
+     { "kick",       input_kick },
+     { "names",      input_names },
+     { "topic",      input_topic },
+     { "query",      input_query },
+     { "me",         input_me },
+     { "msg",        input_msg },
+     { "whois",      input_whois },
+     { "close",      input_close },
+     { "raw",        input_raw },
+     { "umode",      input_umode },
+     { "serv",       input_serv },
+     { "redraw",     input_redraw },
+     { "connect",    input_connect },
+     { "server",     input_connect },
+     { "disconnect", input_disconnect },
+     { "help",       input_help },
 };
 
 void
@@ -29,13 +32,16 @@ input_manage(const char *input)
      if(input[0] == '/')
      {
           ++input;
+
           for(i = 0; i < LEN(input_struct); ++i)
                if(!strncmp(input, input_struct[i].cmd, strlen(input_struct[i].cmd)))
                     input_struct[i].func(input + strlen(input_struct[i].cmd));
      }
      else
      {
-          if(irc_cmd_msg(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name, input))
+          if(hftirc->conf.nserv
+                    && irc_cmd_msg(hftirc->session[hftirc->selses],
+                         hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't send message");
           else
                ui_print_buf(hftirc->selbuf, "<%c%s%c> %s", B, hftirc->conf.serv[hftirc->selses].nick, B, input);
@@ -48,6 +54,7 @@ void
 input_join(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(input[0] != '#')
      {
@@ -65,6 +72,7 @@ void
 input_nick(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(irc_cmd_nick(hftirc->session[hftirc->selses], input))
           WARN("Error", "Can't change nick or invalid nick");
@@ -77,7 +85,8 @@ input_quit(const char *input)
 {
      DSINPUT(input);
 
-     irc_cmd_quit(hftirc->session[hftirc->selses], input);
+     if(hftirc->conf.nserv)
+          irc_cmd_quit(hftirc->session[hftirc->selses], input);
 
      hftirc->running = 0;
 
@@ -87,6 +96,8 @@ input_quit(const char *input)
 void
 input_names(const char *input)
 {
+     NOSERVRET();
+
      if(irc_cmd_names(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
           WARN("Error", "Can't get names list");
 
@@ -105,6 +116,7 @@ void
 input_topic(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(strlen(input) > 0)
      {
@@ -121,6 +133,8 @@ input_topic(const char *input)
 void
 input_part(const char *input)
 {
+     NOSERVRET();
+
      if(irc_cmd_part(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
           WARN("Error", "While using PART command");
      else
@@ -133,6 +147,7 @@ void
 input_me(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(irc_cmd_me(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name, input))
           WARN("Error", "Can't send action message");
@@ -150,6 +165,7 @@ input_msg(const char *input)
      char msg[BUFSIZE] = { 0 };
 
      DSINPUT(input);
+     NOSERVRET();
 
      if(strlen(input) > 0)
      {
@@ -185,7 +201,7 @@ input_kick(const char *input)
      char reason[BUFSIZE] = { 0 };
 
      DSINPUT(input);
-
+     NOSERVRET();
 
      if(strlen(input) > 0)
      {
@@ -215,6 +231,7 @@ void
 input_whois(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(strlen(input) > 0)
      {
@@ -231,6 +248,7 @@ void
 input_query(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(strlen(input) > 0)
      {
@@ -263,6 +281,7 @@ void
 input_raw(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(strlen(input) > 0)
      {
@@ -279,6 +298,7 @@ void
 input_umode(const char *input)
 {
      DSINPUT(input);
+     NOSERVRET();
 
      if(!strlen(input))
           WARN("Error", "Usage: /umode <mode>");
@@ -323,6 +343,74 @@ input_redraw(const char *input)
      endwin();
      ui_init();
      ui_buf_set(hftirc->selbuf);
+
+     return;
+}
+
+void
+input_connect(const char *input)
+{
+     int i;
+     ServInfo defsi = { " ", " ", " ", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
+
+     DSINPUT(input);
+
+     if(strlen(input) > 0)
+     {
+          if(hftirc->conf.nserv > NSERV)
+          {
+               WARN("Error", "Too much connected server");
+
+               return;
+          }
+
+          ++hftirc->conf.nserv;
+          i = hftirc->conf.nserv - 1;
+
+          hftirc->conf.serv[i] = defsi;
+          strcpy(hftirc->conf.serv[i].name, input);
+          strcpy(hftirc->conf.serv[i].adress, input);
+
+          hftirc->session[i] = irc_create_session(&hftirc->callbacks);
+
+          if(irc_connect(hftirc->session[i],
+                         hftirc->conf.serv[i].adress,
+                         hftirc->conf.serv[i].port,
+                         hftirc->conf.serv[i].password,
+                         hftirc->conf.serv[i].nick,
+                         hftirc->conf.serv[i].username,
+                         hftirc->conf.serv[i].realname))
+               ui_print_buf(0, "Error: Can't connect to %s", hftirc->conf.serv[i].adress);
+
+          hftirc->selses = i;
+     }
+     else
+          WARN("Error", "Usage: /connect <adress>  or  /server <adress>");
+
+     return;
+}
+
+void
+input_disconnect(const char *input)
+{
+     int i = hftirc->selses;
+
+     DSINPUT(input);
+     NOSERVRET();
+
+     if(strlen(input) > 0)
+     {
+          for(i = 0; i < hftirc->conf.nserv; ++i)
+               if(!strcasecmp(hftirc->conf.serv[i].name, input))
+                    break;
+
+          irc_disconnect(hftirc->session[i]);
+     }
+
+     irc_disconnect(hftirc->session[i]);
+
+     ui_print_buf(0, "[%s] .:. %c%s%c is now Disconnected",
+               hftirc->conf.serv[i].name, B, hftirc->conf.serv[i].name, B);
 
      return;
 }

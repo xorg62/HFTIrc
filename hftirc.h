@@ -20,6 +20,10 @@
 #define BUFSIZE           8192
 #define MAXBUF            64
 #define BUFLINES          512
+#define NICKLEN           24
+#define CHANLEN           24
+#define HOSTLEN           128
+#define NSERV             32
 #define HFTIRC_KEY_ENTER  10
 #define MAINWIN_LINES     LINES - 2
 #define DATELEN           (strlen(hftirc->date.str))
@@ -31,6 +35,11 @@
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
 #define DSINPUT(i) for(; i[0] == ' '; ++i)
 #define PRINTATTR(w, attr, s)  wattron(w, attr); waddstr(w, s); wattroff(w, attr);
+#define NOSERVRET(r) if(!hftirc->conf.nserv)                     \
+                     {                                           \
+                          WARN("Error", "You're not connected"); \
+                          return r;                              \
+                     }
 
 /* Structures */
 typedef struct
@@ -61,7 +70,7 @@ typedef struct
 
      /* For irc info */
      unsigned int sessid;
-     char name[128];
+     char name[HOSTLEN];
      char names[BUFSIZE];
      char topic[BUFSIZE];
 } ChanBuf;
@@ -84,15 +93,15 @@ typedef struct
 /* Server information struct */
 typedef struct
 {
-     char name[256];
-     char adress[256];
+     char name[HOSTLEN];
+     char adress[HOSTLEN];
      char password[128];
      int port;
-     char nick[128];
-     char mode[24];
+     char nick[NICKLEN];
+     char mode[NICKLEN];
      char username[256];
      char realname[256];
-     char autojoin[128][128];
+     char autojoin[128][CHANLEN];
      int nautojoin;
      unsigned int bname;
 } ServInfo;
@@ -103,7 +112,7 @@ typedef struct
      char path[512];
      char datef[256];
      int nserv;
-     ServInfo *serv;
+     ServInfo serv[NSERV];
 
 } ConfStruct;
 
@@ -112,7 +121,7 @@ typedef struct
 {
      int ft, running;
      int nbuf, selbuf, selses;
-     irc_session_t **session;
+     irc_session_t *session[NSERV];
      irc_callbacks_t callbacks;
      ConfStruct conf;
      ChanBuf cb[MAXBUF];
@@ -120,11 +129,6 @@ typedef struct
      DateStruct date;
 } HFTIrc;
 
-/* Ctx struct */
-typedef struct
-{
-     unsigned int id;
-} irc_ctx_t;
 
 /* Prototypes */
 
@@ -186,6 +190,8 @@ void input_raw(const char *input);
 void input_umode(const char *input);
 void input_serv(const char *input);
 void input_redraw(const char *input);
+void input_connect(const char *input);
+void input_disconnect(const char *input);
 
 /* util.c */
 void update_date(void);
@@ -194,6 +200,8 @@ int find_sessid(irc_session_t *session);
 
 /* main.c */
 void signal_handler(int signal);
+void draw_logo(void);
+
 
 /* Variables */
 HFTIrc *hftirc;
