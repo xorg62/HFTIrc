@@ -106,6 +106,7 @@ main(int argc, char **argv)
 
     endwin();
 
+    free(hftirc->cb);
     free(hftirc->ui);
     free(hftirc);
 

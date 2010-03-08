@@ -19,14 +19,14 @@ find_bufid(unsigned int id, const char *str)
      if(!str)
           return 0;
 
-     for(i = 0; i < hftirc->nbuf + 1; ++i)
+     for(i = 0; i < hftirc->nbuf; ++i)
           if(hftirc->cb[i].name != NULL
             && strlen(hftirc->cb[i].name) > 1)
                if(!strcmp(str, hftirc->cb[i].name)
                  && hftirc->cb[i].sessid == id)
                     return i;
 
-     return hftirc->nbuf + 1;
+     return 0;
 }
 
 int
@@ -43,3 +43,5 @@ find_sessid(irc_session_t *session)
 
      return i;
 }
+
+

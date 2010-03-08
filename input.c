@@ -136,9 +136,10 @@ input_part(const char *input)
      NOSERVRET();
 
      if(irc_cmd_part(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
-          WARN("Error", "While using PART command");
-     else
-          ui_buf_close(hftirc->selbuf);
+          WARN("Error", "Can't use PART command");
+
+     ui_buf_close(hftirc->selbuf);
+     ui_buf_set(hftirc->selbuf);
 
      return;
 }
@@ -359,7 +360,7 @@ input_connect(const char *input)
      {
           if(hftirc->conf.nserv > NSERV)
           {
-               WARN("Error", "Too much connected server");
+               WARN("Error", "Too much connected servers");
 
                return;
           }

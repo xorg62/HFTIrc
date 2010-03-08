@@ -16,27 +16,14 @@
 void
 ui_init(void)
 {
-     int i, j, bg = -1;
+     int bg = -1;
 
      /* Init buffers (only first time) */
      if(hftirc->ft)
      {
           hftirc->selbuf = 0;
-          hftirc->nbuf = 1;
 
-          for(i = 0; i < 64; ++i)
-          {
-               memset(hftirc->cb[i].name, 0, sizeof(hftirc->cb[i].name));
-               memset(hftirc->cb[i].topic, 0, sizeof(hftirc->cb[i].topic));
-
-               strcpy(hftirc->cb[i].name, "status");
-               hftirc->cb[i].sessid = 0;
-
-               for(j = 0; j < BUFLINES; ++j)
-                    memset(hftirc->cb[i].buffer[j], 0, sizeof(hftirc->cb[i].buffer[j]));
-
-               hftirc->cb[i].bufpos = 0;
-          }
+          ui_buf_new("status", 0);
 
           hftirc->ft = 0;
      }
@@ -255,6 +242,9 @@ ui_print_buf(int id, char *format, ...)
      va_list ap;
      char *buf, *p;
 
+     if(id < 0 || id > hftirc->nbuf - 1)
+          return;
+
      va_start(ap, format);
      vasprintf(&p, format, ap);
 
@@ -284,7 +274,7 @@ ui_draw_buf(int id)
 {
      int i;
 
-     if(id < 0 || id > hftirc->nbuf)
+     if(id < 0 || id > hftirc->nbuf - 1)
           return;
 
      werase(hftirc->ui->mainwin);
@@ -325,13 +315,35 @@ ui_buf_set(int buf)
 void
 ui_buf_new(const char *name, unsigned int id)
 {
+     int i, j;
+     void *tmp;
+
      if(!strlen(name))
-          strcpy(hftirc->cb[hftirc->nbuf].name, "???");
+          name = strdup("???");
 
      ++hftirc->nbuf;
+     i = hftirc->nbuf - 1;
 
-     strcpy(hftirc->cb[hftirc->nbuf - 1].name, name);
-     hftirc->cb[hftirc->nbuf - 1].sessid = id;
+     if(!(tmp = realloc(hftirc->cb, sizeof(ChanBuf) * hftirc->nbuf)))
+     {
+          WARN("Error", "Can't create a new buffer (realloc failed)");
+
+          return;
+     }
+     else
+          hftirc->cb = tmp;
+
+     /* Set basic property to the new buffer */
+     memset(hftirc->cb[i].topic, 0, sizeof(hftirc->cb[i].topic));
+     strcpy(hftirc->cb[i].name, name);
+
+     for(j = 0; j < BUFLINES; ++j)
+          memset(hftirc->cb[i].buffer[j], 0, sizeof(hftirc->cb[i].buffer[j]));
+
+     hftirc->cb[i].bufpos = 0;
+     hftirc->cb[i].sessid = id;
+
+     ui_buf_set(i);
 
      return;
 }
@@ -340,28 +352,22 @@ void
 ui_buf_close(int buf)
 {
      int i;
-     ChanBuf cbnull;
-
-     /* Set a empty Chanbuf to set at the last buf if
-      * it is closed */
-      for(i = 0; i < BUFLINES; ++i)
-           memset(cbnull.buffer[i], 0, sizeof(cbnull.buffer[i]));
-      cbnull.bufpos = 0;
-
+     void *tmp;
 
      if(buf <= 0 || buf > hftirc->nbuf - 1)
           return;
 
-     if(hftirc->selbuf == buf)
-          ui_buf_set(--hftirc->selbuf);
-
-     if(buf != hftirc->nbuf - 1)
-          for(i = buf; i < hftirc->nbuf - 1; ++i)
-               hftirc->cb[i] = hftirc->cb[i + 1];
-     else
-          hftirc->cb[hftirc->nbuf - 1] = cbnull;
-
      --hftirc->nbuf;
+
+     if(buf != hftirc->nbuf)
+          for(i = buf; i < hftirc->nbuf; ++i)
+               hftirc->cb[i] =  hftirc->cb[i + 1];
+
+     if((tmp = realloc(hftirc->cb, sizeof(ChanBuf) * hftirc->nbuf)))
+          hftirc->cb = tmp;
+
+     if(hftirc->selbuf == buf)
+          ui_buf_set(buf - 1);
 
      return;
 }

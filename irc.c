@@ -498,6 +498,7 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
      {
           s = find_bufid(S, params[2]);
 
+
           if(!hftirc->cb[s].naming)
           {
                memset(hftirc->cb[s].names, 0, sizeof(hftirc->cb[s].names));

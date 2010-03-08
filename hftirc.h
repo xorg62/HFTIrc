@@ -124,7 +124,7 @@ typedef struct
      irc_session_t *session[NSERV];
      irc_callbacks_t callbacks;
      ConfStruct conf;
-     ChanBuf cb[MAXBUF];
+     ChanBuf *cb;
      Ui *ui;
      DateStruct date;
 } HFTIrc;
@@ -201,7 +201,6 @@ int find_sessid(irc_session_t *session);
 /* main.c */
 void signal_handler(int signal);
 void draw_logo(void);
-
 
 /* Variables */
 HFTIrc *hftirc;

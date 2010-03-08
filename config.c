@@ -22,7 +22,7 @@ config_server(char *src)
 
      if(hftirc->conf.nserv > NSERV)
      {
-          ui_print_buf(0, "HFTIrc configuratin: Too much serv (limit: %d)", NSERV);
+          ui_print_buf(0, "HFTIrc configuratin: Too much servs (limit: %d)", NSERV);
           hftirc->conf.nserv = NSERV;
      }
 
@@ -53,8 +53,6 @@ config_server(char *src)
 
      return;
 }
-
-
 
 void
 config_parse(char *file)
