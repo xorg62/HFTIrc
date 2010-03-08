@@ -66,7 +66,7 @@ typedef struct
 {
      /* For ui use */
      char buffer[BUFLINES][BUFSIZE];
-     int bufpos, naming;
+     int bufpos, scrollpos, naming;
 
      /* For irc info */
      unsigned int sessid;
@@ -147,6 +147,8 @@ void ui_draw_buf(int id);
 void ui_buf_new(const char *name, unsigned int id);
 void ui_buf_close(int buf);
 void ui_buf_set(int buf);
+void ui_scroll_up(int buf);
+void ui_scroll_down(int buf);
 void ui_get_input(void);
 
 /* irc.c */

@@ -257,7 +257,7 @@ ui_print_buf(int id, char *format, ...)
 
      hftirc->cb[id].bufpos = (hftirc->cb[id].bufpos < BUFLINES - 1) ? hftirc->cb[id].bufpos + 1 : 0;
 
-     if(id == hftirc->selbuf)
+     if(id == hftirc->selbuf && !hftirc->cb[id].scrollpos)
      {
           ui_print(hftirc->ui->mainwin, buf);
           wrefresh(hftirc->ui->mainwin);
@@ -281,9 +281,9 @@ ui_draw_buf(int id)
 
      if(hftirc->cb[id].bufpos > MAINWIN_LINES + 1)
      {
-          i = hftirc->cb[id].bufpos - MAINWIN_LINES;
+          i = (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos) - MAINWIN_LINES;
 
-          for(; i < hftirc->cb[id].bufpos; ++i)
+          for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
                if(i < BUFLINES - 1 &&
                          hftirc->cb[id].buffer[i])
                     ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
@@ -340,7 +340,7 @@ ui_buf_new(const char *name, unsigned int id)
      for(j = 0; j < BUFLINES; ++j)
           memset(hftirc->cb[i].buffer[j], 0, sizeof(hftirc->cb[i].buffer[j]));
 
-     hftirc->cb[i].bufpos = 0;
+     hftirc->cb[i].bufpos = hftirc->cb[i].scrollpos = 0;
      hftirc->cb[i].sessid = id;
 
      ui_buf_set(i);
@@ -373,6 +373,41 @@ ui_buf_close(int buf)
 }
 
 void
+ui_scroll_up(int buf)
+{
+     if(buf < 0 || buf > hftirc->nbuf - 1)
+          return;
+
+     if((hftirc->cb[buf].bufpos + hftirc->cb[buf].scrollpos - 2)
+               - MAINWIN_LINES < 0)
+          return;
+
+     hftirc->cb[buf].scrollpos -= 2;
+
+     if(buf == hftirc->selbuf)
+          ui_draw_buf(buf);
+
+     return;
+}
+
+void
+ui_scroll_down(int buf)
+{
+     if(buf < 0 || buf > hftirc->nbuf - 1)
+          return;
+
+     if(hftirc->cb[buf].scrollpos >= 0)
+          return;
+
+     hftirc->cb[buf].scrollpos += 2;
+
+     if(buf == hftirc->selbuf)
+          ui_draw_buf(buf);
+
+     return;
+}
+
+void
 ui_get_input(void)
 {
      int i, t;
@@ -385,12 +420,20 @@ ui_get_input(void)
           default:
                switch(c)
                {
-                    case KEY_PPAGE:
+                    case KEY_F(1):
+                         ui_buf_set(hftirc->selbuf - 1);
+                         break;
+
+                    case KEY_F(2):
                          ui_buf_set(hftirc->selbuf + 1);
                          break;
 
+                    case KEY_PPAGE:
+                         ui_scroll_up(hftirc->selbuf);
+                         break;
+
                     case KEY_NPAGE:
-                         ui_buf_set(hftirc->selbuf - 1);
+                         ui_scroll_down(hftirc->selbuf);
                          break;
 
                     case HFTIRC_KEY_ENTER:
