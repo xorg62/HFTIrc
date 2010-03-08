@@ -133,9 +133,12 @@ input_topic(const char *input)
 void
 input_part(const char *input)
 {
+     DSINPUT(input);
      NOSERVRET();
 
-     if(irc_cmd_part(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
+     /* irc_cmd_part can't send a part message... */
+     if(irc_send_raw(hftirc->session[hftirc->selses], "PART %s :%s",
+                    hftirc->cb[hftirc->selbuf].name, input))
           WARN("Error", "Can't use PART command");
 
      ui_buf_close(hftirc->selbuf);
