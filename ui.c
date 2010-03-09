@@ -279,20 +279,20 @@ ui_draw_buf(int id)
 
      werase(hftirc->ui->mainwin);
 
-     if(hftirc->cb[id].bufpos > MAINWIN_LINES + 1)
+     if(hftirc->cb[id].bufpos > MAINWIN_LINES)
      {
           i = (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos) - MAINWIN_LINES;
 
           for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
-               if(i < BUFLINES - 1 &&
-                         hftirc->cb[id].buffer[i])
-                    ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
+               if(i < BUFLINES && hftirc->cb[id].buffer[i])
+                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"));
      }
      else
           for(i = 0; i < hftirc->cb[id].bufpos; ++i)
                if(hftirc->cb[id].buffer[i])
                     ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
 
+     refresh();
      wrefresh(hftirc->ui->mainwin);
 
      return;
@@ -378,9 +378,8 @@ ui_scroll_up(int buf)
      if(buf < 0 || buf > hftirc->nbuf - 1)
           return;
 
-     if((hftirc->cb[buf].bufpos + hftirc->cb[buf].scrollpos - 2)
-               - MAINWIN_LINES < 0)
-          return;
+     if((hftirc->cb[buf].bufpos + hftirc->cb[buf].scrollpos - 1 < 0))
+               return;
 
      hftirc->cb[buf].scrollpos -= 2;
 
