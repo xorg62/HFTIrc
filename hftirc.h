@@ -65,13 +65,13 @@ typedef struct
 typedef struct
 {
      /* For ui use */
-     char buffer[BUFLINES][BUFSIZE];
+     char *buffer[BUFLINES];
      int bufpos, scrollpos, naming;
 
      /* For irc info */
      unsigned int sessid;
      char name[HOSTLEN];
-     char names[BUFSIZE];
+     char *names;
      char topic[BUFSIZE];
 } ChanBuf;
 

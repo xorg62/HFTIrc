@@ -80,7 +80,8 @@ irc_dump_event(irc_session_t *session, const char *event, const char *origin, co
           strcat(buf, params[i]);
      }
 
-     ui_print_buf(0, "(%s)-(%s)-|%d|-%s", event, (origin ? origin : "NULL"), i, buf);
+     ui_print_buf(0, "[%s] .:. [%s]: (%s) - %d params: |%s|",
+               hftirc->conf.serv[find_sessid(session)].name, event, (origin ? origin : "NULL"), i, buf);
 
      return;
 }
@@ -327,13 +328,6 @@ irc_event_part(irc_session_t *session, const char *event, const char *origin, co
 
      i = find_bufid((s = find_sessid(session)), params[0]);
 
-     if(i == MAXBUF)
-     {
-          irc_dump_event(session, event, origin, params, count);
-
-          return;
-     }
-
      if(strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
@@ -352,24 +346,20 @@ irc_event_quit(irc_session_t *session, const char *event, const char *origin, co
 {
      int i, s;
      char nick[NICKLEN] = { 0 };
+     char snick[NICKLEN + 2] = { 0 };
 
      s = find_sessid(session);
 
      if(strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     for(i  = 0; i < hftirc->nbuf + 1; ++i)
-          if(hftirc->cb[i].sessid == s
-                    && (strstr(hftirc->cb[i].names, nick)
+     sprintf(snick, " %s ", nick);
+
+     for(i = 0; i < hftirc->nbuf; ++i)
+          if(hftirc->cb[i].sessid == s && hftirc->cb[i].names
+                    && (strstr(hftirc->cb[i].names, snick)
                          || !strcmp(hftirc->cb[i].name, nick)))
                ui_print_buf(i, "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]);
-
-     if(i == MAXBUF)
-     {
-          irc_dump_event(session, event, origin, params, count);
-
-          return;
-     }
 
      return;
 }
@@ -474,18 +464,17 @@ irc_event_topic(irc_session_t *session, const char *event, const char *origin, c
 void
 irc_event_names(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int s, S, i, c;
+     int s, S;
 
      s = find_bufid((S = find_sessid(session)), params[1]);
 
      if(!strcmp(event, "366"))
      {
-          for(i = 0; i < strlen(hftirc->cb[s].names); ++i)
-               if(hftirc->cb[s].names[i] == ' ')
-                    ++c;
-
           if(!hftirc->conf.serv[S].bname)
           {
+               if(hftirc->cb[s].names[strlen(hftirc->cb[s].names) - 2] == ' ')
+                    hftirc->cb[s].names[strlen(hftirc->cb[s].names) - 1]  = '\0';
+
                ui_print_buf(s, "  .:. Users of %c%s%c:", B, params[1], B);
                ui_print_buf(s, "-> [%s]", hftirc->cb[s].names);
           }
@@ -498,15 +487,14 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
      {
           s = find_bufid(S, params[2]);
 
-
           if(!hftirc->cb[s].naming)
           {
-               memset(hftirc->cb[s].names, 0, sizeof(hftirc->cb[s].names));
+               hftirc->cb[s].names = NULL;
                ++hftirc->cb[s].naming;
           }
 
-          strcat(hftirc->cb[s].names, params[3]);
-          strcat(hftirc->cb[s].names, " ");
+          asprintf(&hftirc->cb[s].names, "%s %s ",
+                    (hftirc->cb[s].names ? hftirc->cb[s].names : ""),  params[3]);
      }
 
 

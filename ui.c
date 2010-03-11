@@ -253,7 +253,7 @@ ui_print_buf(int id, char *format, ...)
 
      sprintf(buf, "%s %s\n", hftirc->date.str, p);
 
-     strcpy(hftirc->cb[id].buffer[hftirc->cb[id].bufpos], buf);
+     hftirc->cb[id].buffer[hftirc->cb[id].bufpos] = strdup(buf);
 
      hftirc->cb[id].bufpos = (hftirc->cb[id].bufpos < BUFLINES - 1) ? hftirc->cb[id].bufpos + 1 : 0;
 
@@ -272,27 +272,19 @@ ui_print_buf(int id, char *format, ...)
 void
 ui_draw_buf(int id)
 {
-     int i;
+     int i = 0;
 
      if(id < 0 || id > hftirc->nbuf - 1)
           return;
 
      werase(hftirc->ui->mainwin);
 
-     if(hftirc->cb[id].bufpos > MAINWIN_LINES)
-     {
-          i = (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos) - MAINWIN_LINES;
+     i = (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos) - MAINWIN_LINES;
 
-          for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
-               if(i < BUFLINES && hftirc->cb[id].buffer[i])
-                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"));
-     }
-     else
-          for(i = 0; i < hftirc->cb[id].bufpos; ++i)
-               if(hftirc->cb[id].buffer[i])
-                    ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[i]);
+     for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
+          if(i < BUFLINES)
+               ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"));
 
-     refresh();
      wrefresh(hftirc->ui->mainwin);
 
      return;
@@ -338,7 +330,7 @@ ui_buf_new(const char *name, unsigned int id)
      strcpy(hftirc->cb[i].name, name);
 
      for(j = 0; j < BUFLINES; ++j)
-          memset(hftirc->cb[i].buffer[j], 0, sizeof(hftirc->cb[i].buffer[j]));
+          hftirc->cb[i].buffer[j] = NULL;
 
      hftirc->cb[i].bufpos = hftirc->cb[i].scrollpos = 0;
      hftirc->cb[i].sessid = id;
@@ -375,11 +367,9 @@ ui_buf_close(int buf)
 void
 ui_scroll_up(int buf)
 {
-     if(buf < 0 || buf > hftirc->nbuf - 1)
+     if(buf < 0 || buf > hftirc->nbuf - 1
+               || hftirc->cb[buf].bufpos + hftirc->cb[buf].scrollpos - 1 < 0)
           return;
-
-     if((hftirc->cb[buf].bufpos + hftirc->cb[buf].scrollpos - 1 < 0))
-               return;
 
      hftirc->cb[buf].scrollpos -= 2;
 
@@ -392,10 +382,8 @@ ui_scroll_up(int buf)
 void
 ui_scroll_down(int buf)
 {
-     if(buf < 0 || buf > hftirc->nbuf - 1)
-          return;
-
-     if(hftirc->cb[buf].scrollpos >= 0)
+     if(buf < 0 || buf > hftirc->nbuf - 1
+               || hftirc->cb[buf].scrollpos >= 0)
           return;
 
      hftirc->cb[buf].scrollpos += 2;
