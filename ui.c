@@ -196,7 +196,8 @@ ui_manage_print_color(int i, char *str, int *mask)
 void
 ui_print(WINDOW *w, char *str)
 {
-     int i, hmask = A_NORMAL, mask = A_NORMAL;
+     int i, hl = 0;
+     int hmask = A_NORMAL, mask = A_NORMAL;
 
      if(!str || !w)
           return;
@@ -206,7 +207,10 @@ ui_print(WINDOW *w, char *str)
                && strchr(str, '<') && strchr(str, '>')
                && strstr(str + strlen(hftirc->date.str) + 4,
                     hftirc->conf.serv[hftirc->selses].nick))
+     {
                mask |= (COLOR_PAIR(COLOR_HL) | A_BOLD);
+               ++hl;
+     }
 
      for(i = 0; i < strlen(str); ++i)
      {
@@ -220,7 +224,7 @@ ui_print(WINDOW *w, char *str)
           }
 
           /* Decoration stuff */
-          if(!(mask & COLOR_PAIR(COLOR_HL)))
+          if(!hl)
                ui_manage_print_color(i, str, &mask);
 
           wattron(w, mask | hmask);
@@ -228,9 +232,10 @@ ui_print(WINDOW *w, char *str)
           wattroff(w, mask | hmask);
 
           /* Clean mask */
-          mask &= ~(COLOR_PAIR(COLOR_DEF) | COLOR_PAIR(COLOR_ENCAD)
-                    | ((mask & MASK_DATEPOS || mask & MASK_ENCAD) ? A_BOLD : 0)
-                    | (mask & MASK_SYMINFO ? (A_UNDERLINE | A_BOLD) : 0));
+          if(!hl)
+               mask &= ~(COLOR_PAIR(COLOR_DEF) | COLOR_PAIR(COLOR_ENCAD)
+                         | ((mask & MASK_DATEPOS || mask & MASK_ENCAD) ? A_BOLD : 0)
+                         | (mask & MASK_SYMINFO ? (A_UNDERLINE | A_BOLD) : 0));
      }
 
      return;

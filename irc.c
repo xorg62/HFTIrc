@@ -294,25 +294,14 @@ irc_event_join(irc_session_t *session, const char *event, const char *origin, co
 
      i = find_bufid((s = find_sessid(session)), params[0]);
 
-     if(i == MAXBUF)
-     {
-          irc_dump_event(session, event, origin, params, count);
-
-          return;
-     }
-
      if(strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
      ui_print_buf(i, "  ->>>> %c%s%c (%s) has joined %c%s",
                B, nick, B, origin + strlen(nick) + 1, B, params[0]);
 
-     /* Add nick to current names list (for quit event) */
-     if(!opt_srch(hftirc->cb[i].names, nick)) /* function from confparse */
-     {
-          hftirc->conf.serv[s].bname = 1;
-          irc_cmd_names(session, params[0]);
-     }
+     hftirc->conf.serv[s].bname = 1;
+     irc_cmd_names(session, params[0]);
 
      return;
 }
