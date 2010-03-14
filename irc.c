@@ -213,6 +213,7 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
 
      for(i = j = 0; i < hftirc->nbuf; ++i)
           if(hftirc->cb[i].sessid == s
+                    && hftirc->cb[i].names && strlen(nick)
                     && (strstr(hftirc->cb[i].names, nick)
                          || !strcmp(nick, hftirc->cb[i].name)))
           {

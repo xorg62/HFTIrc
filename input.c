@@ -27,11 +27,19 @@ const InputStruct input_struct[] =
 void
 input_manage(const char *input)
 {
-     int i;
+     int i, n;
 
      if(input[0] == '/')
      {
           ++input;
+
+          /* /<num> to go on the buffer num */
+          if(sscanf(input, "%d", &n) == 1)
+               if(n >= 0 && n < hftirc->nbuf)
+               {
+                    ui_buf_set(n);
+                    return;
+               }
 
           for(i = 0; i < LEN(input_struct); ++i)
                if(!strncmp(input, input_struct[i].cmd, strlen(input_struct[i].cmd)))
@@ -56,7 +64,7 @@ input_join(const char *input)
      DSINPUT(input);
      NOSERVRET();
 
-     if(input[0] != '#')
+     if(input[0] != '#' && input[0] != '&')
      {
           WARN("Error", "Usage: /join #<channel>");
 
