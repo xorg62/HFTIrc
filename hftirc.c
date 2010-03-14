@@ -3,7 +3,7 @@
 void
 signal_handler(int signal)
 {
-     int b[2];
+     int b[2], u[2];
 
      switch(signal)
      {
@@ -11,9 +11,11 @@ signal_handler(int signal)
                b[0] = LINES;
                b[1] = COLS;
                endwin();
-               sleep(1);
+               refresh();
+               getmaxyx(stdscr, u[0], u[1]);
                ui_init();
-               ui_print_buf(0, "Terminal resized: (%dx%d -> %dx%d)", b[0], b[1], LINES, COLS);
+               ui_print_buf(0, "[HFTIrc] .:. Terminal resized: (%dx%d -> %dx%d)",
+                         b[0], b[1], LINES, COLS);
                ui_buf_set(hftirc->selbuf);
                break;
      }
@@ -84,7 +86,8 @@ main(int argc, char **argv)
          maxfd = STDIN_FILENO;
 
          for(i = 0; i < hftirc->conf.nserv; ++i)
-              irc_add_select_descriptors(hftirc->session[i], &iset, &oset, &maxfd);
+              if(irc_is_connected(hftirc->session[i]))
+                   irc_add_select_descriptors(hftirc->session[i], &iset, &oset, &maxfd);
 
          if(select(maxfd + hftirc->conf.nserv + 1, &iset, &oset, NULL, &tv) > 0)
          {

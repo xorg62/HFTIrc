@@ -73,6 +73,7 @@ typedef struct
      char name[HOSTLEN];
      char *names;
      char topic[BUFSIZE];
+     int act;
 } ChanBuf;
 
 /* Date struct */

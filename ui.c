@@ -6,6 +6,11 @@
 #define COLOR_ENCAD 4
 #define COLOR_JOIN  5
 #define COLOR_PART  6
+#define COLOR_ACT   7
+#define COLOR_HLACT 8
+
+/* Will be configurable */
+#define COLOR_THEME COLOR_GREEN
 
 #define MASK_CONV     (1 << 2)
 #define MASK_DATEPOS  (1 << 3)
@@ -56,12 +61,14 @@ ui_init(void)
      start_color();
      bg = (use_default_colors() == OK) ? -1 : COLOR_BLACK;
      init_pair(0, bg, bg);
-     init_pair(COLOR_SW,    COLOR_BLACK, COLOR_GREEN);
+     init_pair(COLOR_SW,    COLOR_BLACK, COLOR_THEME);
      init_pair(COLOR_HL,    COLOR_YELLOW, bg);
      init_pair(COLOR_DEF,   COLOR_GREEN, bg);
      init_pair(COLOR_ENCAD, COLOR_BLACK, bg);
      init_pair(COLOR_JOIN,  COLOR_CYAN, bg);
      init_pair(COLOR_PART,  COLOR_RED, bg);
+     init_pair(COLOR_ACT,   COLOR_BLACK, COLOR_THEME);
+     init_pair(COLOR_HLACT, COLOR_YELLOW, COLOR_THEME);
 
      /* Init main window and the borders */
      hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
@@ -91,6 +98,8 @@ ui_init(void)
 void
 ui_update_statuswin(void)
 {
+     int i, x, y;
+
      /* Erase all window content */
      werase(hftirc->ui->statuswin);
 
@@ -112,6 +121,25 @@ ui_update_statuswin(void)
      PRINTATTR(hftirc->ui->statuswin, A_BOLD,  hftirc->conf.serv[hftirc->selses].name);
      waddch(hftirc->ui->statuswin, '/');
      PRINTATTR(hftirc->ui->statuswin, A_BOLD | A_UNDERLINE, hftirc->cb[hftirc->selbuf].name);
+     waddch(hftirc->ui->statuswin, ')');
+
+     /* Activity */
+     wprintw(hftirc->ui->statuswin, " (Bufact: ");
+     for(i = 0; i < hftirc->nbuf; ++i)
+          if(hftirc->cb[i].act)
+          {
+               wattron(hftirc->ui->statuswin,
+                         ((hftirc->cb[i].act == 2) ? COLOR_PAIR(COLOR_HLACT) : COLOR_PAIR(COLOR_ACT))
+                         | A_BOLD | A_UNDERLINE);
+               wprintw(hftirc->ui->statuswin, "%d", i);
+               wattroff(hftirc->ui->statuswin,
+                         ((hftirc->cb[i].act == 2) ? COLOR_PAIR(COLOR_HLACT) : COLOR_PAIR(COLOR_ACT))
+                         | A_BOLD | A_UNDERLINE);
+               waddch(hftirc->ui->statuswin, ' ');
+          }
+     /* Remove last char in () -> a space and put the ) instead it */
+     getyx(hftirc->ui->statuswin, x, y);
+     wmove(hftirc->ui->statuswin, x, y - 1);
      waddch(hftirc->ui->statuswin, ')');
 
      /* Print hftirc version */
@@ -268,6 +296,23 @@ ui_print_buf(int id, char *format, ...)
           wrefresh(hftirc->ui->mainwin);
      }
 
+     /* Activity management:
+      *   1: Normal acitivity on the buffer (talking, info..)
+      *   2: Highlight activity on the buffer
+      */
+     if(id != hftirc->selbuf)
+     {
+          if(hftirc->cb[id].act != 2)
+               hftirc->cb[id].act = 1;
+
+          /* Highlight test */
+          if(hftirc->conf.serv
+                    && strchr(buf, '<') && strchr(buf, '>')
+                    && strstr(buf + strlen(hftirc->date.str) + 4,
+                         hftirc->conf.serv[hftirc->selses].nick))
+               hftirc->cb[id].act = 2;
+     }
+
      free(buf);
      free(p);
 
@@ -303,6 +348,7 @@ ui_buf_set(int buf)
 
      hftirc->selbuf = buf;
      hftirc->selses = hftirc->cb[buf].sessid;
+     hftirc->cb[buf].act = 0;
 
      ui_draw_buf(buf);
 
@@ -337,7 +383,7 @@ ui_buf_new(const char *name, unsigned int id)
      for(j = 0; j < BUFLINES; ++j)
           hftirc->cb[i].buffer[j] = NULL;
 
-     hftirc->cb[i].bufpos = hftirc->cb[i].scrollpos = 0;
+     hftirc->cb[i].bufpos = hftirc->cb[i].scrollpos = hftirc->cb[i].act = 0;
      hftirc->cb[i].sessid = id;
 
      ui_buf_set(i);
