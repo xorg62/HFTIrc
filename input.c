@@ -35,11 +35,10 @@ input_manage(const char *input)
 
           /* /<num> to go on the buffer num */
           if(sscanf(input, "%d", &n) == 1)
-               if(n >= 0 && n < hftirc->nbuf)
-               {
-                    ui_buf_set(n);
-                    return;
-               }
+          {
+               ui_buf_set(n);
+               return;
+          }
 
           for(i = 0; i < LEN(input_struct); ++i)
                if(!strncmp(input, input_struct[i].cmd, strlen(input_struct[i].cmd)))
