@@ -1,6 +1,8 @@
 #include "hftirc.h"
 #include "confparse/confparse.h"
 
+#define SSTRCPY(dest, src) if(src) strcpy((dest), (src))
+
 void
 config_server(char *src)
 {
@@ -32,12 +34,12 @@ config_server(char *src)
 
           cfg_set_sauv(tmp);
 
-          strcpy(hftirc->conf.serv[i].adress,   get_opt(tmp, "irc.hft-community.org", "adress").str);
-          strcpy(hftirc->conf.serv[i].name,     get_opt(tmp, hftirc->conf.serv[i].adress, "name").str);
-          strcpy(hftirc->conf.serv[i].password, get_opt(tmp, " ", "password").str);
-          strcpy(hftirc->conf.serv[i].nick,     get_opt(tmp, "hftircuser", "nickname").str);
-          strcpy(hftirc->conf.serv[i].username, get_opt(tmp, " ", "username").str);
-          strcpy(hftirc->conf.serv[i].realname, get_opt(tmp, " ", "realname").str);
+          SSTRCPY(hftirc->conf.serv[i].adress,   get_opt(tmp, "irc.hft-community.org", "adress").str);
+          SSTRCPY(hftirc->conf.serv[i].name,     get_opt(tmp, hftirc->conf.serv[i].adress, "name").str);
+          SSTRCPY(hftirc->conf.serv[i].password, get_opt(tmp, "", "password").str);
+          SSTRCPY(hftirc->conf.serv[i].nick,     get_opt(tmp, "hftircuser", "nickname").str);
+          SSTRCPY(hftirc->conf.serv[i].username, get_opt(tmp, "", "username").str);
+          SSTRCPY(hftirc->conf.serv[i].realname, get_opt(tmp, "", "realname").str);
           hftirc->conf.serv[i].port = get_opt(tmp, "6667", "port").num;
 
           buf = get_list_opt(tmp, "", "channel_autojoin", &n);
@@ -46,7 +48,7 @@ config_server(char *src)
                ui_print_buf(0, "HFTIrc configuration: section serv (%d), too many channel_autojoin (%d).", i, n);
           else
                for(j = 0; j < n; ++j)
-                    strcpy(hftirc->conf.serv[i].autojoin[j], buf[j].str);
+                    SSTRCPY(hftirc->conf.serv[i].autojoin[j], buf[j].str);
 
           cfg_set_sauv(src);
      }
