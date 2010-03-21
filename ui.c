@@ -42,7 +42,7 @@ const IrcColor irccol[] =
      { COLOR_BLUE,    A_BOLD   },
      { COLOR_MAGENTA, A_BOLD   },
      { COLOR_BLACK,   A_BOLD   },
-     { COLOR_WHITE,   A_NORMAL }
+     { COLOR_WHITE,   A_NORMAL },
 };
 
 void
@@ -93,7 +93,7 @@ ui_init(void)
      /* for macro COLOR use */
      for(f = 0; f < COLORS + 1; ++f)
           for(b = 0; b < COLORS + 1; ++b)
-               init_pair(((f * COLORS) + b), f - 1, b  - 1);
+               init_pair(((f * COLORS) + b), f - 1, b - 1);
 
      /* Init main window and the borders */
      hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
@@ -281,33 +281,31 @@ ui_print(WINDOW *w, char *str)
                case C('c'):
                     if(isdigit(str[i + 1]))
                     {
-                         bg = BGCOLOR + 1;
-
                          /* Set fg color first if there is no coma */
-                         fg = (str[i + 1] - '0') + 1;
+                         fg = (str[i + 1] - '0');
                          ++i;
 
                          if(isdigit(str[i + 1]))
                          {
-                              fg = (fg - 1) * 10 + (str[i + 1] - '0') + 1;
+                              fg = fg * 10 + (str[i + 1] - '0');
                               ++i;
                          }
 
                          /* bg color if coma */
-                         if(str[i + 1] == ',' && isdigit(str[i +  2]))
+                         if(str[i + 1] == ',' && isdigit(str[i + 2]))
                          {
-                              bg = (str[i + 2] - '0') + 1;
+                              bg = (str[i + 2] - '0');
                               i += 2;
 
                               if(isdigit(str[i + 1]))
                               {
-                                   bg = (bg - 1) * 10 + (str[i + 1] - '0') + 1;
+                                   bg = bg * 10 + (str[i + 1] - '0');
                                    ++i;
                               }
                          }
-
-                         if(fg <= COLORMAX && bg <= COLORMAX)
-                              hmask ^= (COLOR(irccol[fg].color, irccol[bg].color) | irccol[fg].mask);
+                         hmask ^= (COLOR(irccol[(fg + (!fg ? 0 : 1)) % COLORMAX].color,
+                                        irccol[(bg + 1) % COLORMAX].color)
+                                   | irccol[(fg + 1) % COLORMAX].mask);
                     }
                     break;
 
