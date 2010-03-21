@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <time.h>
 #include <signal.h>
 #include <locale.h>
@@ -29,6 +30,7 @@
 #define DATELEN           (strlen(hftirc->date.str))
 #define CONFPATH          "hftirc.conf"
 #define B                 C('B')
+#define U                 C('_')
 
 #define C(c) ((c) & 037)
 #define LEN(x) (sizeof(x)/sizeof(x[0]))
@@ -75,6 +77,13 @@ typedef struct
      char topic[BUFSIZE];
      int act;
 } ChanBuf;
+
+/* Irc color struct */
+typedef struct
+{
+     short color;
+     unsigned int mask;
+} IrcColor;
 
 /* Date struct */
 typedef struct

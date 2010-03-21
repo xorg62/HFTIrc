@@ -74,8 +74,8 @@ irc_dump_event(irc_session_t *session, const char *event, const char *origin, co
           strcat(buf, params[i]);
      }
 
-     ui_print_buf(0, "[%s] .:. [%s]: (%s) - %d params: [%s]",
-               hftirc->conf.serv[find_sessid(session)].name, event, (origin ? origin : "NULL"), i, buf);
+     ui_print_buf(0, "[%s] .:. (%s): %s",
+               hftirc->conf.serv[find_sessid(session)].name, event, buf);
 
      return;
 }
@@ -296,7 +296,10 @@ irc_event_connect(irc_session_t *session, const char *event, const char *origin,
      irc_event_numeric(session, 123456, origin, params, count);
 
      for(i = 0; i < hftirc->conf.serv[c].nautojoin; ++i)
+     {
+          hftirc->selses = c;
           input_join(hftirc->conf.serv[c].autojoin[i]);
+     }
 
      return;
 }

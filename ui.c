@@ -1,27 +1,55 @@
 #include "hftirc.h"
 
-#define COLOR_SW    1
-#define COLOR_HL    2
-#define COLOR_DEF   3
-#define COLOR_ENCAD 4
-#define COLOR_JOIN  5
-#define COLOR_PART  6
-#define COLOR_ACT   7
-#define COLOR_HLACT 8
-
 /* Will be configurable */
-#define COLOR_THEME COLOR_GREEN
+#define COLOR(fg, bg) (COLOR_PAIR(((fg) + 1) * COLORS + ((bg) + 1)))
+#define BGCOLOR       ((use_default_colors() == OK) ? -1 : COLOR_BLACK)
+#define COLORMAX      16
 
+/* Colors lists */
+#define COLOR_THEME  COLOR_GREEN
+#define COLOR_SW     COLOR(COLOR_BLACK,  COLOR_THEME)
+#define COLOR_HL     (COLOR(COLOR_YELLOW, BGCOLOR) | A_BOLD)
+#define COLOR_DEF    COLOR(COLOR_GREEN,  BGCOLOR)
+#define COLOR_ENCAD  (COLOR(COLOR_BLACK,  BGCOLOR) | A_BOLD)
+#define COLOR_JOIN   COLOR(COLOR_CYAN,   BGCOLOR)
+#define COLOR_PART   COLOR(COLOR_RED,    BGCOLOR)
+#define COLOR_ACT    (COLOR(COLOR_BLACK,  COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_HLACT  (COLOR(COLOR_YELLOW, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+
+/* Colors mask for ui_manage_print_color */
 #define MASK_CONV     (1 << 2)
 #define MASK_DATEPOS  (1 << 3)
 #define MASK_ENCAD    (1 << 4)
 #define MASK_SYMINFO  (1 << 5)
 #define MASK_PARTJOIN (1 << 6)
 
+/* Irc color (^C<fg>,<bg>) */
+const IrcColor irccol[] =
+{
+     { -1,            A_NORMAL },
+     { COLOR_WHITE,   A_BOLD   },
+     { COLOR_BLACK,   A_NORMAL },
+     { COLOR_BLUE,    A_NORMAL },
+     { COLOR_GREEN,   A_NORMAL },
+     { COLOR_RED,     A_BOLD   },
+     { COLOR_RED,     A_NORMAL },
+     { COLOR_MAGENTA, A_NORMAL },
+     { COLOR_YELLOW,  A_NORMAL },
+     { COLOR_YELLOW,  A_BOLD   },
+     { COLOR_GREEN,   A_BOLD   },
+     { COLOR_CYAN,    A_NORMAL },
+     { COLOR_CYAN,    A_BOLD   },
+     { COLOR_BLUE,    A_BOLD   },
+     { COLOR_MAGENTA, A_BOLD   },
+     { COLOR_BLACK,   A_BOLD   },
+     { COLOR_WHITE,   A_NORMAL }
+};
+
 void
 ui_init(void)
 {
-     int bg = -1;
+     int bg;
+     int b, f;
 
      /* Init buffers (only first time) */
      if(hftirc->ft)
@@ -59,16 +87,13 @@ ui_init(void)
 
      /* Color support */
      start_color();
-     bg = (use_default_colors() == OK) ? -1 : COLOR_BLACK;
-     init_pair(0, bg, bg);
-     init_pair(COLOR_SW,    COLOR_BLACK, COLOR_THEME);
-     init_pair(COLOR_HL,    COLOR_YELLOW, bg);
-     init_pair(COLOR_DEF,   COLOR_GREEN, bg);
-     init_pair(COLOR_ENCAD, COLOR_BLACK, bg);
-     init_pair(COLOR_JOIN,  COLOR_CYAN, bg);
-     init_pair(COLOR_PART,  COLOR_RED, bg);
-     init_pair(COLOR_ACT,   COLOR_BLACK, COLOR_THEME);
-     init_pair(COLOR_HLACT, COLOR_YELLOW, COLOR_THEME);
+     bg = BGCOLOR;
+     //init_pair(0, bg, bg);
+
+     /* for macro COLOR use */
+     for(f = 0; f < COLORS + 1; ++f)
+          for(b = 0; b < COLORS + 1; ++b)
+               init_pair(((f * COLORS) + b), f - 1, b  - 1);
 
      /* Init main window and the borders */
      hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
@@ -77,7 +102,7 @@ ui_init(void)
 
      /* Init topic window */
      hftirc->ui->topicwin = newwin(1, COLS, 0, 0);
-     wbkgd(hftirc->ui->topicwin, COLOR_PAIR(1));
+     wbkgd(hftirc->ui->topicwin, COLOR_SW);
      wrefresh(hftirc->ui->statuswin);
 
      /* Init input window */
@@ -87,7 +112,7 @@ ui_init(void)
 
      /* Init status window (with the hour / current chan) */
      hftirc->ui->statuswin = newwin(1, COLS, LINES - 2, 0);
-     wbkgd(hftirc->ui->statuswin, COLOR_PAIR(1));
+     wbkgd(hftirc->ui->statuswin, COLOR_SW);
      wrefresh(hftirc->ui->statuswin);
 
      refresh();
@@ -104,7 +129,7 @@ ui_update_statuswin(void)
      werase(hftirc->ui->statuswin);
 
      /* Update bg color */
-     wbkgd(hftirc->ui->statuswin, COLOR_PAIR(COLOR_SW));
+     wbkgd(hftirc->ui->statuswin, COLOR_SW);
 
      /* Print date */
      mvwprintw(hftirc->ui->statuswin, 0, 0, "%s", hftirc->date.str);
@@ -129,12 +154,10 @@ ui_update_statuswin(void)
           if(hftirc->cb[i].act)
           {
                wattron(hftirc->ui->statuswin,
-                         ((hftirc->cb[i].act == 2) ? COLOR_PAIR(COLOR_HLACT) : COLOR_PAIR(COLOR_ACT))
-                         | A_BOLD | A_UNDERLINE);
+                         ((hftirc->cb[i].act == 2) ? COLOR_HLACT : COLOR_ACT));
                wprintw(hftirc->ui->statuswin, "%d", i);
                wattroff(hftirc->ui->statuswin,
-                         ((hftirc->cb[i].act == 2) ? COLOR_PAIR(COLOR_HLACT) : COLOR_PAIR(COLOR_ACT))
-                         | A_BOLD | A_UNDERLINE);
+                         ((hftirc->cb[i].act == 2) ? COLOR_HLACT : COLOR_ACT));
                waddch(hftirc->ui->statuswin, ' ');
           }
      /* Remove last char in () -> a space and put the ) instead it */
@@ -159,7 +182,7 @@ ui_update_topicwin(void)
      werase(hftirc->ui->topicwin);
 
      /* Update bg color */
-     wbkgd(hftirc->ui->topicwin, COLOR_PAIR(COLOR_SW));
+     wbkgd(hftirc->ui->topicwin, COLOR_SW);
 
      /* Write topic */
      waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
@@ -175,13 +198,13 @@ ui_manage_print_color(int i, char *str, int *mask)
 {
      /* Date special char [::] */
      if(i <= DATELEN && (str[i] == ':' || str[i] == '[' || str[i] == ']'))
-          *mask |= COLOR_PAIR(COLOR_DEF);
+          *mask |= COLOR_DEF;
 
      /* Nicks <> */
      if(i == DATELEN + 1 && str[i] == '<' && strchr(str + i + 1, '>'))
-          *mask |= (COLOR_PAIR(COLOR_ENCAD) | A_BOLD | MASK_DATEPOS | MASK_CONV);
+          *mask |= (COLOR_ENCAD | MASK_DATEPOS | MASK_CONV);
      else if(str[i] == '>' && (*mask & MASK_DATEPOS))
-          *mask |= (COLOR_PAIR(COLOR_ENCAD) | A_BOLD);
+          *mask |= COLOR_ENCAD;
      else if(str[i - 1] == '>' && (*mask & MASK_DATEPOS))
           *mask &= ~(MASK_DATEPOS);
 
@@ -191,7 +214,7 @@ ui_manage_print_color(int i, char *str, int *mask)
                     || (str[i - 1] == '.' && str[i] == ':' && str[i + 1] == '.')
                     || (str[i - 2] == '.' && str[i - 1] == ':' && str[i] == '.')))
      {
-          *mask |= (COLOR_PAIR(COLOR_DEF) | A_UNDERLINE | MASK_SYMINFO);
+          *mask |= (COLOR_DEF | A_UNDERLINE | MASK_SYMINFO);
           if(str[i] == ':')
           {
                *mask |= (A_BOLD);
@@ -206,17 +229,16 @@ ui_manage_print_color(int i, char *str, int *mask)
                     && ((str[i] == '-' && str[i + 4] == '>')
                          || (str[i] == '<' && str[i + 4] == '-'))))
      {
-          *mask |= (COLOR_PAIR(str[DATELEN + 7] == '-' ? 6 : 5) | MASK_PARTJOIN);
-
+          *mask |= ((str[DATELEN + 7] == '-' ? COLOR_PART : COLOR_JOIN) | MASK_PARTJOIN);
           if(str[i] == ' ' && (str[i - 1] == '>' || str[i - 1] == '-'))
-               *mask &= ~(COLOR_PAIR(COLOR_JOIN) | COLOR_PAIR(COLOR_PART) | MASK_PARTJOIN);
+               *mask &= ~(COLOR_JOIN | COLOR_PART | MASK_PARTJOIN);
      }
 
 
      /* All []() */
      if(!(*mask & MASK_CONV) && i > DATELEN && (str[i] == '['
                || str[i] == ']' || str[i] == '(' || str[i] == ')'))
-          *mask |= (COLOR_PAIR(COLOR_ENCAD) | A_BOLD | MASK_ENCAD);
+          *mask |= (COLOR_ENCAD | MASK_ENCAD);
 
      return;
 }
@@ -224,7 +246,8 @@ ui_manage_print_color(int i, char *str, int *mask)
 void
 ui_print(WINDOW *w, char *str)
 {
-     int i, hl = 0;
+     int i;
+     int fg = 0, bg  = 0, hl = 0;
      int hmask = A_NORMAL, mask = A_NORMAL;
 
      if(!str || !w)
@@ -236,33 +259,74 @@ ui_print(WINDOW *w, char *str)
                && strstr(str + strlen(hftirc->date.str) + 4,
                     hftirc->conf.serv[hftirc->selses].nick))
      {
-               mask |= (COLOR_PAIR(COLOR_HL) | A_BOLD);
+               mask |= COLOR_HL;
                ++hl;
      }
 
      for(i = 0; i < strlen(str); ++i)
      {
-          /* Bold and underline */
-          if(str[i] == B || str[i] == C('_'))
+          switch(str[i])
           {
-               hmask ^= (str[i] == B ? A_BOLD : A_UNDERLINE);
+               /* Bold */
+               case B:
+                    hmask ^= A_BOLD;
+                    break;
 
-               if(str[i + 1] != B && str[i + 1] != C('_'))
-                    ++i;
+               /* Underline */
+               case U:
+                    hmask ^= A_UNDERLINE;
+                    break;
+
+               /* mIRC©®™ colors (inspired by colors.c of libircclient) */
+               case C('c'):
+                    if(isdigit(str[i + 1]))
+                    {
+                         bg = BGCOLOR + 1;
+
+                         /* Set fg color first if there is no coma */
+                         fg = (str[i + 1] - '0') + 1;
+                         ++i;
+
+                         if(isdigit(str[i + 1]))
+                         {
+                              fg = (fg - 1) * 10 + (str[i + 1] - '0') + 1;
+                              ++i;
+                         }
+
+                         /* bg color if coma */
+                         if(str[i + 1] == ',' && isdigit(str[i +  2]))
+                         {
+                              bg = (str[i + 2] - '0') + 1;
+                              i += 2;
+
+                              if(isdigit(str[i + 1]))
+                              {
+                                   bg = (bg - 1) * 10 + (str[i + 1] - '0') + 1;
+                                   ++i;
+                              }
+                         }
+
+                         if(fg <= COLORMAX && bg <= COLORMAX)
+                              hmask ^= (COLOR(irccol[fg].color, irccol[bg].color) | irccol[fg].mask);
+                    }
+                    break;
+
+               default:
+                    /* Decoration stuff */
+                    if(!hl)
+                         ui_manage_print_color(i, str, &mask);
+
+                    wattron(w, mask | hmask);
+                    wprintw(w, "%c", str[i]);
+                    wattroff(w, mask | hmask);
+
+                    break;
           }
-
-          /* Decoration stuff */
-          if(!hl)
-               ui_manage_print_color(i, str, &mask);
-
-          wattron(w, mask | hmask);
-          wprintw(w, "%c", str[i]);
-          wattroff(w, mask | hmask);
 
           /* Clean mask */
           if(!hl)
-               mask &= ~(COLOR_PAIR(COLOR_DEF) | COLOR_PAIR(COLOR_ENCAD)
-                         | ((mask & MASK_DATEPOS || mask & MASK_ENCAD) ? A_BOLD : 0)
+               mask &= ~(COLOR_DEF | COLOR_ENCAD
+                         | ((mask & MASK_DATEPOS) ? A_BOLD : 0)
                          | (mask & MASK_SYMINFO ? (A_UNDERLINE | A_BOLD) : 0));
      }
 
