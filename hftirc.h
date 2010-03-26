@@ -52,6 +52,7 @@ typedef struct
      WINDOW *statuswin;
      WINDOW *topicwin;
 
+     int bg, c;
      /* Input buffer struct */
      struct
      {
@@ -147,6 +148,8 @@ void config_parse(char *file);
 
 /* ui.c */
 void ui_init(void);
+void ui_init_color(void);
+int ui_color(int fg, int bg);
 void ui_update_statuswin(void);
 void ui_update_topicwin(void);
 void ui_update_infowin(void);

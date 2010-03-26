@@ -1,20 +1,18 @@
 #include "hftirc.h"
 
 /* Will be configurable */
-#define COLOR(fg, bg) (COLOR_PAIR(((fg) + 1) * COLORS + ((bg) + 1)))
-#define BGCOLOR       ((use_default_colors() == OK) ? -1 : COLOR_BLACK)
 #define COLORMAX      16
 
 /* Colors lists */
 #define COLOR_THEME  COLOR_GREEN
-#define COLOR_SW     COLOR(COLOR_BLACK,  COLOR_THEME)
-#define COLOR_HL     (COLOR(COLOR_YELLOW, BGCOLOR) | A_BOLD)
-#define COLOR_DEF    COLOR(COLOR_GREEN,  BGCOLOR)
-#define COLOR_ENCAD  (COLOR(COLOR_BLACK,  BGCOLOR) | A_BOLD)
-#define COLOR_JOIN   COLOR(COLOR_CYAN,   BGCOLOR)
-#define COLOR_PART   COLOR(COLOR_RED,    BGCOLOR)
-#define COLOR_ACT    (COLOR(COLOR_BLACK,  COLOR_THEME) | A_BOLD | A_UNDERLINE)
-#define COLOR_HLACT  (COLOR(COLOR_YELLOW, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_SW     ui_color(COLOR_BLACK,  COLOR_THEME)
+#define COLOR_HL     (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
+#define COLOR_DEF    ui_color(COLOR_GREEN,  hftirc->ui->bg)
+#define COLOR_ENCAD  (ui_color(COLOR_BLACK,  hftirc->ui->bg) | A_BOLD)
+#define COLOR_JOIN   ui_color(COLOR_CYAN,   hftirc->ui->bg)
+#define COLOR_PART   ui_color(COLOR_RED,    hftirc->ui->bg)
+#define COLOR_ACT    (ui_color(COLOR_BLACK,  COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_HLACT  (ui_color(COLOR_YELLOW, COLOR_THEME) | A_BOLD | A_UNDERLINE)
 
 /* Colors mask for ui_manage_print_color */
 #define MASK_CONV     (1 << 2)
@@ -26,7 +24,6 @@
 /* Irc color (^C<fg>,<bg>) */
 const IrcColor irccol[] =
 {
-     { -1,            A_NORMAL },
      { COLOR_WHITE,   A_BOLD   },
      { COLOR_BLACK,   A_NORMAL },
      { COLOR_BLUE,    A_NORMAL },
@@ -48,9 +45,6 @@ const IrcColor irccol[] =
 void
 ui_init(void)
 {
-     int bg;
-     int b, f;
-
      /* Init buffers (only first time) */
      if(hftirc->ft)
      {
@@ -86,14 +80,8 @@ ui_init(void)
      hftirc->ui->ib.split = 0;
 
      /* Color support */
-     start_color();
-     bg = BGCOLOR;
-     //init_pair(0, bg, bg);
-
-     /* for macro COLOR use */
-     for(f = 0; f < COLORS + 1; ++f)
-          for(b = 0; b < COLORS + 1; ++b)
-               init_pair(((f * COLORS) + b), f - 1, b - 1);
+     if(has_colors())
+          ui_init_color();
 
      /* Init main window and the borders */
      hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
@@ -118,6 +106,43 @@ ui_init(void)
      refresh();
 
      return;
+}
+
+void
+ui_init_color(void)
+{
+     int i;
+     int cn;
+
+     start_color();
+
+     hftirc->ui->bg = ((use_default_colors() == OK) ? -1 : COLOR_BLACK);
+     hftirc->ui->c = 1;
+
+     for(cn = ((COLOR_PAIRS >= 256) ? 16 : 8), i = 1; i < ((COLOR_PAIRS >= 256) ? 256 : COLOR_PAIRS); ++i)
+          init_pair(i, ((i - 1) % cn), (((i - 1) < cn) ? -1 : (i - 1) / cn));
+
+     hftirc->ui->c = i;
+
+     return;
+}
+
+
+int
+ui_color(int fg, int bg)
+{
+     int i;
+     short f, b;
+
+     for(i = 1; i < hftirc->ui->c + 1; ++i)
+     {
+          pair_content(i, &f, &b);
+
+          if(f == fg && b == bg)
+               return COLOR_PAIR(i);
+     }
+
+     return 0;
 }
 
 void
@@ -247,7 +272,8 @@ void
 ui_print(WINDOW *w, char *str)
 {
      int i;
-     int fg = 0, bg  = 0, hl = 0;
+     int fg = 16, bg  = 16, hl = 0;
+     int lcol = 0;
      int hmask = A_NORMAL, mask = A_NORMAL;
 
      if(!str || !w)
@@ -279,6 +305,9 @@ ui_print(WINDOW *w, char *str)
 
                /* mIRC©®™ colors (inspired by colors.c of libircclient) */
                case C('c'):
+                    if(lcol)
+                         hmask &= ~lcol;
+
                     if(isdigit(str[i + 1]))
                     {
                          /* Set fg color first if there is no coma */
@@ -303,10 +332,11 @@ ui_print(WINDOW *w, char *str)
                                    ++i;
                               }
                          }
-                         hmask ^= (COLOR(irccol[(fg + (!fg ? 0 : 1)) % COLORMAX].color,
-                                        irccol[(bg + 1) % COLORMAX].color)
-                                   | irccol[(fg + 1) % COLORMAX].mask);
+
+                         hmask ^= (lcol = (ui_color(irccol[fg % COLORMAX].color, irccol[bg % COLORMAX].color)
+                                        | irccol[fg % COLORMAX].mask));
                     }
+
                     break;
 
                default:
