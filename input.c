@@ -21,6 +21,7 @@ const InputStruct input_struct[] =
      { "connect",    input_connect },
      { "server",     input_connect },
      { "disconnect", input_disconnect },
+     { "away",       input_away },
      { "help",       input_help },
 };
 
@@ -150,7 +151,6 @@ input_part(const char *input)
           WARN("Error", "Can't use PART command");
 
      ui_buf_close(hftirc->selbuf);
-     ui_buf_set(hftirc->selbuf);
 
      return;
 }
@@ -426,3 +426,25 @@ input_disconnect(const char *input)
 
      return;
 }
+
+void
+input_away(const char *input)
+{
+     DSINPUT(input);
+     NOSERVRET();
+
+     if(strlen(input) > 0)
+     {
+          if(irc_send_raw(hftirc->session[hftirc->selses],
+                         "AWAY :%s", input))
+               WARN("Error", "Can't send AWAY");
+
+     }
+     else
+          if(irc_send_raw(hftirc->session[hftirc->selses],
+                         "AWAY :"))
+               WARN("Error", "Can't send AWAY");
+
+     return;
+}
+

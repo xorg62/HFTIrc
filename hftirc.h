@@ -207,6 +207,8 @@ void input_serv(const char *input);
 void input_redraw(const char *input);
 void input_connect(const char *input);
 void input_disconnect(const char *input);
+void input_away(const char *input);
+
 
 /* util.c */
 void update_date(void);

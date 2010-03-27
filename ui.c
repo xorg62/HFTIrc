@@ -221,6 +221,9 @@ ui_update_topicwin(void)
 void
 ui_manage_print_color(int i, char *str, int *mask)
 {
+     if(i <= 1)
+          return;
+
      /* Date special char [::] */
      if(i <= DATELEN && (str[i] == ':' || str[i] == '[' || str[i] == ']'))
           *mask |= COLOR_DEF;
@@ -280,7 +283,7 @@ ui_print(WINDOW *w, char *str)
           return;
 
      /* Highlight line */
-     if(hftirc->conf.serv && hftirc->selbuf != 0
+     if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
                && strchr(str, '<') && strchr(str, '>')
                && strstr(str + strlen(hftirc->date.str) + 4,
                     hftirc->conf.serv[hftirc->selses].nick))
@@ -487,7 +490,6 @@ void
 ui_buf_close(int buf)
 {
      int i;
-     void *tmp;
 
      if(buf <= 0 || buf > hftirc->nbuf - 1)
           return;
@@ -497,9 +499,6 @@ ui_buf_close(int buf)
      if(buf != hftirc->nbuf)
           for(i = buf; i < hftirc->nbuf; ++i)
                hftirc->cb[i] =  hftirc->cb[i + 1];
-
-     if((tmp = realloc(hftirc->cb, sizeof(ChanBuf) * hftirc->nbuf)))
-          hftirc->cb = tmp;
 
      if(hftirc->selbuf == buf)
           ui_buf_set(buf - 1);

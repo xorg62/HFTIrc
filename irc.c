@@ -132,6 +132,12 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
                irc_event_whois(session, event, origin, params, count);
                break;
 
+          /* Away */
+          case 305:
+          case 306:
+               ui_print_buf(0, "[%s] .:. %s", hftirc->conf.serv[find_sessid(session)].name, params[1]);
+               break;
+
           /* Topic / Channel */
           case 332:
           case 333:
