@@ -5,42 +5,11 @@
 
 /* Colors lists */
 #define COLOR_THEME  COLOR_GREEN
-#define COLOR_SW     ui_color(COLOR_BLACK,  COLOR_THEME)
+#define COLOR_SW     (ui_color(COLOR_BLACK,  COLOR_THEME))
 #define COLOR_HL     (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
-#define COLOR_DEF    ui_color(COLOR_GREEN,  hftirc->ui->bg)
-#define COLOR_ENCAD  (ui_color(COLOR_BLACK,  hftirc->ui->bg) | A_BOLD)
-#define COLOR_JOIN   ui_color(COLOR_CYAN,   hftirc->ui->bg)
-#define COLOR_PART   ui_color(COLOR_RED,    hftirc->ui->bg)
+#define COLOR_WROTE  (ui_color(COLOR_CYAN, hftirc->ui->bg))
 #define COLOR_ACT    (ui_color(COLOR_BLACK,  COLOR_THEME) | A_BOLD | A_UNDERLINE)
 #define COLOR_HLACT  (ui_color(COLOR_YELLOW, COLOR_THEME) | A_BOLD | A_UNDERLINE)
-
-/* Colors mask for ui_manage_print_color */
-#define MASK_CONV     (1 << 2)
-#define MASK_DATEPOS  (1 << 3)
-#define MASK_ENCAD    (1 << 4)
-#define MASK_SYMINFO  (1 << 5)
-#define MASK_PARTJOIN (1 << 6)
-
-/* Irc color (^C<fg>,<bg>) */
-const IrcColor irccol[] =
-{
-     { COLOR_WHITE,   A_BOLD   },
-     { COLOR_BLACK,   A_NORMAL },
-     { COLOR_BLUE,    A_NORMAL },
-     { COLOR_GREEN,   A_NORMAL },
-     { COLOR_RED,     A_BOLD   },
-     { COLOR_RED,     A_NORMAL },
-     { COLOR_MAGENTA, A_NORMAL },
-     { COLOR_YELLOW,  A_NORMAL },
-     { COLOR_YELLOW,  A_BOLD   },
-     { COLOR_GREEN,   A_BOLD   },
-     { COLOR_CYAN,    A_NORMAL },
-     { COLOR_CYAN,    A_BOLD   },
-     { COLOR_BLUE,    A_BOLD   },
-     { COLOR_MAGENTA, A_BOLD   },
-     { COLOR_BLACK,   A_BOLD   },
-     { COLOR_WHITE,   A_NORMAL },
-};
 
 void
 ui_init(void)
@@ -111,8 +80,7 @@ ui_init(void)
 void
 ui_init_color(void)
 {
-     int i;
-     int cn;
+     int i, cn;
 
      start_color();
 
@@ -157,10 +125,10 @@ ui_update_statuswin(void)
      wbkgd(hftirc->ui->statuswin, COLOR_SW);
 
      /* Print date */
-     mvwprintw(hftirc->ui->statuswin, 0, 0, "%s", hftirc->date.str);
+     mvwprintw(hftirc->ui->statuswin, 0, 0, "[%s]", hftirc->date.str);
 
      /* Pseudo with mode */
-     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 1, "(");
+     mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 3, "(");
      PRINTATTR(hftirc->ui->statuswin, A_BOLD, hftirc->conf.serv[hftirc->selses].nick);
      waddch(hftirc->ui->statuswin, '(');
      PRINTATTR(hftirc->ui->statuswin, A_BOLD | A_UNDERLINE, hftirc->conf.serv[hftirc->selses].mode);
@@ -185,6 +153,7 @@ ui_update_statuswin(void)
                          ((hftirc->cb[i].act == 2) ? COLOR_HLACT : COLOR_ACT));
                waddch(hftirc->ui->statuswin, ' ');
           }
+
      /* Remove last char in () -> a space and put the ) instead it */
      getyx(hftirc->ui->statuswin, x, y);
      wmove(hftirc->ui->statuswin, x, y - 1);
@@ -217,79 +186,29 @@ ui_update_topicwin(void)
      return;
 }
 
-/* Set basic mainwin colors in mask to attribute it in ui_print */
-void
-ui_manage_print_color(int i, char *str, int *mask)
-{
-     if(i <= 1)
-          return;
-
-     /* Date special char [::] */
-     if(i <= DATELEN && (str[i] == ':' || str[i] == '[' || str[i] == ']'))
-          *mask |= COLOR_DEF;
-
-     /* Nicks <> */
-     if(i == DATELEN + 1 && str[i] == '<' && strchr(str + i + 1, '>'))
-          *mask |= (COLOR_ENCAD | MASK_DATEPOS | MASK_CONV);
-     else if(str[i] == '>' && (*mask & MASK_DATEPOS))
-          *mask |= COLOR_ENCAD;
-     else if(str[i - 1] == '>' && (*mask & MASK_DATEPOS))
-          *mask &= ~(MASK_DATEPOS);
-
-     /* Info symbol .:. */
-     if(!(*mask & MASK_CONV) && i >= DATELEN + 2
-               && ((str[i] == '.' && str[i + 1] == ':' && str[i + 2] == '.')
-                    || (str[i - 1] == '.' && str[i] == ':' && str[i + 1] == '.')
-                    || (str[i - 2] == '.' && str[i - 1] == ':' && str[i] == '.')))
-     {
-          *mask |= (COLOR_DEF | A_UNDERLINE | MASK_SYMINFO);
-          if(str[i] == ':')
-          {
-               *mask |= (A_BOLD);
-               *mask &= ~(A_UNDERLINE);
-          }
-     }
-     else if((*mask & MASK_SYMINFO) && str[i - 1] == '.')
-          *mask &= ~(MASK_SYMINFO);
-
-     /* Join & par/quit ->>>> / <<<<- */
-     if((*mask & MASK_PARTJOIN) || (i >= DATELEN + 3 && i <= DATELEN + 8 && !(*mask & MASK_CONV)
-                    && ((str[i] == '-' && str[i + 4] == '>')
-                         || (str[i] == '<' && str[i + 4] == '-'))))
-     {
-          *mask |= ((str[DATELEN + 7] == '-' ? COLOR_PART : COLOR_JOIN) | MASK_PARTJOIN);
-          if(str[i] == ' ' && (str[i - 1] == '>' || str[i - 1] == '-'))
-               *mask &= ~(COLOR_JOIN | COLOR_PART | MASK_PARTJOIN);
-     }
-
-
-     /* All []() */
-     if(!(*mask & MASK_CONV) && i > DATELEN && (str[i] == '['
-               || str[i] == ']' || str[i] == '(' || str[i] == ')'))
-          *mask |= (COLOR_ENCAD | MASK_ENCAD);
-
-     return;
-}
 
 void
 ui_print(WINDOW *w, char *str)
 {
-     int i;
-     int fg = 16, bg  = 16, hl = 0;
-     int lcol = 0;
-     int hmask = A_NORMAL, mask = A_NORMAL;
+     int i, mask = A_NORMAL;
+     char *p, nick[128] = { 0 };
 
      if(!str || !w)
           return;
 
+     /* Wrote lines */
+     if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
+               && (p = strchr(str, '<')) && sscanf(p, "%128s", nick)
+               && strstr(nick, hftirc->conf.serv[hftirc->selses].nick))
+          mask |= COLOR_WROTE;
+
      /* Highlight line */
      if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
                && strchr(str, '<') && strchr(str, '>')
-               && strstr(str + strlen(hftirc->date.str) + 4,
-                    hftirc->conf.serv[hftirc->selses].nick))
+               && strstr(str + strlen(hftirc->date.str) + 4,  hftirc->conf.serv[hftirc->selses].nick))
      {
-               mask |= COLOR_HL;
-               ++hl;
+          mask &= ~(COLOR_WROTE);
+          mask |= COLOR_HL;
      }
 
      for(i = 0; i < strlen(str); ++i)
@@ -298,67 +217,26 @@ ui_print(WINDOW *w, char *str)
           {
                /* Bold */
                case B:
-                    hmask ^= A_BOLD;
+                    mask ^= A_BOLD;
                     break;
 
                /* Underline */
                case U:
-                    hmask ^= A_UNDERLINE;
+                    mask ^= A_UNDERLINE;
                     break;
 
-               /* mIRC©®™ colors (inspired by colors.c of libircclient) */
+               /* mIRC©®™ colors (not needed for now.) */
                case C('c'):
-                    if(lcol)
-                         hmask &= ~lcol;
-
-                    if(isdigit(str[i + 1]))
-                    {
-                         /* Set fg color first if there is no coma */
-                         fg = (str[i + 1] - '0');
-                         ++i;
-
-                         if(isdigit(str[i + 1]))
-                         {
-                              fg = fg * 10 + (str[i + 1] - '0');
-                              ++i;
-                         }
-
-                         /* bg color if coma */
-                         if(str[i + 1] == ',' && isdigit(str[i + 2]))
-                         {
-                              bg = (str[i + 2] - '0');
-                              i += 2;
-
-                              if(isdigit(str[i + 1]))
-                              {
-                                   bg = bg * 10 + (str[i + 1] - '0');
-                                   ++i;
-                              }
-                         }
-
-                         hmask ^= (lcol = (ui_color(irccol[fg % COLORMAX].color, irccol[bg % COLORMAX].color)
-                                        | irccol[fg % COLORMAX].mask));
-                    }
-
                     break;
 
                default:
-                    /* Decoration stuff */
-                    if(!hl)
-                         ui_manage_print_color(i, str, &mask);
-
-                    wattron(w, mask | hmask);
+                    /* simple waddch doesn't work with some char */
+                    wattron(w, mask);
                     wprintw(w, "%c", str[i]);
-                    wattroff(w, mask | hmask);
+                    wattroff(w, mask);
 
                     break;
           }
-
-          /* Clean mask */
-          if(!hl)
-               mask &= ~(COLOR_DEF | COLOR_ENCAD
-                         | ((mask & MASK_DATEPOS) ? A_BOLD : 0)
-                         | (mask & MASK_SYMINFO ? (A_UNDERLINE | A_BOLD) : 0));
      }
 
      return;
@@ -401,10 +279,8 @@ ui_print_buf(int id, char *format, ...)
                hftirc->cb[id].act = 1;
 
           /* Highlight test */
-          if(hftirc->conf.serv
-                    && strchr(buf, '<') && strchr(buf, '>')
-                    && strstr(buf + strlen(hftirc->date.str) + 4,
-                         hftirc->conf.serv[hftirc->selses].nick))
+          if(hftirc->conf.serv && strchr(buf, '<') && strchr(buf, '>')
+                    && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->conf.serv[hftirc->selses].nick))
                hftirc->cb[id].act = 2;
      }
 
@@ -454,7 +330,7 @@ void
 ui_buf_new(const char *name, unsigned int id)
 {
      int i, j;
-     void *tmp;
+     ChanBuf *cbs = NULL;
 
      if(!strlen(name))
           name = strdup("???");
@@ -462,24 +338,28 @@ ui_buf_new(const char *name, unsigned int id)
      ++hftirc->nbuf;
      i = hftirc->nbuf - 1;
 
-     if(!(tmp = realloc(hftirc->cb, sizeof(ChanBuf) * hftirc->nbuf)))
-     {
-          WARN("Error", "Can't create a new buffer (realloc failed)");
+     cbs = calloc(hftirc->nbuf, sizeof(ChanBuf));
 
-          return;
-     }
-     else
-          hftirc->cb = tmp;
+     for(j = 0; j < i; ++j)
+          cbs[j] = hftirc->cb[j];
 
-     /* Set basic property to the new buffer */
-     memset(hftirc->cb[i].topic, 0, sizeof(hftirc->cb[i].topic));
-     strcpy(hftirc->cb[i].name, name);
+     free(hftirc->cb);
+
+     memset(cbs[i].topic, 0, sizeof(cbs[i].topic));
+     strcpy(cbs[i].name, name);
 
      for(j = 0; j < BUFLINES; ++j)
-          hftirc->cb[i].buffer[j] = NULL;
+          cbs[i].buffer[j] = NULL;
 
-     hftirc->cb[i].bufpos = hftirc->cb[i].scrollpos = hftirc->cb[i].act = 0;
-     hftirc->cb[i].sessid = id;
+     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
+     cbs[i].sessid = id;
+
+     hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
+
+     for(i = 0; i < hftirc->nbuf; ++i)
+          hftirc->cb[i] = cbs[i];
+
+     free(cbs);
 
      ui_buf_set(i);
 
@@ -489,16 +369,28 @@ ui_buf_new(const char *name, unsigned int id)
 void
 ui_buf_close(int buf)
 {
-     int i;
+     int i, n;
+     ChanBuf *cbs = NULL;
 
      if(buf <= 0 || buf > hftirc->nbuf - 1)
           return;
 
      --hftirc->nbuf;
 
-     if(buf != hftirc->nbuf)
-          for(i = buf; i < hftirc->nbuf; ++i)
-               hftirc->cb[i] =  hftirc->cb[i + 1];
+     cbs = malloc(sizeof(ChanBuf) * hftirc->nbuf);
+
+     for(i = n = 0; i < hftirc->nbuf + 1; ++i)
+          if(i != buf)
+               cbs[n++] = hftirc->cb[i];
+
+     free(hftirc->cb);
+
+     hftirc->cb = calloc(hftirc->nbuf, sizeof(ChanBuf));
+
+     for(i = 0; i < hftirc->nbuf; ++i)
+          hftirc->cb[i] = cbs[i];
+
+     free(cbs);
 
      if(hftirc->selbuf == buf)
           ui_buf_set(buf - 1);

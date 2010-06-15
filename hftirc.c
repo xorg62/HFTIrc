@@ -23,30 +23,6 @@ signal_handler(int signal)
      return;
 }
 
-void
-draw_logo(void)
-{
-     int i;
-     const char *logo[] =
-     {
-          "---------------------------------------",
-          "     __  __  ______ ______",
-          "    / / / / /  ___//_   _/____",
-          "   / /_/ / / /_     / /  /_ _/ _ __  ___",
-          "  /  _  / /  _/    / /   / / / '__// __/",
-          " / / / / / /      / /   / / / /  / (__",
-          "/_/ /_/ /_/      /_/  /___//_/   \\___/",
-          "Hackers Feeding Themselves irc client.",
-          "",
-          "--------------------------------------"
-     };
-
-     for(i = 0; i < LEN(logo); ++i)
-          ui_print_buf(0, "[HFTIrc]  %c%s", B, logo[i]);
-
-     return;
-}
-
 int
 main(int argc, char **argv)
 {
@@ -70,7 +46,6 @@ main(int argc, char **argv)
     ui_init();
     config_parse(CONFPATH);
     update_date();
-    draw_logo();
     irc_init();
 
     while(hftirc->running)

@@ -12,7 +12,6 @@
 #include <time.h>
 #include <signal.h>
 #include <locale.h>
-
 #include <libircclient.h>
 #include <libirc_events.h>
 
@@ -65,7 +64,8 @@ typedef struct
 } Ui;
 
 /* Channel buffer */
-typedef struct
+typedef struct ChanBuf ChanBuf;
+struct ChanBuf
 {
      /* For ui use */
      char *buffer[BUFLINES];
@@ -77,7 +77,8 @@ typedef struct
      char *names;
      char topic[BUFSIZE];
      int act;
-} ChanBuf;
+     ChanBuf *next;
+};
 
 /* Irc color struct */
 typedef struct
@@ -121,7 +122,6 @@ typedef struct
 typedef struct
 {
      char path[512];
-     char datef[256];
      int nserv;
      ServInfo serv[NSERV];
 
@@ -153,7 +153,6 @@ int ui_color(int fg, int bg);
 void ui_update_statuswin(void);
 void ui_update_topicwin(void);
 void ui_update_infowin(void);
-void ui_manage_print_color(int i, char *str, int *mask);
 void ui_print(WINDOW *w, char *str);
 void ui_print_buf(int id, char *format, ...);
 void ui_draw_buf(int id);
@@ -208,7 +207,6 @@ void input_redraw(const char *input);
 void input_connect(const char *input);
 void input_disconnect(const char *input);
 void input_away(const char *input);
-
 
 /* util.c */
 void update_date(void);

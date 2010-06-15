@@ -52,7 +52,7 @@ input_manage(const char *input)
                          hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't send message");
           else
-               ui_print_buf(hftirc->selbuf, "<%c%s%c> %s", B, hftirc->conf.serv[hftirc->selses].nick, B, input);
+               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, input);
      }
 
      return;
@@ -133,7 +133,7 @@ input_topic(const char *input)
                WARN("Error", "Can't change topic");
      }
      else
-          ui_print_buf(hftirc->selbuf, "  .:. Topic of %s: %s",
+          ui_print_buf(hftirc->selbuf, "  *** Topic of %s: %s",
                     hftirc->cb[hftirc->selbuf].name,
                     hftirc->cb[hftirc->selbuf].topic);
      return;
@@ -267,7 +267,7 @@ input_query(const char *input)
           ++hftirc->nbuf;
           strcpy(hftirc->cb[hftirc->nbuf - 1].name, input);
           ui_buf_set(hftirc->nbuf - 1);
-          ui_print_buf(hftirc->nbuf - 1, "  .:. Query with %s", input);
+          ui_print_buf(hftirc->nbuf - 1, "  *** Query with %s", input);
      }
      else
           WARN("Error", "Usage: /query <nick>");
@@ -421,7 +421,7 @@ input_disconnect(const char *input)
 
      irc_disconnect(hftirc->session[i]);
 
-     ui_print_buf(0, "[%s] .:. %c%s%c is now Disconnected",
+     ui_print_buf(0, "[%s] *** %c%s%c is now Disconnected",
                hftirc->conf.serv[i].name, B, hftirc->conf.serv[i].name, B);
 
      return;
