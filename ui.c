@@ -377,7 +377,7 @@ ui_buf_close(int buf)
 
      --hftirc->nbuf;
 
-     cbs = malloc(sizeof(ChanBuf) * hftirc->nbuf);
+     cbs = calloc(hftirc->nbuf, sizeof(ChanBuf));
 
      for(i = n = 0; i < hftirc->nbuf + 1; ++i)
           if(i != buf)

@@ -64,8 +64,7 @@ typedef struct
 } Ui;
 
 /* Channel buffer */
-typedef struct ChanBuf ChanBuf;
-struct ChanBuf
+typedef struct
 {
      /* For ui use */
      char *buffer[BUFLINES];
@@ -77,15 +76,7 @@ struct ChanBuf
      char *names;
      char topic[BUFSIZE];
      int act;
-     ChanBuf *next;
-};
-
-/* Irc color struct */
-typedef struct
-{
-     short color;
-     unsigned int mask;
-} IrcColor;
+} ChanBuf;
 
 /* Date struct */
 typedef struct

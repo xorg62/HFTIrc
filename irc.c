@@ -165,6 +165,11 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 461:
                ui_print_buf(0, "[%s] *** %s", hftirc->conf.serv[find_sessid(session)].name, params[2]);
                break;
+          case 432:
+          case 442:
+               ui_print_buf(0, "[%s] *** %c%s%c: %s",
+                         hftirc->conf.serv[find_sessid(session)].name, B, params[1], B, params[2]);
+               break;
           case 433:
                ui_print_buf(0, "[%s] *** Nickname %c%s%c already in use",
                          hftirc->conf.serv[find_sessid(session)].name, B, params[0], B);

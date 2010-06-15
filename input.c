@@ -149,8 +149,8 @@ input_part(const char *input)
      if(irc_send_raw(hftirc->session[hftirc->selses], "PART %s :%s",
                     hftirc->cb[hftirc->selbuf].name, input))
           WARN("Error", "Can't use PART command");
-
-     ui_buf_close(hftirc->selbuf);
+     else
+          ui_buf_close(hftirc->selbuf);
 
      return;
 }
@@ -259,13 +259,22 @@ input_whois(const char *input)
 void
 input_query(const char *input)
 {
+     int i;
+
      DSINPUT(input);
      NOSERVRET();
 
      if(strlen(input) > 0)
      {
-          ++hftirc->nbuf;
-          strcpy(hftirc->cb[hftirc->nbuf - 1].name, input);
+          for(i = 0; i < hftirc->nbuf; ++i)
+               if(!strcmp(hftirc->cb[i].name, input)
+                         && hftirc->cb[i].sessid == hftirc->selses)
+               {
+                    ui_buf_set(i);
+                    return;
+               }
+
+          ui_buf_new(input, hftirc->selses);
           ui_buf_set(hftirc->nbuf - 1);
           ui_print_buf(hftirc->nbuf - 1, "  *** Query with %s", input);
      }
@@ -281,7 +290,8 @@ input_close(const char *input)
      if(hftirc->selbuf == 0)
           return;
 
-     if(hftirc->cb[hftirc->selbuf].name[0] == '#')
+     if(hftirc->cb[hftirc->selbuf].name[0] == '#'
+               || hftirc->cb[hftirc->selbuf].name[0] == '&')
           input_part(NULL);
 
      ui_buf_close(hftirc->selbuf);
