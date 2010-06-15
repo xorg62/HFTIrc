@@ -1,4 +1,8 @@
 # HFTIRC Makefile
+PREFIX?=	/usr/local
+
+include	config.mk
+include config.local.mk
 
 EXEC=hftirc
 SRC= confparse/util.c      \
@@ -12,20 +16,12 @@ SRC= confparse/util.c      \
      input.c  \
      hftirc.h
 
-CFLAGS+=-Wall -g -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES -I/usr/include/libircclient
-LDFLAGS+=-lncursesw /usr/lib/libircclient.a
+CFLAGS+=	${INCLUDES} ${NCURSES5INCDIR} ${INCLIBIRCCLIENT}
+CFLAGS+=	-Wall -g -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES
+
+LDFLAGS+=	${LIBDIR} ${NCURSES5LIBDIR} ${LIBIRCCLIENTLIB}
 
 OBJ=$(SRC:.c=.o)
-UNAME=$(shell uname)
-
-ifeq ($(UNAME),Linux)
-	CFLAGS += -D_GNU_SOURCE
-endif
-
-ifeq ($(UNAME),FreeBSD)
-    CFLAGS+=-I/usr/local/include
-    LDFLAGS+=-L/usr/local/lib
-endif
 
 all: $(EXEC)
 
@@ -40,7 +36,7 @@ $(EXEC): $(OBJ)
 .PHONY: clean mrproper
 
 clean:
-	@rm -rf *.o
+	rm -rf *.o
 
 mrproper: clean
-	@rm -rf $(EXEC)
+	rm -rf $(EXEC)

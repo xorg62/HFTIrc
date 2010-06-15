@@ -1,2 +1,3 @@
 hftirc
 *.o
+config.local.mk
