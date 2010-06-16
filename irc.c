@@ -1,5 +1,4 @@
 #include "hftirc.h"
-#include "confparse/confparse.h"
 
 void
 irc_init(void)
@@ -396,6 +395,9 @@ irc_event_channel(irc_session_t *session, const char *event, const char *origin,
 
      ui_print_buf(i, "<%s> %s", nick, params[1]);
 
+     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->conf.serv[hftirc->selses].nick))
+          putchar('\a');
+
      return;
 }
 
@@ -418,6 +420,9 @@ irc_event_privmsg(irc_session_t *session, const char *event, const char *origin,
      }
 
      ui_print_buf(i, "<%s> %s", nick, params[1]);
+
+     if(hftirc->conf.bell)
+          putchar('\a');
 
      return;
 }

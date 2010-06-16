@@ -278,9 +278,10 @@ ui_print_buf(int id, char *format, ...)
           if(hftirc->cb[id].act != 2)
                hftirc->cb[id].act = 1;
 
-          /* Highlight test */
-          if(hftirc->conf.serv && strchr(buf, '<') && strchr(buf, '>')
+          /* Highlight test (if hl or private message) */
+          if(hftirc->conf.serv && ((strchr(buf, '<') && strchr(buf, '>')
                     && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->conf.serv[hftirc->selses].nick))
+                    || (hftirc->cb[id].name[0] != '#' && hftirc->cb[id].name[0] != '&')))
                hftirc->cb[id].act = 2;
      }
 

@@ -5,9 +5,7 @@ include	config.mk
 include config.local.mk
 
 EXEC=hftirc
-SRC= confparse/util.c      \
-     confparse/confparse.c \
-     confparse/confparse.h \
+SRC= parse/parse.c \
      config.c \
      ui.c     \
      irc.c    \

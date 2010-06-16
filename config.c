@@ -1,21 +1,18 @@
 #include "hftirc.h"
-#include "confparse/confparse.h"
 
 #define SSTRCPY(dest, src) if(src) strcpy((dest), (src))
 
 void
-config_server(char *src)
+config_server(void)
 {
      int i, j, n = 0;
-     char *tmp;
-     opt_type *buf;
+     struct conf_sec **serv;
+     struct opt_type *opt;
      ServInfo defsi = { "Hft", "irc.hft-community", "", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
 
-     cfg_set_sauv(src);
+     serv = fetch_section(fetch_section_first(NULL, "servers"), "server");
 
-     hftirc->conf.nserv = get_size_sec(src, "server");
-
-     if(!hftirc->conf.nserv)
+     if(!(hftirc->conf.nserv = fetch_section_count(serv)))
      {
           hftirc->conf.serv[0] = defsi;
 
@@ -30,28 +27,30 @@ config_server(char *src)
 
      for(i = 0; i < hftirc->conf.nserv; ++i)
      {
-          tmp = get_nsec(src, "server", i);
 
-          cfg_set_sauv(tmp);
+          SSTRCPY(hftirc->conf.serv[i].adress,   fetch_opt_first(serv[i], "irc.hft-community.org", "adress").str);
+          SSTRCPY(hftirc->conf.serv[i].name,     fetch_opt_first(serv[i], hftirc->conf.serv[i].adress, "name").str);
+          SSTRCPY(hftirc->conf.serv[i].password, fetch_opt_first(serv[i], "", "password").str);
+          SSTRCPY(hftirc->conf.serv[i].nick,     fetch_opt_first(serv[i], "hftircuser", "nickname").str);
+          SSTRCPY(hftirc->conf.serv[i].username, fetch_opt_first(serv[i], "", "username").str);
+          SSTRCPY(hftirc->conf.serv[i].realname, fetch_opt_first(serv[i], "", "realname").str);
+          hftirc->conf.serv[i].port = fetch_opt_first(serv[i], "6667", "port").num;
 
-          SSTRCPY(hftirc->conf.serv[i].adress,   get_opt(tmp, "irc.hft-community.org", "adress").str);
-          SSTRCPY(hftirc->conf.serv[i].name,     get_opt(tmp, hftirc->conf.serv[i].adress, "name").str);
-          SSTRCPY(hftirc->conf.serv[i].password, get_opt(tmp, "", "password").str);
-          SSTRCPY(hftirc->conf.serv[i].nick,     get_opt(tmp, "hftircuser", "nickname").str);
-          SSTRCPY(hftirc->conf.serv[i].username, get_opt(tmp, "", "username").str);
-          SSTRCPY(hftirc->conf.serv[i].realname, get_opt(tmp, "", "realname").str);
-          hftirc->conf.serv[i].port = get_opt(tmp, "6667", "port").num;
+          opt = fetch_opt(serv[i], "", "channel_autojoin");
 
-          buf = get_list_opt(tmp, "", "channel_autojoin", &n);
+          if((n = fetch_opt_count(opt)))
+          {
+               if((hftirc->conf.serv[i].nautojoin = n) > 127)
+                    ui_print_buf(0, "HFTIrc configuration: section serv (%d), too many channel_autojoin (%d).", i, n);
+               else
+                    for(j = 0; j < n; ++j)
+                         SSTRCPY(hftirc->conf.serv[i].autojoin[j], opt[j].str);
+          }
 
-          if((hftirc->conf.serv[i].nautojoin = n) > 127)
-               ui_print_buf(0, "HFTIrc configuration: section serv (%d), too many channel_autojoin (%d).", i, n);
-          else
-               for(j = 0; j < n; ++j)
-                    SSTRCPY(hftirc->conf.serv[i].autojoin[j], buf[j].str);
-
-          cfg_set_sauv(src);
+          free(opt);
      }
+
+     free(serv);
 
      return;
 }
@@ -59,19 +58,24 @@ config_server(char *src)
 void
 config_parse(char *file)
 {
-     char *buf;
+     struct conf_sec *misc;
 
-     if(!(buf = file_to_str(file)))
+     if (get_conf(file) == -1)
      {
-          ui_print_buf(0, "HFTIrc configuration: parsing configuration file (%s) failed.", hftirc->conf.path);
-          buf = file_to_str(CONFPATH);
+          ui_print_buf(0, "parsing configuration file (%s) failed.", file);
+          get_conf(CONFPATH);
      }
 
-     cfg_set_sauv(buf);
 
-     config_server(buf);
+     /* Misc section */
+     misc = fetch_section_first(NULL, "misc");
 
-     free(buf);
+     hftirc->conf.bell = fetch_opt_first(misc, "false", "bell").boolp;
+
+     free(misc);
+
+     /* Servers section */
+     config_server();
 
      return;
 }

@@ -42,6 +42,14 @@
                           return r;                              \
                      }
 
+
+/* Enum */
+typedef enum { False, True } Bool;
+
+/* Internal lib */
+#include "parse/parse.h"
+
+
 /* Structures */
 typedef struct
 {
@@ -113,6 +121,7 @@ typedef struct
 {
      char path[512];
      int nserv;
+     int bell;
      ServInfo serv[NSERV];
 
 } ConfStruct;
