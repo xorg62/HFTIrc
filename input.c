@@ -440,20 +440,22 @@ input_disconnect(const char *input)
 void
 input_away(const char *input)
 {
+     int i;
+
      DSINPUT(input);
      NOSERVRET();
 
      if(strlen(input) > 0)
      {
-          if(irc_send_raw(hftirc->session[hftirc->selses],
-                         "AWAY :%s", input))
-               WARN("Error", "Can't send AWAY");
+          for(i = 0; i < hftirc->conf.nserv; ++i)
+               if(irc_send_raw(hftirc->session[i], "AWAY :%s", input))
+                    WARN("Error", "Can't send AWAY");
 
      }
      else
-          if(irc_send_raw(hftirc->session[hftirc->selses],
-                         "AWAY :"))
-               WARN("Error", "Can't send AWAY");
+          for(i = 0; i < hftirc->conf.nserv; ++i)
+               if(irc_send_raw(hftirc->session[i],  "AWAY :"))
+                    WARN("Error", "Can't send AWAY");
 
      return;
 }

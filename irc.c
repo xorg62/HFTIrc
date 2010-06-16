@@ -31,7 +31,7 @@ irc_init(void)
      {
           hftirc->session[i] = irc_create_session(&hftirc->callbacks);
 
-          if(irc_connect(hftirc->session[i],
+          if((hftirc->conf.serv[i].ipv6 ? (irc_connect6) : (irc_connect)) (hftirc->session[i],
                          hftirc->conf.serv[i].adress,
                          hftirc->conf.serv[i].port,
                          hftirc->conf.serv[i].password,

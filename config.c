@@ -32,9 +32,10 @@ config_server(void)
           SSTRCPY(hftirc->conf.serv[i].name,     fetch_opt_first(serv[i], hftirc->conf.serv[i].adress, "name").str);
           SSTRCPY(hftirc->conf.serv[i].password, fetch_opt_first(serv[i], "", "password").str);
           SSTRCPY(hftirc->conf.serv[i].nick,     fetch_opt_first(serv[i], "hftircuser", "nickname").str);
-          SSTRCPY(hftirc->conf.serv[i].username, fetch_opt_first(serv[i], "", "username").str);
-          SSTRCPY(hftirc->conf.serv[i].realname, fetch_opt_first(serv[i], "", "realname").str);
+          SSTRCPY(hftirc->conf.serv[i].username, fetch_opt_first(serv[i], "hftircuser", "username").str);
+          SSTRCPY(hftirc->conf.serv[i].realname, fetch_opt_first(serv[i], "hftircuser", "realname").str);
           hftirc->conf.serv[i].port = fetch_opt_first(serv[i], "6667", "port").num;
+          hftirc->conf.serv[i].ipv6 = fetch_opt_first(serv[i], "false", "ipv6").boolp;
 
           opt = fetch_opt(serv[i], "", "channel_autojoin");
 

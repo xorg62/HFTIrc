@@ -49,7 +49,6 @@ typedef enum { False, True } Bool;
 /* Internal lib */
 #include "parse/parse.h"
 
-
 /* Structures */
 typedef struct
 {
@@ -114,6 +113,7 @@ typedef struct
      char realname[256];
      char autojoin[128][CHANLEN];
      int nautojoin;
+     Bool ipv6;
 } ServInfo;
 
 /* Config struct */
