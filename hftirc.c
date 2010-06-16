@@ -44,8 +44,8 @@ main(int argc, char **argv)
     hftirc->running = 1;
 
     ui_init();
-    config_parse(CONFPATH);
     update_date();
+    config_parse(CONFPATH);
     irc_init();
 
     while(hftirc->running)

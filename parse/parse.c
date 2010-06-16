@@ -190,8 +190,8 @@ print_kw_tree(void)
      s = TAILQ_FIRST(&stack);
 
      TAILQ_FOREACH(k, &keywords, entry)
-          printf("%s ", get_kw_name(k->type));
-     printf("\n");
+          ui_print_buf(0, "%s ", get_kw_name(k->type));
+     ui_print_buf(0, "\n");
 }
 
 static char *
@@ -237,7 +237,7 @@ get_conf(const char *name)
      if ((fd = open(name, O_RDONLY)) == -1 ||
                stat(name, &st) == -1)
      {
-          warn("%s", name);
+          ui_print_buf(0, "%s", name);
           return (-1);
      }
 
@@ -250,7 +250,7 @@ get_conf(const char *name)
 
      munmap(buf, st.st_size);
      close(fd);
-     warnx("%s read", name);
+     ui_print_buf(0, "%s read", name);
 
      file.name = name;
 
@@ -378,7 +378,7 @@ pop_keyword(void)
      {
           TAILQ_REMOVE(&keywords, curk, entry);
 #ifdef DEBUG
-          warnx("%s", get_kw_name(curk->type));
+          ui_print_buf(0, "%s", get_kw_name(curk->type));
 #endif
           free(curk);
 
@@ -393,7 +393,7 @@ pop_stack(void)
      {
           TAILQ_REMOVE(&stack, curw, entry);
 #ifdef DEBUG
-          warnx("%s", curw->name);
+          ui_print_buf(0, "%s", curw->name);
 #endif
           free(curw);
 
@@ -407,10 +407,10 @@ syntax(const char *fmt, ...)
      va_list args;
 
      if (curw)
-          fprintf(stderr, "%s: %s:%d, near '%s', ",
+          ui_print_buf(0, "%s: %s:%d, near '%s', ",
                     __progname, file.name, curw->line, curw->name);
      else
-          fprintf(stderr, "%s: %s: ", __progname, file.name);
+          ui_print_buf(0, "%s: %s: ", __progname, file.name);
      va_start(args, fmt);
      vfprintf(stderr, fmt, args);
      va_end(args);
@@ -432,7 +432,7 @@ print_unused(struct conf_sec *sec)
 
      SLIST_FOREACH(o, &sec->optlist, entry)
           if (o->used == False)
-               warnx("%s:%d, unused param %s",
+               ui_print_buf(0, "%s:%d, unused param %s",
                          file.name, o->line, o->name);
 
      TAILQ_FOREACH(s, &sec->sub, entry)
