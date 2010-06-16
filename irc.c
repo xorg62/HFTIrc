@@ -84,9 +84,12 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
 {
      char num[24];
      char buf[BUFSIZE] = { 0 };
+     char name[256] = { 0 };
      int i;
 
      sprintf(num, "%d", event);
+
+     strcpy(name, hftirc->conf.serv[find_sessid(session)].name);
 
      switch(event)
      {
@@ -114,7 +117,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
                     strcat(buf, params[i]);
                }
 
-               ui_print_buf(0, "[%s] *** %s", hftirc->conf.serv[find_sessid(session)].name, buf + 1);
+               ui_print_buf(0, "[%s] *** %s", name, buf + 1);
                break;
 
           /* Whois */
@@ -134,7 +137,19 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           /* Away */
           case 305:
           case 306:
-               ui_print_buf(0, "[%s] *** %s", hftirc->conf.serv[find_sessid(session)].name, params[1]);
+               ui_print_buf(0, "[%s] *** %s", name, params[1]);
+               break;
+
+
+          /* List */
+          case 321:
+               ui_print_buf(0, "[%s] *** %s : %s", name, params[1], params[2]);
+               break;
+          case 322:
+               ui_print_buf(0, "[%s] *** %s   %s : %s", name, params[1], params[2], params[3]);
+               break;
+          case 323:
+               ui_print_buf(0, "[%s] *** %s", name, params[1]);
                break;
 
           /* Topic / Channel */
@@ -162,19 +177,17 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 412:
           case 421:
           case 461:
-               ui_print_buf(0, "[%s] *** %s", hftirc->conf.serv[find_sessid(session)].name, params[2]);
+               ui_print_buf(0, "[%s] *** %s", name, params[2]);
                break;
           case 432:
           case 442:
-               ui_print_buf(0, "[%s] *** %c%s%c: %s",
-                         hftirc->conf.serv[find_sessid(session)].name, B, params[1], B, params[2]);
+               ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
                break;
           case 433:
-               ui_print_buf(0, "[%s] *** Nickname %c%s%c already in use",
-                         hftirc->conf.serv[find_sessid(session)].name, B, params[0], B);
+               ui_print_buf(0, "[%s] *** Nickname %c%s%c already in use", name, B, params[0], B);
                break;
           case 451:
-               ui_print_buf(0, "[%s] *** You have not registered", hftirc->conf.serv[find_sessid(session)].name);
+               ui_print_buf(0, "[%s] *** You have not registered", name);
                break;
           case 482:
                 ui_print_buf(hftirc->selbuf, "  *** <%s> You're not channel operator", params[1]);
@@ -183,15 +196,12 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           /* Redirection */
           case 470:
                ui_print_buf(0, "[%s] *** Channel %c%s%c linked on %c%s",
-                         hftirc->conf.serv[find_sessid(session)].name,
-                         B, params[1], B, B, params[2]);
+                         name, B, params[1], B, B, params[2]);
                strcpy(hftirc->cb[hftirc->nbuf - 1].name, params[2]);
                break;
 
           case 479:
-               ui_print_buf(0, "[%s] *** %c%s%c: %s",
-                         hftirc->conf.serv[find_sessid(session)].name,
-                         B, params[1], B, params[2]);
+               ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
 
                for(i = 0; i < hftirc->nbuf; ++i)
                     if(!strcmp(hftirc->cb[i].name, params[1])
