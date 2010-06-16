@@ -106,7 +106,6 @@ typedef struct
      char realname[256];
      char autojoin[128][CHANLEN];
      int nautojoin;
-     unsigned int bname;
 } ServInfo;
 
 /* Config struct */
@@ -206,7 +205,6 @@ int find_sessid(irc_session_t *session);
 
 /* main.c */
 void signal_handler(int signal);
-void draw_logo(void);
 
 /* Variables */
 HFTIrc *hftirc;
