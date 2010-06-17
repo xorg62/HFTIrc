@@ -181,7 +181,7 @@ input_me(const char *input)
      if(irc_cmd_me(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name, input))
           WARN("Error", "Can't send action message");
      else
-          ui_print_buf(hftirc->selbuf, " * %s %s", hftirc->conf.serv[hftirc->selses].nick, input);
+          ui_print_buf(hftirc->selbuf, " %c* %s%c %s", B, hftirc->conf.serv[hftirc->selses].nick, B, input);
 
      return;
 }
