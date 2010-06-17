@@ -372,7 +372,7 @@ input_redraw(const char *input)
 void
 input_connect(const char *input)
 {
-     int i;
+     int i = -1;
      ServInfo defsi = { " ", " ", " ", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
 
      DSINPUT(input);
@@ -386,12 +386,29 @@ input_connect(const char *input)
                return;
           }
 
-          ++hftirc->conf.nserv;
-          i = hftirc->conf.nserv - 1;
+          /* Check if serv is already used (but disconnected) in hftirc */
+          for(i = 0; i < hftirc->conf.nserv; ++i)
+               if(!strcmp(input, hftirc->conf.serv[i].adress)
+                         || !strcasecmp(input, hftirc->conf.serv[i].name))
+               {
+                    if(irc_is_connected(hftirc->session[i]))
+                    {
+                         WARN("Error", "Already connected to this server");
+                         return;
+                    }
+                    else
+                         break;
+               }
 
-          hftirc->conf.serv[i] = defsi;
-          strcpy(hftirc->conf.serv[i].name, input);
-          strcpy(hftirc->conf.serv[i].adress, input);
+          if(i < 0)
+          {
+               ++hftirc->conf.nserv;
+               i = (hftirc->conf.nserv - 1);
+
+               hftirc->conf.serv[i] = defsi;
+               strcpy(hftirc->conf.serv[i].name, input);
+               strcpy(hftirc->conf.serv[i].adress, input);
+          }
 
           hftirc->session[i] = irc_create_session(&hftirc->callbacks);
 

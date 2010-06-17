@@ -322,7 +322,7 @@ irc_event_connect(irc_session_t *session, const char *event, const char *origin,
 void
 irc_event_join(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int s, i, j;
+     int s, i, j, k;
      char nick[NICKLEN] = { 0 };
 
      i = find_bufid((s = find_sessid(session)), params[0]);
@@ -332,8 +332,22 @@ irc_event_join(irc_session_t *session, const char *event, const char *origin, co
 
      if(!strcmp(nick, hftirc->conf.serv[s].nick))
      {
-          irc_join(session, params[0]);
-          i = hftirc->nbuf - 1;
+          /* Check if the channel isn't already present on buffers */
+          for(k = 0; k < hftirc->nbuf; ++k)
+               if(!strcmp(params[0], hftirc->cb[k].name)
+                         && hftirc->cb[k].sessid == s)
+               {
+                    ui_buf_set(k);
+                    i = k;
+                    break;
+               }
+
+          /* Else, create a buffer */
+          if(hftirc->selbuf != k)
+          {
+               irc_join(session, params[0]);
+               i = hftirc->nbuf - 1;
+          }
      }
 
      ui_print_buf(i, "  ->>>> %c%s%c (%s) has joined %c%s",
