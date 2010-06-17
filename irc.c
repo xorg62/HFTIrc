@@ -323,7 +323,7 @@ irc_event_connect(irc_session_t *session, const char *event, const char *origin,
 void
 irc_event_join(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int s, i, j, k;
+     int s, j, i = 0;
      char nick[NICKLEN] = { 0 };
 
      i = find_bufid((s = find_sessid(session)), params[0]);
@@ -334,17 +334,10 @@ irc_event_join(irc_session_t *session, const char *event, const char *origin, co
      if(!strcmp(nick, hftirc->conf.serv[s].nick))
      {
           /* Check if the channel isn't already present on buffers */
-          for(k = 0; k < hftirc->nbuf; ++k)
-               if(!strcmp(params[0], hftirc->cb[k].name)
-                         && hftirc->cb[k].sessid == s)
-               {
-                    ui_buf_set(k);
-                    i = k;
-                    break;
-               }
-
+          if(i != 0)
+               ui_buf_set(i);
           /* Else, create a buffer */
-          if(hftirc->selbuf != k)
+          else
           {
                irc_join(session, params[0]);
                i = hftirc->nbuf - 1;
@@ -574,8 +567,10 @@ irc_event_kick(irc_session_t *session, const char *event, const char *origin, co
 void
 irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count)
 {
-     char *n = hftirc->conf.serv[find_sessid(session)].name;
-     int i;
+     int s, b = 0;
+     char *n = hftirc->conf.serv[(s = find_sessid(session))].name;
+
+     b = find_bufid(s, params[1]);
 
      switch(event)
      {
@@ -584,48 +579,44 @@ irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, 
           case 313:
           case 320:
           case 671:
-               ui_print_buf(0, "[%s] ***           %s: %s", n, params[1], params[2]);
+               ui_print_buf(b, "[%s] ***           %s: %s", n, params[1], params[2]);
                break;
 
           /* Whois user */
           case 311:
-               ui_print_buf(0, "[%s] *** %c%s%c (%s@%s)", n,  B, params[1], B, params[2], params[3]);
-               ui_print_buf(0, "[%s] *** IRCNAME:  %s", n, params[5]);
+               ui_print_buf(b, "[%s] *** %c%s%c (%s@%s)", n,  B, params[1], B, params[2], params[3]);
+               ui_print_buf(b, "[%s] *** IRCNAME:  %s", n, params[5]);
                break;
 
           /* Whois server */
           case 312:
-               ui_print_buf(0, "[%s] *** SERVER:   %s (%s)", n, params[2], params[3]);
+               ui_print_buf(b, "[%s] *** SERVER:   %s (%s)", n, params[2], params[3]);
                break;
 
           /* Whois away */
           case 301:
                /* When whois */
-               if(!(i = find_bufid(find_sessid(session), params[1])))
-                    ui_print_buf(0, "[%s] *** AWAY:     %s", n,  params[2]);
-               /* When privmsg */
-               else
-                    ui_print_buf(i, "  *** %s away: %s", params[1],  params[2]);
+               ui_print_buf(b, "[%s] *** AWAY:     %s", n,  params[2]);
                break;
 
           /* Whois idle */
           case 317:
-               ui_print_buf(0, "[%s] *** IDLE:     seconds idle: %s signon time: %s", n, params[2], params[3]);
+               ui_print_buf(b, "[%s] *** IDLE:     seconds idle: %s signon time: %s", n, params[2], params[3]);
                break;
 
           /* End of whois */
           case 318:
-               ui_print_buf(0, "[%s] *** %s", n, params[2]);
+               ui_print_buf(b, "[%s] *** %s", n, params[2]);
                break;
 
           /* Whois channel */
           case 319:
-               ui_print_buf(0, "[%s] *** CHANNELS: %s", n, params[2]);
+               ui_print_buf(b, "[%s] *** CHANNELS: %s", n, params[2]);
                break;
 
           /* Whois account */
           case 330:
-               ui_print_buf(0, "[%s] ***           %s: %s %s", n, params[1], params[3], params[2]);
+               ui_print_buf(b, "[%s] ***           %s: %s %s", n, params[1], params[3], params[2]);
                break;
      }
 

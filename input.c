@@ -250,8 +250,15 @@ input_whois(const char *input)
           if(irc_cmd_whois(hftirc->session[hftirc->selses], input))
                WARN("Error", "Can't use WHOIS");
      }
+     /* No input -> whois current private nick */
      else
-          WARN("Error", "Usage: /whois <nick>");
+     {
+          if(hftirc->cb[hftirc->selbuf].name[0] == '#'
+                    || hftirc->cb[hftirc->selbuf].name[0] == '&')
+               WARN("Error", "Usage: /whois <nick>");
+          else if(irc_cmd_whois(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
+               WARN("Error", "Can't use WHOIS");
+     }
 
      return;
 }
