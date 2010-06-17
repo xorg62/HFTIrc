@@ -556,7 +556,8 @@ irc_event_action(irc_session_t *session, const char *event, const char *origin, 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     i = find_bufid(find_sessid(session), params[0]);
+     if(!(i = find_bufid(find_sessid(session), params[0])))
+          i = find_bufid(find_sessid(session), nick);
 
      ui_print_buf(i, " %c* %s%c %s", B, nick, B, params[1]);
 

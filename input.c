@@ -87,7 +87,8 @@ input_join(const char *input)
           return;
      }
 
-     if(irc_cmd_join(hftirc->session[hftirc->selses], input, NULL)) /* Last arg -> password (TODO) */
+     /* Last arg -> password (TODO) */
+     if(irc_cmd_join(hftirc->session[hftirc->selses], input, NULL))
           WARN("Error", "Can't use JOIN command");
 
      return;

@@ -83,7 +83,6 @@ config_parse(char *file)
           get_conf(CONFPATH);
      }
 
-
      /* Misc section */
      misc = fetch_section_first(NULL, "misc");
 
