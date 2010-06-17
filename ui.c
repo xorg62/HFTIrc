@@ -512,6 +512,7 @@ ui_get_input(void)
                               if(hftirc->ui->ib.histpos >= hftirc->ui->ib.nhisto)
                                    hftirc->ui->ib.histpos = 0;
 
+                              wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
                               wcscpy(hftirc->ui->ib.buffer, hftirc->ui->ib.histo[hftirc->ui->ib.nhisto - ++hftirc->ui->ib.histpos]);
                               werase(hftirc->ui->inputwin);
                               wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
@@ -522,6 +523,7 @@ ui_get_input(void)
                          if(hftirc->ui->ib.nhisto && hftirc->ui->ib.histpos > 0
                                    && hftirc->ui->ib.histpos < hftirc->ui->ib.nhisto)
                          {
+                              wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
                               wcscpy(hftirc->ui->ib.buffer, hftirc->ui->ib.histo[hftirc->ui->ib.nhisto - --hftirc->ui->ib.histpos]);
                               werase(hftirc->ui->inputwin);
                               wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
