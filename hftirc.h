@@ -28,6 +28,7 @@
 #include <time.h>
 #include <signal.h>
 #include <locale.h>
+#include <sys/utsname.h>
 #include <libircclient.h>
 #include <libirc_events.h>
 
@@ -202,6 +203,8 @@ void irc_event_action(irc_session_t *session, const char *event, const char *ori
 void irc_event_kick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count);
 void irc_event_invite(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_ctcp(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
+
 
 /* input.c */
 void input_manage(const char *input);
@@ -225,6 +228,8 @@ void input_redraw(const char *input);
 void input_connect(const char *input);
 void input_disconnect(const char *input);
 void input_away(const char *input);
+void input_ctcp(const char *input);
+
 
 /* util.c */
 void update_date(void);

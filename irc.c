@@ -38,6 +38,7 @@ irc_init(void)
      hftirc->callbacks.event_umode       = irc_event_mode;
      hftirc->callbacks.event_ctcp_rep    = irc_dump_event;
      hftirc->callbacks.event_ctcp_action = irc_event_action;
+     hftirc->callbacks.event_ctcp_req    = irc_event_ctcp;
      hftirc->callbacks.event_unknown     = irc_dump_event;
      hftirc->callbacks.event_numeric     = irc_event_numeric;
 
@@ -651,6 +652,33 @@ irc_event_invite(irc_session_t *session, const char *event, const char *origin, 
 
      ui_print_buf(0, "[%s] *** You've been invited by %c%s%c to %c%s",
                hftirc->conf.serv[find_sessid(session)].name, B, nick, B, B, params[1]);
+
+     return;
+}
+
+void
+irc_event_ctcp(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+{
+     int i, s;
+     char nick[NICKLEN] = { 0 };
+     char reply[256] = { 0 };
+     struct utsname un;
+
+     if(origin && strchr(origin, '!'))
+          for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
+
+     i = find_bufid((s = find_sessid(session)), nick);
+
+     ui_print_buf(i, "[%s] *** %c%s%c (%s) CTCP request: %c%s%c",
+               hftirc->conf.serv[s].name, B, nick, B, origin + strlen(nick) + 1, B, params[0], B);
+
+     if(!strcasecmp(params[0], "VERSION"))
+     {
+          uname(&un);
+
+          sprintf(reply, "%s HFTirc "HFTIRC_VERSION" - on %s %s", params[0], un.sysname, un.machine);
+          irc_cmd_ctcp_reply(session, nick, reply);
+     }
 
      return;
 }

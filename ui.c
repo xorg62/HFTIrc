@@ -360,24 +360,21 @@ ui_buf_new(const char *name, unsigned int id)
 
      cbs = calloc(hftirc->nbuf, sizeof(ChanBuf));
 
-     for(j = 0; j < i; ++j)
-          cbs[j] = hftirc->cb[j];
+     for(j = 0; j < i; cbs[j] = hftirc->cb[j], ++j);
 
      free(hftirc->cb);
 
      memset(cbs[i].topic, 0, sizeof(cbs[i].topic));
      strcpy(cbs[i].name, name);
 
-     for(j = 0; j < BUFLINES; ++j)
-          cbs[i].buffer[j] = NULL;
+     for(j = 0; j < BUFLINES;cbs[i].buffer[j++] = NULL);
 
      cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
      cbs[i].sessid = id;
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
 
-     for(i = 0; i < hftirc->nbuf; ++i)
-          hftirc->cb[i] = cbs[i];
+     for(i = 0; i < hftirc->nbuf; hftirc->cb[i] = cbs[i], ++i);
 
      free(cbs);
 
@@ -407,8 +404,7 @@ ui_buf_close(int buf)
 
      hftirc->cb = calloc(hftirc->nbuf, sizeof(ChanBuf));
 
-     for(i = 0; i < hftirc->nbuf; ++i)
-          hftirc->cb[i] = cbs[i];
+     for(i = 0; i < hftirc->nbuf; hftirc->cb[i] = cbs[i], ++i);
 
      free(cbs);
 
@@ -497,11 +493,8 @@ ui_get_input(void)
                               wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
                               input_manage(buf);
                               werase(hftirc->ui->inputwin);
-
                               wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
-                              hftirc->ui->ib.pos
-                                   = hftirc->ui->ib.cpos
-                                   = hftirc->ui->ib.split = 0;
+                              hftirc->ui->ib.pos = hftirc->ui->ib.cpos = hftirc->ui->ib.split = 0;
                               wmove(hftirc->ui->inputwin, 0, 0);
                          }
                          break;

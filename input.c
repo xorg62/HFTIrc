@@ -38,6 +38,7 @@ const InputStruct input_struct[] =
      { "server",     input_connect },
      { "disconnect", input_disconnect },
      { "away",       input_away },
+     { "ctcp",       input_ctcp },
      { "help",       input_help },
 };
 
@@ -500,6 +501,40 @@ input_away(const char *input)
           for(i = 0; i < hftirc->conf.nserv; ++i)
                if(irc_send_raw(hftirc->session[i],  "AWAY :"))
                     WARN("Error", "Can't send AWAY");
+
+     return;
+}
+
+void
+input_ctcp(const char *input)
+{
+     int i;
+     char nick[64] = { 0 };
+     char request[BUFSIZE] = { 0 };
+
+     DSINPUT(input);
+     NOSERVRET();
+
+     if(strlen(input) > 0)
+     {
+          for(i = 0; input[i] != ' ' && input[i]; nick[i] = input[i], ++i);
+
+          if(input[i] == ' ')
+          {
+               input += strlen(nick);
+               DSINPUT(input);
+               for(i = 0; input[i]; request[i] = input[i], ++i);
+          }
+     }
+     else
+     {
+          WARN("Error", "Usage: /ctcp <nick> <request>");
+
+          return;
+     }
+
+     if(irc_cmd_ctcp_request(hftirc->session[hftirc->selses], nick, request))
+          WARN("Error", "Can't kick");
 
      return;
 }
