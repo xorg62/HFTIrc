@@ -627,7 +627,7 @@ void
 irc_event_invite(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i;
-     char nick[NICKLEN];
+     char nick[NICKLEN] = { 0 };
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
