@@ -129,6 +129,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 317:
           case 318:
           case 319:
+          case 320:
           case 330:
           case 671:
                irc_event_whois(session, event, origin, params, count);
@@ -581,6 +582,7 @@ irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, 
           /* Whois operator/registered/securingconnection */
           case 307:
           case 313:
+          case 320:
           case 671:
                ui_print_buf(0, "[%s] ***           %s: %s", n, params[1], params[2]);
                break;

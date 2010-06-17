@@ -372,7 +372,7 @@ input_redraw(const char *input)
 void
 input_connect(const char *input)
 {
-     int i = -1;
+     int i = -1, a = 0;
      ServInfo defsi = { " ", " ", " ", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
 
      DSINPUT(input);
@@ -397,10 +397,13 @@ input_connect(const char *input)
                          return;
                     }
                     else
+                    {
+                         ++a;
                          break;
+                    }
                }
 
-          if(i < 0)
+          if(!a)
           {
                ++hftirc->conf.nserv;
                i = (hftirc->conf.nserv - 1);
