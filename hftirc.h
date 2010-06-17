@@ -41,6 +41,7 @@
 #define HOSTLEN           128
 #define NSERV             32
 #define HFTIRC_KEY_ENTER  10
+#define HISTOLEN          256
 #define MAINWIN_LINES     LINES - 2
 #define DATELEN           (strlen(hftirc->date.str))
 #define CONFPATH          "hftirc.conf"
@@ -79,6 +80,8 @@ typedef struct
      struct
      {
           wchar_t buffer[BUFSIZE];
+          wchar_t histo[HISTOLEN][BUFSIZE];
+          unsigned int nhisto, histpos;
           int pos;
           int cpos;
           int split;

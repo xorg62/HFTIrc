@@ -82,6 +82,8 @@ ui_init(void)
      hftirc->ui->inputwin = newwin(1, COLS, LINES - 1, 0);
      wmove(hftirc->ui->inputwin, 0, 0);
      wrefresh(hftirc->ui->inputwin);
+     hftirc->ui->ib.nhisto = 1;
+     hftirc->ui->ib.histpos = 0;
 
      /* Init status window (with the hour / current chan) */
      hftirc->ui->statuswin = newwin(1, COLS, LINES - 2, 0);
@@ -479,15 +481,54 @@ ui_get_input(void)
                          if(hftirc->ui->ib.pos || wcslen(hftirc->ui->ib.buffer))
                          {
                               memset(buf, 0, BUFSIZE);
+
+                              /* Histo */
+                              if(hftirc->ui->ib.nhisto + 1 > HISTOLEN)
+                              {
+                                   for(i = hftirc->ui->ib.nhisto - 1; i > 1; --i)
+                                        wcscpy(hftirc->ui->ib.histo[i], hftirc->ui->ib.histo[i - 1]);
+
+                                   hftirc->ui->ib.nhisto = 0;
+                              }
+                              /* Store in histo array */
+                              wcscpy(hftirc->ui->ib.histo[hftirc->ui->ib.nhisto++], hftirc->ui->ib.buffer);
+                              hftirc->ui->ib.histpos = 0;
+
                               wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
                               input_manage(buf);
                               werase(hftirc->ui->inputwin);
+
                               wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
                               hftirc->ui->ib.pos
                                    = hftirc->ui->ib.cpos
                                    = hftirc->ui->ib.split = 0;
                               wmove(hftirc->ui->inputwin, 0, 0);
                          }
+                         break;
+
+                    case KEY_UP:
+                         if(hftirc->ui->ib.nhisto)
+                         {
+                              if(hftirc->ui->ib.histpos >= hftirc->ui->ib.nhisto)
+                                   hftirc->ui->ib.histpos = 0;
+
+                              wcscpy(hftirc->ui->ib.buffer, hftirc->ui->ib.histo[hftirc->ui->ib.nhisto - ++hftirc->ui->ib.histpos]);
+                              werase(hftirc->ui->inputwin);
+                              wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
+                         }
+                         break;
+
+                    case KEY_DOWN:
+                         if(hftirc->ui->ib.nhisto && hftirc->ui->ib.histpos > 0
+                                   && hftirc->ui->ib.histpos < hftirc->ui->ib.nhisto)
+                         {
+                              wcscpy(hftirc->ui->ib.buffer, hftirc->ui->ib.histo[hftirc->ui->ib.nhisto - --hftirc->ui->ib.histpos]);
+                              werase(hftirc->ui->inputwin);
+                              wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
+                         }
+                         else
+                              werase(hftirc->ui->inputwin);
+
                          break;
 
                     case KEY_LEFT:
@@ -591,12 +632,6 @@ ui_get_input(void)
                          }
                          else
                               hftirc->ui->ib.cpos = (int)wcslen(hftirc->ui->ib.buffer);
-                         break;
-
-                    case KEY_UP:
-                         break;
-
-                    case KEY_DOWN:
                          break;
 
                     case KEY_RESIZE:
