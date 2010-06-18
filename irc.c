@@ -394,7 +394,7 @@ irc_event_part(irc_session_t *session, const char *event, const char *origin, co
 
 
      SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
-          if(!strcmp(nick, ns->nick))
+          if(ns->nick && !strcmp(nick, ns->nick))
                SLIST_REMOVE(&hftirc->cb[i].nickhead, ns, NickStruct, next);
 
      ui_print_buf(i, "  <<<<- %s (%s) has left %c%s%c [%s]",
