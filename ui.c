@@ -177,11 +177,6 @@ ui_update_statuswin(void)
      wmove(hftirc->ui->statuswin, x, y - 1);
      waddch(hftirc->ui->statuswin, ')');
 
-     /* Print hftirc version */
-     mvwprintw(hftirc->ui->statuswin, 0,
-               COLS - strlen("HFTIrc "HFTIRC_VERSION),
-               "HFTIrc "HFTIRC_VERSION);
-
      wrefresh(hftirc->ui->statuswin);
 
      return;
