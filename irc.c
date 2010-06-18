@@ -420,7 +420,7 @@ irc_event_quit(irc_session_t *session, const char *event, const char *origin, co
 
      for(i = 0; i < hftirc->nbuf; ++i)
           SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
-               if(hftirc->cb[i].sessid == s
+               if(hftirc->cb[i].sessid == s && ns->nick
                          && (!strcmp(nick, ns->nick) || !strcmp(nick, hftirc->cb[i].name)))
                {
                     ui_print_buf(i, "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]);
@@ -545,21 +545,16 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
 
      if(!strcmp(event, "366"))
      {
-          if(!hftirc->cb[s].bname)
-          {
-               ui_print_buf(s, "  *** Users of %c%s%c:", B, params[1], B);
+          ui_print_buf(s, "  *** Users of %c%s%c:", B, params[1], B);
 
-               ui_print_buf(s, "%c[%c", B, B);
+          ui_print_buf(s, "%c[%c", B, B);
 
-               SLIST_FOREACH(ns, &hftirc->cb[s].nickhead, next)
-                    ui_print_buf(s, "  [%c%s ]", ((ns->rang) ? ns->rang : ' '), ns->nick);
+          SLIST_FOREACH(ns, &hftirc->cb[s].nickhead, next)
+               ui_print_buf(s, "  [%c%s ]", ((ns->rang) ? ns->rang : ' '), ns->nick);
 
-               ui_print_buf(s, "%c]%c", B, B);
+          ui_print_buf(s, "%c]%c", B, B);
 
-               hftirc->cb[s].naming = 0;
-          }
-          else
-               hftirc->cb[s].bname = 0;
+          hftirc->cb[s].naming = 0;
      }
      else
      {

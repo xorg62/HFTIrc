@@ -108,7 +108,6 @@ typedef struct
 
      /* For irc info */
      unsigned int sessid;
-     unsigned int bname;
      char name[HOSTLEN], *names;
      SLIST_HEAD(, NickStruct) nickhead;
      char topic[BUFSIZE];
