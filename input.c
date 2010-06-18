@@ -300,6 +300,8 @@ input_query(const char *input)
                }
 
           ui_buf_new(input, hftirc->selses);
+          SLIST_INSERT_HEAD(&hftirc->cb[hftirc->nbuf - 1].nickhead,
+                    nickstruct_set((char *)input), next);
           ui_buf_set(hftirc->nbuf - 1);
           ui_print_buf(hftirc->nbuf - 1, "  *** Query with %s", input);
      }

@@ -267,11 +267,11 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
                return;
      }
 
-     for(i = j = 0; i < hftirc->nbuf; ++i)
+     for(i = 0; i < hftirc->nbuf; ++i)
           SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
-               if(hftirc->cb[i].sessid == s && strlen(nick) && ns->nick && !strcmp(nick, ns->nick))
+               if(hftirc->cb[i].sessid == s && ns->nick && !strcmp(nick, ns->nick))
                {
-                    ui_print_buf(i, "  *** %s is now %s", nick, params[0]);
+                    ui_print_buf(i, "  *** %s is now %c%s", nick, B, params[0]);
                     strcpy(ns->nick, params[0]);
                }
 
@@ -473,6 +473,7 @@ irc_event_privmsg(irc_session_t *session, const char *event, const char *origin,
      {
           ui_buf_new(nick, find_sessid(session));
           i = hftirc->nbuf - 1;
+          SLIST_INSERT_HEAD(&hftirc->cb[i].nickhead, nickstruct_set(nick), next);
      }
 
      ui_print_buf(i, "<%s> %s", nick, params[1]);
