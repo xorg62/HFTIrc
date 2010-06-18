@@ -60,4 +60,19 @@ find_sessid(irc_session_t *session)
      return i;
 }
 
+NickStruct*
+nickstruct_set(char *nick)
+{
+     NickStruct *ret;
 
+     ret = calloc(1, sizeof(NickStruct));
+     if(strchr("@+%", nick[0]))
+     {
+          ret->rang = nick[0];
+          strcpy(ret->nick, nick + 1);
+     }
+     else
+          strcpy(ret->nick, nick);
+
+     return ret;
+}

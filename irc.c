@@ -249,6 +249,7 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
 {
      int i, j, s;
      char nick[NICKLEN] = { 0 };
+     NickStruct *ns;
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
@@ -260,22 +261,26 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
           strcpy(hftirc->conf.serv[s].nick, params[0]);
 
           for(j = 0; j < hftirc->nbuf; ++j)
-               if(hftirc->cb[j].sessid == i && j != 0)
+               if(hftirc->cb[j].sessid == s && j != 0)
                     ui_print_buf(j, "  *** Your nick is now %c%s", B, hftirc->conf.serv[s].nick);
 
                return;
      }
 
      for(i = j = 0; i < hftirc->nbuf; ++i)
-          if(hftirc->cb[i].sessid == s
-                    && hftirc->cb[i].names && strlen(nick)
-                    && (strstr(hftirc->cb[i].names, nick)
-                         || !strcmp(nick, hftirc->cb[i].name)))
-               ui_print_buf(i, "  *** %s is now %s", nick, params[0]);
+          SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
+               if(hftirc->cb[i].sessid == s && strlen(nick) && ns->nick && !strcmp(nick, ns->nick))
+               {
+                    ui_print_buf(i, "  *** %s is now %s", nick, params[0]);
+                    strcpy(ns->nick, params[0]);
+               }
 
      for(i = 0; i < hftirc->nbuf; ++i)
           if(!strcmp(nick, hftirc->cb[i].name) && s == hftirc->cb[i].sessid)
                strcpy(hftirc->cb[i].name, params[0]);
+
+     if(ns)
+          free(ns);
 
      return;
 }
@@ -311,9 +316,7 @@ irc_event_mode(irc_session_t *session, const char *event, const char *origin, co
           strcat(nicks, params[i]);
      }
 
-     i = find_bufid(s, params[0]);
-
-     ui_print_buf(i, "  *** Mode %c%s%c [%s %s] set by %c%s",
+     ui_print_buf(find_bufid(s, params[0]), "  *** Mode %c%s%c [%s %s] set by %c%s",
                B, params[0], B, params[1], nicks + 1, B, nick);
 
      return;
@@ -342,6 +345,7 @@ irc_event_join(irc_session_t *session, const char *event, const char *origin, co
 {
      int s, j, i = 0;
      char nick[NICKLEN] = { 0 };
+     NickStruct *ns;
 
      i = find_bufid((s = find_sessid(session)), params[0]);
 
@@ -364,6 +368,12 @@ irc_event_join(irc_session_t *session, const char *event, const char *origin, co
      ui_print_buf(i, "  ->>>> %c%s%c (%s) has joined %c%s",
                B, nick, B, origin + strlen(nick) + 1, B, params[0]);
 
+     ns = nickstruct_set(nick);
+
+     SLIST_INSERT_HEAD(&hftirc->cb[i].nickhead, ns, next);
+
+     free(ns);
+
      return;
 }
 
@@ -373,16 +383,25 @@ irc_event_part(irc_session_t *session, const char *event, const char *origin, co
 {
      int s, i, j;
      char nick[NICKLEN] = { 0 };
+     NickStruct *ns;
 
-	irc_cmd_user_mode(session, "+i");
+     irc_cmd_user_mode(session, "+i");
 
      i = find_bufid((s = find_sessid(session)), params[0]);
 
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
+
+     SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
+          if(!strcmp(nick, ns->nick))
+               SLIST_REMOVE(&hftirc->cb[i].nickhead, ns, NickStruct, next);
+
      ui_print_buf(i, "  <<<<- %s (%s) has left %c%s%c [%s]",
                nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
+
+     if(ns)
+          free(ns);
 
      return;
 }
@@ -392,20 +411,24 @@ irc_event_quit(irc_session_t *session, const char *event, const char *origin, co
 {
      int i, s;
      char nick[NICKLEN] = { 0 };
-     char snick[NICKLEN + 2] = { 0 };
+     NickStruct *ns;
 
      s = find_sessid(session);
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     sprintf(snick, " %s ", nick);
-
      for(i = 0; i < hftirc->nbuf; ++i)
-          if(hftirc->cb[i].sessid == s && hftirc->cb[i].names
-                    && (strstr(hftirc->cb[i].names, snick)
-                         || !strcmp(hftirc->cb[i].name, nick)))
-               ui_print_buf(i, "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]);
+          SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
+               if(hftirc->cb[i].sessid == s
+                         && (!strcmp(nick, ns->nick) || !strcmp(nick, hftirc->cb[i].name)))
+               {
+                    ui_print_buf(i, "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]);
+                    SLIST_REMOVE(&hftirc->cb[i].nickhead, ns, NickStruct, next);
+               }
+
+     if(ns)
+          free(ns);
 
      return;
 }
@@ -449,8 +472,6 @@ irc_event_privmsg(irc_session_t *session, const char *event, const char *origin,
      if(!(i = find_bufid(find_sessid(session), nick)))
      {
           ui_buf_new(nick, find_sessid(session));
-          asprintf(&hftirc->cb[hftirc->nbuf - 1].names, "%s%s ",
-                    (hftirc->cb[hftirc->nbuf - 1].names ? hftirc->cb[hftirc->nbuf - 1].names : " "), nick);
           i = hftirc->nbuf - 1;
      }
 
@@ -516,34 +537,50 @@ void
 irc_event_names(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int s, S;
+     char *p;
+     NickStruct *ns;
 
      s = find_bufid((S = find_sessid(session)), params[1]);
 
      if(!strcmp(event, "366"))
      {
+          if(!hftirc->cb[s].bname)
+          {
+               ui_print_buf(s, "  *** Users of %c%s%c:", B, params[1], B);
 
-          if(hftirc->cb[s].names[strlen(hftirc->cb[s].names) - 2] == ' ')
-               hftirc->cb[s].names[strlen(hftirc->cb[s].names) - 1]  = '\0';
+               ui_print_buf(s, "%c[%c", B, B);
 
-          ui_print_buf(s, "  *** Users of %c%s%c:", B, params[1], B);
-          ui_print_buf(s, "-> [%s]", hftirc->cb[s].names);
+               SLIST_FOREACH(ns, &hftirc->cb[s].nickhead, next)
+                    ui_print_buf(s, "  [%c%s ]", ((ns->rang) ? ns->rang : ' '), ns->nick);
 
-          hftirc->cb[s].naming = 0;
+               ui_print_buf(s, "%c]%c", B, B);
+
+               hftirc->cb[s].naming = 0;
+          }
+          else
+               hftirc->cb[s].bname = 0;
      }
      else
      {
           s = find_bufid(S, params[2]);
 
+          /* Empty the list */
           if(!hftirc->cb[s].naming)
+               SLIST_INIT(&hftirc->cb[s].nickhead);
+
+          p = strtok((char *)params[3], " ");
+
+          while(p)
           {
-               hftirc->cb[s].names = NULL;
-               ++hftirc->cb[s].naming;
+               ns = nickstruct_set(p);
+
+               SLIST_INSERT_HEAD(&hftirc->cb[s].nickhead, ns, next);
+
+               p = strtok(NULL, " ");
           }
 
-          asprintf(&hftirc->cb[s].names, "%s %s ",
-                    (hftirc->cb[s].names ? hftirc->cb[s].names : ""),  params[3]);
+          ++hftirc->cb[s].naming;
      }
-
 
      return;
 }

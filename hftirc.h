@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <locale.h>
 #include <sys/utsname.h>
+#include <sys/queue.h>
 #include <libircclient.h>
 #include <libirc_events.h>
 
@@ -90,6 +91,14 @@ typedef struct
      } ib;
 } Ui;
 
+/* Nick chained list */
+typedef struct NickStruct
+{
+     char nick[NICKLEN];
+     char rang;
+     SLIST_ENTRY(NickStruct) next;
+} NickStruct;
+
 /* Channel buffer */
 typedef struct
 {
@@ -99,8 +108,9 @@ typedef struct
 
      /* For irc info */
      unsigned int sessid;
-     char name[HOSTLEN];
-     char *names;
+     unsigned int bname;
+     char name[HOSTLEN], *names;
+     SLIST_HEAD(, NickStruct) nickhead;
      char topic[BUFSIZE];
      int act;
 } ChanBuf;
@@ -235,6 +245,7 @@ void input_ctcp(const char *input);
 void update_date(void);
 int find_bufid(unsigned id, const char *str);
 int find_sessid(irc_session_t *session);
+NickStruct* nickstruct_set(char *nick);
 
 /* main.c */
 void signal_handler(int signal);
