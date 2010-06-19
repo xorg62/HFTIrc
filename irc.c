@@ -534,7 +534,7 @@ void
 irc_event_names(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int s, S;
-     char *p;
+     char *p, *str = " ";
      NickStruct *ns;
 
      s = find_bufid((S = find_sessid(session)), params[1]);
@@ -546,11 +546,15 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
           ui_print_buf(s, "%c[%c", B, B);
 
           for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next)
-               ui_print_buf(s, "  [%c%s ]", ((ns->rang) ? ns->rang : ' '), ns->nick);
+               asprintf(&str, "%s %c%c%c%s", str, B, (ns->rang) ? ns->rang : ' ', B, ns->nick);
+
+          ui_print_buf(s, " %s",  str);
 
           ui_print_buf(s, "%c]%c", B, B);
 
           hftirc->cb[s].naming = 0;
+
+          free(str);
      }
      else
      {
