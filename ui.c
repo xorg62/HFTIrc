@@ -362,8 +362,6 @@ ui_buf_new(const char *name, unsigned int id)
      memset(cbs[i].topic, 0, sizeof(cbs[i].topic));
      strcpy(cbs[i].name, name);
 
-     SLIST_INIT(&cbs[i].nickhead);
-
      for(j = 0; j < BUFLINES;cbs[i].buffer[j++] = NULL);
 
      cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;

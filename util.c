@@ -60,12 +60,42 @@ find_sessid(irc_session_t *session)
      return i;
 }
 
+void
+nick_attach(int buf, NickStruct *nick)
+{
+     if(hftirc->cb[buf].nickhead)
+          hftirc->cb[buf].nickhead->prev = nick;
+
+     nick->next = hftirc->cb[buf].nickhead;
+     hftirc->cb[buf].nickhead = nick;
+
+     return;
+}
+
+void
+nick_detach(int buf, NickStruct *nick)
+{
+     NickStruct **ns;
+
+     for(ns = &hftirc->cb[buf].nickhead
+               ; *ns && *ns != nick
+               ; ns = &(*ns)->next);
+
+     *ns = nick->next;
+
+     return;
+}
+
 NickStruct*
 nickstruct_set(char *nick)
 {
      NickStruct *ret;
 
-     ret = calloc(1, sizeof(NickStruct));
+     ret = malloc(sizeof(NickStruct));
+
+     memset(ret->nick, 0, NICKLEN);
+     ret->rang = '\0';
+
      if(strchr("@+%", nick[0]))
      {
           ret->rang = nick[0];

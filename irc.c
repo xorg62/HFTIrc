@@ -268,7 +268,7 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
      }
 
      for(i = 0; i < hftirc->nbuf; ++i)
-          SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
+          for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
                if(hftirc->cb[i].sessid == s && ns->nick && !strcmp(nick, ns->nick))
                {
                     ui_print_buf(i, "  *** %s is now %c%s", nick, B, params[0]);
@@ -278,9 +278,6 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
      for(i = 0; i < hftirc->nbuf; ++i)
           if(!strcmp(nick, hftirc->cb[i].name) && s == hftirc->cb[i].sessid)
                strcpy(hftirc->cb[i].name, params[0]);
-
-     if(ns)
-          free(ns);
 
      return;
 }
@@ -370,9 +367,7 @@ irc_event_join(irc_session_t *session, const char *event, const char *origin, co
 
      ns = nickstruct_set(nick);
 
-     SLIST_INSERT_HEAD(&hftirc->cb[i].nickhead, ns, next);
-
-     free(ns);
+     nick_attach(i, ns);
 
      return;
 }
@@ -392,16 +387,15 @@ irc_event_part(irc_session_t *session, const char *event, const char *origin, co
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
-
-     SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
-          if(ns->nick && !strcmp(nick, ns->nick))
-               SLIST_REMOVE(&hftirc->cb[i].nickhead, ns, NickStruct, next);
+     for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
+          if(ns->nick && strlen(ns->nick) && !strcmp(ns->nick, nick))
+          {
+               nick_detach(i, ns);
+               free(ns);
+          }
 
      ui_print_buf(i, "  <<<<- %s (%s) has left %c%s%c [%s]",
                nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
-
-     if(ns)
-          free(ns);
 
      return;
 }
@@ -419,16 +413,16 @@ irc_event_quit(irc_session_t *session, const char *event, const char *origin, co
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
      for(i = 0; i < hftirc->nbuf; ++i)
-          SLIST_FOREACH(ns, &hftirc->cb[i].nickhead, next)
-               if(hftirc->cb[i].sessid == s && ns->nick
-                         && (!strcmp(nick, ns->nick) || !strcmp(nick, hftirc->cb[i].name)))
+          for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
+          {
+               if(hftirc->cb[i].sessid == s && strlen(ns->nick) && !strcmp(nick, ns->nick))
                {
                     ui_print_buf(i, "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]);
-                    SLIST_REMOVE(&hftirc->cb[i].nickhead, ns, NickStruct, next);
+                    nick_detach(i, ns);
+                    free(ns);
+                    break;
                }
-
-     if(ns)
-          free(ns);
+          }
 
      return;
 }
@@ -464,6 +458,7 @@ irc_event_privmsg(irc_session_t *session, const char *event, const char *origin,
 {
      int i, j;
      char nick[NICKLEN] = { 0 };
+     NickStruct *ns;
 
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
@@ -473,7 +468,8 @@ irc_event_privmsg(irc_session_t *session, const char *event, const char *origin,
      {
           ui_buf_new(nick, find_sessid(session));
           i = hftirc->nbuf - 1;
-          SLIST_INSERT_HEAD(&hftirc->cb[i].nickhead, nickstruct_set(nick), next);
+          ns = nickstruct_set(nick);
+          nick_attach(i, ns);
      }
 
      ui_print_buf(i, "<%s> %s", nick, params[1]);
@@ -549,7 +545,7 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
 
           ui_print_buf(s, "%c[%c", B, B);
 
-          SLIST_FOREACH(ns, &hftirc->cb[s].nickhead, next)
+          for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next)
                ui_print_buf(s, "  [%c%s ]", ((ns->rang) ? ns->rang : ' '), ns->nick);
 
           ui_print_buf(s, "%c]%c", B, B);
@@ -562,7 +558,14 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
 
           /* Empty the list */
           if(!hftirc->cb[s].naming)
-               SLIST_INIT(&hftirc->cb[s].nickhead);
+          {
+               /* Free the entire tail queue. */
+               for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next)
+               {
+                    nick_detach(s, ns);
+                    free(ns);
+               }
+          }
 
           p = strtok((char *)params[3], " ");
 
@@ -570,7 +573,7 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
           {
                ns = nickstruct_set(p);
 
-               SLIST_INSERT_HEAD(&hftirc->cb[s].nickhead, ns, next);
+               nick_attach(s, ns);
 
                p = strtok(NULL, " ");
           }

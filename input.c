@@ -125,8 +125,9 @@ input_names(const char *input)
 {
      NOSERVRET();
 
-     if(irc_cmd_names(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
-          WARN("Error", "Can't get names list");
+     if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
+          if(irc_cmd_names(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
+               WARN("Error", "Can't get names list");
 
      return;
 }
@@ -271,8 +272,7 @@ input_whois(const char *input)
      /* No input -> whois current private nick */
      else
      {
-          if(hftirc->cb[hftirc->selbuf].name[0] == '#'
-                    || hftirc->cb[hftirc->selbuf].name[0] == '&')
+          if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
                WARN("Error", "Usage: /whois <nick>");
           else if(irc_cmd_whois(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
                WARN("Error", "Can't use WHOIS");
@@ -285,6 +285,7 @@ void
 input_query(const char *input)
 {
      int i;
+     NickStruct *ns;
 
      DSINPUT(input);
      NOSERVRET();
@@ -300,8 +301,8 @@ input_query(const char *input)
                }
 
           ui_buf_new(input, hftirc->selses);
-          SLIST_INSERT_HEAD(&hftirc->cb[hftirc->nbuf - 1].nickhead,
-                    nickstruct_set((char *)input), next);
+          ns = nickstruct_set((char *)input);
+          nick_attach(hftirc->nbuf - 1,  ns);
           ui_buf_set(hftirc->nbuf - 1);
           ui_print_buf(hftirc->nbuf - 1, "  *** Query with %s", input);
      }
@@ -317,9 +318,8 @@ input_close(const char *input)
      if(hftirc->selbuf == 0)
           return;
 
-     if(hftirc->cb[hftirc->selbuf].name[0] == '#'
-               || hftirc->cb[hftirc->selbuf].name[0] == '&')
-          input_part(NULL);
+     if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
+               input_part(NULL);
 
      ui_buf_close(hftirc->selbuf);
 
