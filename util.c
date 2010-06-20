@@ -131,7 +131,7 @@ complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
      for(ns = hftirc->cb[buf].nickhead; ns; ns = ns->next)
      {
           swprintf(wbuf, BUFSIZE, L"%s", ns->nick);
-          if(!wcsncmp(wbuf, start, wcslen(start)))
+          if(!wcsncasecmp(wbuf, start, wcslen(start)))
                if(++c == hits)
                     return wcsdup(wbuf + wcslen(start));
      }
