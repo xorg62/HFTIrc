@@ -602,6 +602,9 @@ irc_event_action(irc_session_t *session, const char *event, const char *origin, 
 
      ui_print_buf(i, " %c* %s%c %s", B, nick, B, params[1]);
 
+     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->conf.serv[hftirc->selses].nick))
+          putchar('\a');
+
      return;
 }
 

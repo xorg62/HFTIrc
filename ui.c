@@ -292,7 +292,7 @@ ui_print_buf(int id, char *format, ...)
                hftirc->cb[id].act = 1;
 
           /* Highlight test (if hl or private message) */
-          if(hftirc->conf.serv && id && ((strchr(buf, '<') && strchr(buf, '>')
+          if(hftirc->conf.serv && id  && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
                               && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->conf.serv[hftirc->selses].nick))
                          || (hftirc->cb[id].name[0] != '#' && hftirc->cb[id].name[0] != '&')))
                /* No HL on status buffer (0) */
