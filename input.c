@@ -194,8 +194,12 @@ input_msg(const char *input)
           return;
      }
      else
+     {
           if(irc_cmd_msg(hftirc->session[hftirc->selses], nick, msg))
                WARN("Error", "Can't send MSG");
+          else if((i = find_bufid(hftirc->selses, nick)))
+                ui_print_buf(i, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, msg);
+     }
 
      return;
 }
