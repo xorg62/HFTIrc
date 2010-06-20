@@ -294,7 +294,7 @@ ui_print_buf(int id, char *format, ...)
           /* Highlight test (if hl or private message) */
           if(hftirc->conf.serv && id  && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
                               && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->conf.serv[hftirc->selses].nick))
-                         || (hftirc->cb[id].name[0] != '#' && hftirc->cb[id].name[0] != '&')))
+                         || !strchr("#&", hftirc->cb[id].name[0])))
                /* No HL on status buffer (0) */
                hftirc->cb[id].act = (id) ? 2 : 1;
      }
@@ -647,6 +647,7 @@ ui_get_input(void)
                               if((cmp = complete_nick(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf, &b)))
                               {
                                    hftirc->ui->ib.found = 1;
+                                   memset(hftirc->ui->ib.buffer, 0, BUFSIZE);
                                    wcscpy(hftirc->ui->ib.buffer, tmpbuf);
                                    wcscat(hftirc->ui->ib.buffer, cmp);
                                    wcscat(hftirc->ui->ib.buffer, ((b) ? L" " : L": "));
