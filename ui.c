@@ -443,8 +443,9 @@ ui_scroll_down(int buf)
 void
 ui_get_input(void)
 {
-     int i, t;
+     int i, b = 0, t;
      wint_t c;
+     wchar_t tmpbuf[BUFSIZE], *cmp;
      char buf[BUFSIZE];
 
      switch((t = get_wch(&c)))
@@ -490,7 +491,8 @@ ui_get_input(void)
                               input_manage(buf);
                               werase(hftirc->ui->inputwin);
                               wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
-                              hftirc->ui->ib.pos = hftirc->ui->ib.cpos = hftirc->ui->ib.split = 0;
+                              hftirc->ui->ib.pos = hftirc->ui->ib.cpos = hftirc->ui->ib.split
+                                   = hftirc->ui->ib.hits = 0;
                               wmove(hftirc->ui->inputwin, 0, 0);
                          }
                          break;
@@ -628,6 +630,38 @@ ui_get_input(void)
                     case KEY_RESIZE:
                          break;
 
+
+                    case '\t':
+                         if(hftirc->ui->ib.prev == c)
+                         {
+                              ++hftirc->ui->ib.hits;
+                              hftirc->ui->ib.found = 0;
+                         }
+                         else
+                         {
+                              hftirc->ui->ib.hits = 1;
+                              wcscpy(tmpbuf, hftirc->ui->ib.buffer);
+                         }
+
+                         if(hftirc->ui->ib.pos)
+                              if((cmp = complete_nick(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf, &b)))
+                              {
+                                   hftirc->ui->ib.found = 1;
+                                   wcscpy(hftirc->ui->ib.buffer, tmpbuf);
+                                   wcscat(hftirc->ui->ib.buffer, cmp);
+                                   wcscat(hftirc->ui->ib.buffer, ((b) ? L" " : L": "));
+                                   free(cmp);
+                              }
+
+                         /* To circular it */
+                         if(!hftirc->ui->ib.found)
+                              hftirc->ui->ib.hits = 0;
+
+                         werase(hftirc->ui->inputwin);
+                         wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
+
+                         break;
+
                     default:
                          if(c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE)
                          {
@@ -645,6 +679,8 @@ ui_get_input(void)
                                    hftirc->ui->ib.spting = 1;
                               }
 
+                              hftirc->ui->ib.hits = 1;
+
                               ++(hftirc->ui->ib.pos);
                               ++(hftirc->ui->ib.cpos);
                               wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
@@ -653,6 +689,8 @@ ui_get_input(void)
                }
                break;
      }
+
+     hftirc->ui->ib.prev = c;
 
      mvwaddwstr(hftirc->ui->inputwin, 0, 0,
                hftirc->ui->ib.buffer + hftirc->ui->ib.split);

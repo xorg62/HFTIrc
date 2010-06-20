@@ -106,3 +106,37 @@ nickstruct_set(char *nick)
 
      return ret;
 }
+
+wchar_t*
+complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
+{
+     NickStruct *ns;
+     wchar_t wbuf[BUFSIZE] = { 0 };
+
+     int i, c = 0;
+
+     if(!start || hits <= 0)
+          return NULL;
+
+     /* If the nick is located in middle of text */
+     for(i = wcslen(start) + 1; i != 0; --i)
+          if(start[i] == ' ')
+          {
+               start += i + 1;
+               break;
+          }
+
+     *beg = i;
+
+     for(ns = hftirc->cb[buf].nickhead; ns; ns = ns->next)
+     {
+          swprintf(wbuf, BUFSIZE, L"%s", ns->nick);
+          if(!wcsncmp(wbuf, start, wcslen(start)))
+               if(++c == hits)
+                    return wcsdup(wbuf + wcslen(start));
+     }
+
+     return NULL;
+}
+
+

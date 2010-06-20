@@ -82,7 +82,8 @@ typedef struct
      {
           wchar_t buffer[BUFSIZE];
           wchar_t histo[HISTOLEN][BUFSIZE];
-          unsigned int nhisto, histpos;
+          unsigned int nhisto, histpos, hits, found;
+          wchar_t prev;
           int pos;
           int cpos;
           int split;
@@ -248,6 +249,8 @@ int find_sessid(irc_session_t *session);
 void nick_attach(int buf, NickStruct *nick);
 void nick_detach(int buf, NickStruct *nick);
 NickStruct* nickstruct_set(char *nick);
+wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
+
 
 /* main.c */
 void signal_handler(int signal);
