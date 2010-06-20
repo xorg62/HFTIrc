@@ -148,6 +148,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 319:
           case 320:
           case 330:
+          case 378:
           case 671:
                irc_event_whois(session, event, origin, params, count);
                break;

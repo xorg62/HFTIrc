@@ -216,9 +216,8 @@ void irc_event_whois(irc_session_t *session, unsigned int event, const char *ori
 void irc_event_invite(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 void irc_event_ctcp(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
 
-
 /* input.c */
-void input_manage(const char *input);
+void input_manage(char *input);
 void input_join(const char *input);
 void input_nick(const char *input);
 void input_quit(const char *input);
@@ -240,7 +239,10 @@ void input_connect(const char *input);
 void input_disconnect(const char *input);
 void input_away(const char *input);
 void input_ctcp(const char *input);
-
+void input_buffer(const char *input);
+void input_buffer_list(const char *input);
+void input_buffer_swap(const char *input);
+void input_say(const char *input);
 
 /* util.c */
 void update_date(void);
@@ -251,7 +253,6 @@ void nick_detach(int buf, NickStruct *nick);
 NickStruct* nickstruct_set(char *nick);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
 wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
-
 
 /* main.c */
 void signal_handler(int signal);

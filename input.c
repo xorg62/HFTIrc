@@ -17,13 +17,17 @@
 #include "input.h"
 
 void
-input_manage(const char *input)
+input_manage(char *input)
 {
      int i, n;
 
      if(input[0] == '/')
      {
+          /* Erase / */
           ++input;
+
+          /* Erase spaces at the end */
+          for(; *(input + strlen(input) - 1) == ' '; *(input + strlen(input) - 1) = '\0');
 
           /* /<num> to go on the buffer num */
           if(sscanf(input, "%d", &n) == 1)
@@ -37,14 +41,7 @@ input_manage(const char *input)
                     input_struct[i].func(input + strlen(input_struct[i].cmd));
      }
      else
-     {
-          if(hftirc->conf.nserv
-                    && irc_cmd_msg(hftirc->session[hftirc->selses],
-                         hftirc->cb[hftirc->selbuf].name, input))
-               WARN("Error", "Can't send message");
-          else
-               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, input);
-     }
+          input_say(input);
 
      return;
 }
@@ -519,4 +516,70 @@ input_ctcp(const char *input)
 
      return;
 }
+
+void
+input_buffer(const char *input)
+{
+     int i;
+
+     DSINPUT(input);
+     NOSERVRET();
+
+     if(strlen(input) > 0)
+     {
+          if(sscanf(input, "%d", &i) == 1)
+          {
+               ui_buf_set(i);
+               return;
+          }
+     }
+     else
+          WARN("Error", "Usage: /buffer <num>");
+
+     return;
+}
+
+void
+input_buffer_list(const char *input)
+{
+     int i;
+
+     ui_print_buf(0, "[Hftirc] %cBuffers list%c:", B, B);
+
+     for(i = 0; i < hftirc->nbuf; ++i)
+          ui_print_buf(0, "[Hftirc] - %d: %s (%s)",
+                    i, hftirc->cb[i].name, hftirc->conf.serv[hftirc->cb[i].sessid].name);
+
+     return;
+}
+
+void
+input_buffer_swap(const char *input)
+{
+
+
+     return;
+}
+
+void
+input_say(const char *input)
+{
+     DSINPUT(input);
+     NOSERVRET();
+
+     if(strlen(input) > 0)
+     {
+          if(irc_cmd_msg(hftirc->session[hftirc->selses],
+                         hftirc->cb[hftirc->selbuf].name, input))
+               WARN("Error", "Can't send message");
+          else
+               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, input);
+     }
+     else
+          WARN("Error", "Usage: /say <message>");
+
+     return;
+}
+
+
 

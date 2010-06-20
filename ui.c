@@ -364,9 +364,8 @@ ui_buf_new(const char *name, unsigned int id)
 
      for(j = 0; j < BUFLINES;cbs[i].buffer[j++] = NULL);
 
-     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
+     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = cbs[i].naming = 0;
      cbs[i].sessid = id;
-     cbs[i].naming = 0;
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
 
@@ -630,7 +629,6 @@ ui_get_input(void)
                     case KEY_RESIZE:
                          break;
 
-
                     case '\t':
                          if(hftirc->ui->ib.prev == c)
                          {
@@ -667,7 +665,8 @@ ui_get_input(void)
                               hftirc->ui->ib.hits = 0;
 
                          werase(hftirc->ui->inputwin);
-                         wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
+                         wmove(hftirc->ui->inputwin, 0,
+                                   (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
 
                          break;
 
