@@ -535,6 +535,7 @@ void
 irc_event_names(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int s, S;
+     unsigned int cn = 0;
      char *p, *str = " ";
      NickStruct *ns;
 
@@ -542,15 +543,13 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
 
      if(!strcmp(event, "366"))
      {
-          ui_print_buf(s, "  *** Users of %c%s%c:", B, params[1], B);
 
-          ui_print_buf(s, "%c[%c", B, B);
-
-          for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next)
+          for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next, ++cn)
                asprintf(&str, "%s %c%c%c%s", str, B, (ns->rang) ? ns->rang : ' ', B, ns->nick);
 
+          ui_print_buf(s, "  *** Users of %c%s%c: %c%d%c nick(s)", B, params[1], B, B, cn, B);
+          ui_print_buf(s, "%c[%c", B, B);
           ui_print_buf(s, " %s",  str);
-
           ui_print_buf(s, "%c]%c", B, B);
 
           hftirc->cb[s].naming = 0;

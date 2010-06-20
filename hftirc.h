@@ -33,7 +33,7 @@
 #include <libirc_events.h>
 
 /* Macro */
-#define HFTIRC_VERSION    "0.01"
+#define HFTIRC_VERSION    "(devel version)"
 #define BUFSIZE           8192
 #define MAXBUF            64
 #define BUFLINES          512
