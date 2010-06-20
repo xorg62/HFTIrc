@@ -443,7 +443,7 @@ ui_scroll_down(int buf)
 void
 ui_get_input(void)
 {
-     int i, b = 0, t;
+     int i, b = 1, t;
      wint_t c;
      wchar_t tmpbuf[BUFSIZE], *cmp;
      char buf[BUFSIZE];
@@ -644,7 +644,14 @@ ui_get_input(void)
                          }
 
                          if(hftirc->ui->ib.pos)
-                              if((cmp = complete_nick(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf, &b)))
+                         {
+                              cmp = (hftirc->ui->ib.buffer[0] == '/')
+                                   /* Input /cmd completion */
+                                   ? complete_input(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf)
+                                   /* Nick completion */
+                                   : complete_nick(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf, &b);
+
+                              if(cmp)
                               {
                                    hftirc->ui->ib.found = 1;
                                    memset(hftirc->ui->ib.buffer, 0, BUFSIZE);
@@ -653,6 +660,7 @@ ui_get_input(void)
                                    wcscat(hftirc->ui->ib.buffer, ((b) ? L" " : L": "));
                                    free(cmp);
                               }
+                         }
 
                          /* To circular it */
                          if(!hftirc->ui->ib.found)

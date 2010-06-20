@@ -14,33 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "hftirc.h"
-
-const InputStruct input_struct[] =
-{
-     { "join",       input_join },
-     { "nick",       input_nick },
-     { "quit",       input_quit },
-     { "part",       input_part },
-     { "kick",       input_kick },
-     { "names",      input_names },
-     { "topic",      input_topic },
-     { "query",      input_query },
-     { "me",         input_me },
-     { "msg",        input_msg },
-     { "whois",      input_whois },
-     { "close",      input_close },
-     { "raw",        input_raw },
-     { "umode",      input_umode },
-     { "serv",       input_serv },
-     { "redraw",     input_redraw },
-     { "connect",    input_connect },
-     { "server",     input_connect },
-     { "disconnect", input_disconnect },
-     { "away",       input_away },
-     { "ctcp",       input_ctcp },
-     { "help",       input_help },
-};
+#include "input.h"
 
 void
 input_manage(const char *input)

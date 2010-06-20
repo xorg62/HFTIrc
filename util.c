@@ -15,6 +15,7 @@
  */
 
 #include "hftirc.h"
+#include "input.h"
 
 void
 update_date(void)
@@ -112,7 +113,6 @@ complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
 {
      NickStruct *ns;
      wchar_t wbuf[BUFSIZE] = { 0 };
-
      int i, c = 0;
 
      if(!start || hits <= 0)
@@ -139,4 +139,26 @@ complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
      return NULL;
 }
 
+wchar_t*
+complete_input(int buf, unsigned int hits, wchar_t *start)
+{
+     wchar_t wbuf[BUFSIZE] = { 0 };
+     int i, c = 0;
+
+     if(!start || start[0] != '/' || hits <= 0)
+          return NULL;
+
+     /* Erase / */
+     ++start;
+
+     for(i = 0; i < LEN(input_struct); ++i)
+     {
+          swprintf(wbuf, BUFSIZE, L"%s", input_struct[i].cmd);
+          if(!wcsncasecmp(wbuf, start, wcslen(start)))
+               if(++c == hits)
+                    return wcsdup(wbuf + wcslen(start));
+     }
+
+     return NULL;
+}
 

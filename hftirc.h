@@ -250,6 +250,7 @@ void nick_attach(int buf, NickStruct *nick);
 void nick_detach(int buf, NickStruct *nick);
 NickStruct* nickstruct_set(char *nick);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
+wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
 
 
 /* main.c */
