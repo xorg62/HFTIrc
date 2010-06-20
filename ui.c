@@ -645,7 +645,7 @@ ui_get_input(void)
 
                          if(hftirc->ui->ib.pos)
                          {
-                              cmp = (hftirc->ui->ib.buffer[0] == '/')
+                              cmp = (hftirc->ui->ib.buffer[0] == '/' && !wcschr(tmpbuf, ' '))
                                    /* Input /cmd completion */
                                    ? complete_input(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf)
                                    /* Nick completion */
