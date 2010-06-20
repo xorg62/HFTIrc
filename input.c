@@ -109,7 +109,12 @@ input_names(const char *input)
 void
 input_help(const char *input)
 {
-     ui_print_buf(0, "Help: ...");
+     int i;
+
+     ui_print_buf(0, "[Hftirc] *** %cCommands list%c:", B, B);
+
+     for(i = 0; i < LEN(input_struct); ++i)
+          ui_print_buf(0, "[Hftirc] - %s", input_struct[i].cmd);
 
      return;
 }
