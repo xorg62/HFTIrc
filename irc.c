@@ -102,11 +102,11 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
      char num[24];
      char buf[BUFSIZE] = { 0 };
      char name[256] = { 0 };
-     int i;
+     int i, s;
 
      sprintf(num, "%d", event);
 
-     strcpy(name, hftirc->conf.serv[find_sessid(session)].name);
+     strcpy(name, hftirc->conf.serv[(s = find_sessid(session))].name);
 
      switch(event)
      {
@@ -177,7 +177,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
                irc_event_topic(session, num, origin, params, count);
                break;
           case 328:
-               ui_print_buf(find_bufid(find_sessid(session), params[1]),
+               ui_print_buf(find_bufid(s, params[1]),
                          "  *** Home page of %c%s%c: %s", B, params[1], B, params[2]);
                break;
 
@@ -216,19 +216,17 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 470:
                ui_print_buf(0, "[%s] *** Channel %c%s%c linked on %c%s",
                          name, B, params[1], B, B, params[2]);
-               strcpy(hftirc->cb[hftirc->nbuf - 1].name, params[2]);
+
+               if((i = find_bufid(s, params[1])))
+                    strcpy(hftirc->cb[i].name, params[2]);
+
                break;
 
           case 479:
                ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
 
-               for(i = 0; i < hftirc->nbuf; ++i)
-                    if(!strcmp(hftirc->cb[i].name, params[1])
-                              && hftirc->cb[i].sessid == find_sessid(session))
-                    {
-                         ui_buf_close(i);
-                         break;
-                    }
+               if((i = find_bufid(s, params[1])))
+                    ui_buf_close(i);
 
                ui_buf_set(0);
                break;
