@@ -66,9 +66,6 @@
 
 
 /* Typedef */
-typedef struct IrcCallbacks IrcCallbacks;
-typedef struct IrcSession IrcSession;
-typedef void (*IrcEventCallback)(IrcSession *s, const char *event, const char *origin, const char **params, unsigned int count);
 typedef enum { False, True } Bool;
 
 /* Internal lib */
@@ -164,29 +161,7 @@ typedef struct
 
 } ConfStruct;
 
-struct IrcCallbacks
-{
-     IrcEventCallback connect;
-     IrcEventCallback quit;
-     IrcEventCallback join;
-     IrcEventCallback nick;
-     IrcEventCallback part;
-     IrcEventCallback topic;
-     IrcEventCallback privmsg;
-     IrcEventCallback channel;
-     IrcEventCallback kick;
-     IrcEventCallback mode;
-     IrcEventCallback umode;
-     IrcEventCallback notice;
-     IrcEventCallback invite;
-     IrcEventCallback action;
-     IrcEventCallback numeric;
-     IrcEventCallback unknown;
-     IrcEventCallback ctcp_rep;
-     IrcEventCallback ctcp_req;
-};
-
-struct IrcSession
+typedef struct IrcSession
 {
      int sock;
      short port;
@@ -204,9 +179,7 @@ struct IrcSession
 	unsigned int outoffset;
 
      struct in_addr	local_addr;
-
-     IrcCallbacks callbacks;
-};
+} IrcSession;
 
 /* Global struct */
 typedef struct
@@ -214,7 +187,6 @@ typedef struct
      int ft, running;
      int nbuf, selbuf, selses;
      IrcSession *session[NSERV];
-     IrcCallbacks callbacks;
      ConfStruct conf;
      ChanBuf *cb;
      Ui *ui;
