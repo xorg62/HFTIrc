@@ -69,7 +69,7 @@ main(int argc, char **argv)
     while(hftirc->running)
     {
          tv.tv_sec = 0;
-         tv.tv_usec = 10000;
+         tv.tv_usec = 250000;
 
          FD_ZERO(&iset);
          FD_ZERO(&oset);
@@ -87,8 +87,8 @@ main(int argc, char **argv)
                    ui_get_input();
               else
                    for(i = 0; i < hftirc->conf.nserv; ++i)
-                        if(hftirc->session[i]->state == STATE_CONNECTED)
-                             irc_process_select_descriptors(hftirc->session[i], &iset, &oset);
+                        if(hftirc->session[i]->connected)
+                             irc_run_process(hftirc->session[i], &iset, &oset);
          }
 
          update_date();

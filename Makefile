@@ -6,10 +6,10 @@ include config.local.mk
 
 EXEC=hftirc
 SRC= parse/parse.c \
-     irc/libirc.c  \
      config.c      \
      ui.c          \
      irc.c         \
+     event.c       \
      hftirc.c      \
      util.c        \
      input.c       \

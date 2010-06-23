@@ -407,8 +407,16 @@ input_connect(const char *input)
                if(!strcmp(input, hftirc->conf.serv[i].adress)
                          || !strcasecmp(input, hftirc->conf.serv[i].name))
                {
-                    ++a;
-                    break;
+                    if(hftirc->session[i]->connected)
+                    {
+                         WARN("Warning", "Already connected on this server");
+                         return;
+                    }
+                    else
+                    {
+                         ++a;
+                         break;
+                    }
                }
 
           if(!a)
@@ -421,7 +429,7 @@ input_connect(const char *input)
                strcpy(hftirc->conf.serv[i].adress, input);
           }
 
-          hftirc->session[i] = irc_session(&hftirc->callbacks);
+          hftirc->session[i] = irc_session();
 
           if(irc_connect(hftirc->session[i],
                          hftirc->conf.serv[i].adress,
@@ -578,7 +586,7 @@ input_say(const char *input)
                          hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't send message");
           else
-               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, input);
+               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->session[hftirc->selses]->nick, input);
      }
      else
           WARN("Error", "Usage: /say <message>");

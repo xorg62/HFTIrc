@@ -16,37 +16,403 @@
 
 #include "hftirc.h"
 
+IrcSession*
+irc_session(void)
+{
+     IrcSession *s;
+
+     s = calloc(1, sizeof(IrcSession));
+
+     s->sock = -1;
+     s->connected = 0;
+
+     return s;
+}
+
+int
+irc_connect(IrcSession *s,
+          const char *server,
+          unsigned short port,
+          const char *password,
+          const char *nick,
+          const char *username,
+          const char *realname)
+{
+     struct hostent *hp;
+     struct sockaddr_in a;
+
+     if (!server || !nick)
+          return 1;
+
+     s->username = (username) ? strdup(username) : NULL;
+     s->password = (password) ? strdup(password) : NULL;
+     s->realname = (realname) ? strdup(realname) : NULL;
+
+     s->nick   = strdup(nick);
+     s->server = strdup(server);
+
+     if(!(hp = gethostbyname(server)))
+          return 1;
+
+     a.sin_family = AF_INET;
+     a.sin_port   = htons(s->port ? s->port : 6667);
+
+     memcpy(&a.sin_addr, hp->h_addr_list[0], (size_t) hp->h_length);
+
+     /* Create socket */
+     if((s->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+          return 1;
+
+     /* connect to the server */
+     if(connect(s->sock, (const struct sockaddr*) &a, sizeof(a)) < 0)
+          return 1;
+
+     /* Identify */
+    irc_send_raw(s, "PASS %s", password);
+    irc_send_raw(s, "NICK %s", nick);
+    irc_send_raw(s, "USER %s localhost %s :%s", username, server, realname);
+
+    s->connected = 1;
+
+    return 0;
+}
+
+void
+irc_disconnect(IrcSession *s)
+{
+     if(s->sock >= 0)
+          close(s->sock);
+
+     s->sock = -1;
+
+     s->connected = 0;
+
+     return;
+}
+
+int
+irc_run_process(IrcSession *session, fd_set *inset, fd_set *outset)
+{
+     int length, offset;
+     unsigned int amount;
+
+     if(session->sock < 0 || !session->connected)
+          return 1;
+
+     /* Read time */
+     if(FD_ISSET(session->sock, inset))
+     {
+          amount = (sizeof(session->inbuf) - 1) - session->inoffset;
+
+          if((length = recv(session->sock, session->inbuf + session->inoffset, amount, 0)) <= 0)
+               return 1;
+
+          session->inoffset += length;
+
+          /* Process the incoming data */
+          for(; ((offset = irc_findcrlf(session->inbuf, session->inoffset)) > 0); session->inoffset -= offset)
+          {
+               irc_manage_event(session, offset - 2);
+
+               if(session->inoffset - offset > 0)
+                    memmove(session->inbuf, session->inbuf + offset, session->inoffset - offset);
+          }
+     }
+     /* Send time */
+     if(FD_ISSET(session->sock, outset))
+     {
+          if((length = send(session->sock, session->outbuf, session->outoffset, 0)) <= 0)
+               return 1;
+
+          if(session->outoffset - length > 0)
+               memmove (session->outbuf, session->outbuf + length, session->outoffset - length);
+
+          session->outoffset -= length;
+     }
+
+     return 0;
+}
+
+int
+irc_add_select_descriptors(IrcSession *session, fd_set *inset, fd_set *outset, int *maxfd)
+{
+     if(session->sock < 0 || !session->connected)
+          return 1;
+
+     if(session->inoffset < (sizeof (session->inbuf) - 1))
+          FD_SET(session->sock, inset);
+
+     if(irc_findcrlf(session->outbuf, session->outoffset) > 0)
+          FD_SET(session->sock, outset);
+
+     if(*maxfd < session->sock)
+          *maxfd = session->sock;
+
+     return 0;
+}
+
+int
+irc_send_raw(IrcSession *session, const char *format, ...)
+{
+     char buf[BUFSIZE];
+     va_list va_alist;
+
+     va_start(va_alist, format);
+     vsnprintf(buf, sizeof(buf), format, va_alist);
+     va_end(va_alist);
+
+     if((strlen(buf) + 2) >= (sizeof(session->outbuf) - session->outoffset))
+          return 1;
+
+     strcpy(session->outbuf + session->outoffset, buf);
+
+     session->outoffset += strlen(buf);
+     session->outbuf[session->outoffset++] = '\r';
+     session->outbuf[session->outoffset++] = '\n';
+
+     return 0;
+}
+
+void
+irc_parse_in(char *buf,
+          const char *prefix,
+          const char *command,
+          const char **params,
+          int *code,
+          int *paramindex)
+{
+     char *p = buf, *s = NULL;
+
+     /* Parse prefix */
+     if(buf[0] == ':')
+     {
+          for(; *p && *p != ' '; ++p);
+          *p++ = '\0';
+          strcpy((char *)prefix, buf + 1);
+     }
+
+     /* Parse command */
+     if(isdigit(p[0]) && isdigit(p[1]) && isdigit(p[2]))
+     {
+          p[3] = '\0';
+          *code = atoi (p);
+          p += 4;
+     }
+     else
+     {
+          for(s = p; *p && *p != ' '; ++p);
+          *p++ = '\0';
+          strcpy((char *)command, s);
+     }
+
+     /* Parse params */
+     for(;*p && *paramindex < 10; *p++ = '\0')
+     {
+          if(*p == ':')
+          {
+               params[(*paramindex)++] = p + 1;
+               break;
+          }
+
+          for(s = p; *p && *p != ' '; ++p);
+
+          params[(*paramindex)++] = s;
+
+          if(!*p)
+               break;
+     }
+
+     return;
+}
+
+void
+irc_manage_event(IrcSession *session, int process_length)
+{
+     char buf[BUFSIZE], ctcp_buf[128];
+     const char command[BUFSIZE] = { 0 };
+     const char prefix[BUFSIZE] =  { 0 };
+     const char *params[11];
+     int code = 0, paramindex = 0;
+     unsigned int msglen;
+
+     if(process_length > sizeof(buf))
+          return;
+
+     memcpy(buf, session->inbuf, process_length);
+     buf[process_length] = '\0';
+
+     memset((char *)params, 0, sizeof(params));
+
+     /* Parse socket */
+     irc_parse_in(buf, prefix, command, params, &code, &paramindex);
+
+     /* Handle auto PING/PONG */
+     if(strlen(command) && !strcmp(command, "PING") && params[0])
+     {
+          irc_send_raw(session, "PONG %s", params[0]);
+          return;
+     }
+
+     /* Numerical */
+     if(code)
+     {
+          if((code == 376 || code == 422) && !session->motd_received)
+          {
+               session->motd_received = 1;
+               event_connect(session, "CONNECT", prefix, params, paramindex);
+          }
+
+          event_numeric(session, code, prefix, params, paramindex);
+     }
+     else
+     {
+          /* Quit */
+          if(!strcmp(command, "QUIT"))
+               event_quit(session, command, prefix, params, paramindex);
+
+          /* Join */
+          else if(!strcmp(command, "JOIN"))
+               event_join(session, command, prefix, params, paramindex);
+
+          /* Part */
+          else if(!strcmp(command, "PART"))
+               event_part(session, command, prefix, params, paramindex);
+
+          /* Invite */
+          else if(!strcmp(command, "INVITE"))
+               event_invite(session, command, prefix, params, paramindex);
+
+          /* Topic */
+          else if(!strcmp (command, "TOPIC"))
+               event_topic(session, command, prefix, params, paramindex);
+
+          /* Kick */
+          else if (!strcmp(command, "KICK"))
+               event_kick(session, command, prefix, params, paramindex);
+
+          /* Nick */
+          else if(!strcmp(command, "NICK"))
+          {
+               if(!strncmp(prefix, session->nick, sizeof(session->nick)) && paramindex > 0)
+               {
+                    free(session->nick);
+                    session->nick = strdup(params[0]);
+               }
+
+               event_nick(session, command, prefix, params, paramindex);
+          }
+
+          /* Mode / User mode */
+          else if(!strcmp(command, "MODE"))
+          {
+               /* User mode  case */
+               if(paramindex > 0 && !strcmp(params[0], session->nick))
+               {
+                    params[0] = params[1];
+                    paramindex = 1;
+               }
+
+               event_mode(session, command, prefix, params, paramindex);
+          }
+
+          /* Privmsg */
+          else if(!strcmp(command, "PRIVMSG"))
+          {
+               if(paramindex > 1)
+               {
+                    msglen = strlen(params[1]);
+
+                    /* CTCP request */
+                    if(params[1][0] == 0x01 && params[1][msglen - 1] == 0x01)
+                    {
+                         msglen -= 2;
+
+                         if(msglen > sizeof(ctcp_buf) - 1)
+                              msglen = sizeof(ctcp_buf) - 1;
+
+                         memcpy(ctcp_buf, params[1] + 1, msglen);
+                         ctcp_buf[msglen] = '\0';
+
+                         if(strstr(ctcp_buf, "ACTION ") == ctcp_buf)
+                         {
+                              params[1] = ctcp_buf + strlen("ACTION ");
+                              paramindex = 2;
+                              event_action(session, "ACTION", prefix, params, paramindex);
+                         }
+                         else
+                         {
+                              params[0] = ctcp_buf;
+                              paramindex = 1;
+                              event_ctcp(session, "CTCP", prefix, params, paramindex);
+                         }
+                    }
+                    /* Private message */
+                    else if(!strcmp(params[0], session->nick))
+                         event_privmsg(session, command, prefix, params, paramindex);
+                    /* Channel message */
+                    else
+                         event_channel(session, command, prefix, params, paramindex);
+               }
+
+          }
+
+          /* Notice */
+          else if(!strcmp(command, "NOTICE"))
+          {
+               msglen = strlen(params[1]);
+
+               /* CTCP request */
+               if(paramindex > 1 && params[1][0] == 0x01 && params[1][msglen-1] == 0x01)
+               {
+                    msglen -= 2;
+
+                    if(msglen > sizeof(ctcp_buf) - 1)
+                         msglen = sizeof(ctcp_buf) - 1;
+
+                    memcpy(ctcp_buf, params[1] + 1, msglen);
+                    ctcp_buf[msglen] = '\0';
+
+                    params[0] = ctcp_buf;
+                    paramindex = 1;
+
+                    dump_event(session, "CTCP", prefix, params, paramindex);
+               }
+               /* Normal notice */
+               else
+                    event_notice(session, command, prefix, params, paramindex);
+          }
+
+          /* Unknown */
+          else
+               dump_event(session, command, prefix, params, paramindex);
+     }
+
+     return;
+}
+
+int
+irc_findcrlf(const char *buf, int length)
+{
+     int offset = 0;
+
+     for(; offset < (length - 1); ++offset)
+          if(buf[offset] == '\r' && buf[offset + 1] == '\n')
+               return offset + 2;
+
+     return 0;
+}
+
 void
 irc_init(void)
 {
      int i;
 
-     memset(&hftirc->callbacks, 0, sizeof(hftirc->callbacks));
-
-     hftirc->callbacks.connect   = irc_event_connect;
-     hftirc->callbacks.join      = irc_event_join;
-     hftirc->callbacks.nick      = irc_event_nick;
-     hftirc->callbacks.quit      = irc_event_quit;
-     hftirc->callbacks.part      = irc_event_part;
-     hftirc->callbacks.mode      = irc_event_mode;
-     hftirc->callbacks.topic     = irc_event_topic;
-     hftirc->callbacks.kick      = irc_event_kick;
-     hftirc->callbacks.channel   = irc_event_channel;
-     hftirc->callbacks.privmsg   = irc_event_privmsg;
-     hftirc->callbacks.notice    = irc_event_notice;
-     hftirc->callbacks.invite    = irc_event_invite;
-     hftirc->callbacks.umode     = irc_event_mode;
-     hftirc->callbacks.ctcp_rep  = irc_dump_event;
-     hftirc->callbacks.action    = irc_event_action;
-     hftirc->callbacks.ctcp_req  = irc_event_ctcp;
-     hftirc->callbacks.unknown   = irc_dump_event;
-     hftirc->callbacks.numeric   = irc_event_numeric;
-
      hftirc->selses = 0;
 
+     /* Connection to conf servers */
      for(i = 0; i < hftirc->conf.nserv; ++i)
      {
-          hftirc->session[i] = irc_session(&hftirc->callbacks);
+          hftirc->session[i] = irc_session();
           if(irc_connect(hftirc->session[i],
                          hftirc->conf.serv[i].adress,
                          hftirc->conf.serv[i].port,
@@ -56,7 +422,6 @@ irc_init(void)
                          hftirc->conf.serv[i].realname))
                ui_print_buf(0, "Error: Can't connect to %s", hftirc->conf.serv[i].adress);
      }
-
 
      return;
 }
@@ -75,649 +440,5 @@ irc_join(IrcSession *session, const char *chan)
      return;
 }
 
-void
-irc_dump_event(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     char buf[BUFSIZE] = { 0 };
-     unsigned int i;
 
-     for(i = 0; i < count; ++i)
-     {
-          if(i)
-               strcat(buf, "|");
 
-          strcat(buf, params[i]);
-     }
-
-     ui_print_buf(0, "[%s] *** (%s): %s",
-               hftirc->conf.serv[find_sessid(session)].name, event, buf);
-
-     return;
-}
-
-void
-irc_event_numeric(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     char buf[BUFSIZE] = { 0 };
-     char name[256] = { 0 };
-     int i, s, e;
-
-     e = atoi(event);
-
-     strcpy(name, hftirc->conf.serv[(s = find_sessid(session))].name);
-
-     switch(e)
-     {
-          /* Basic message, just write it in status buffer */
-          case 1:
-          case 2:
-          case 3:
-          case 4:
-          case 5:
-          case 250:
-          case 251:
-          case 252:
-          case 253:
-          case 254:
-          case 255:
-          case 265:
-          case 266:
-          case 372:
-          case 375:
-          case 123456:
-               for(i = 1; i < count; ++i)
-               {
-                    strcat(buf, "|");
-
-                    strcat(buf, params[i]);
-               }
-
-               ui_print_buf(0, "[%s] *** %s", name, buf + 1);
-               break;
-
-          /* Whois */
-          case 301:
-          case 307:
-          case 311:
-          case 312:
-          case 313:
-          case 317:
-          case 318:
-          case 319:
-          case 320:
-          case 330:
-          case 378:
-          case 671:
-               irc_event_whois(session, e, origin, params, count);
-               break;
-
-          /* Away */
-          case 305:
-          case 306:
-               ui_print_buf(0, "[%s] *** %s", name, params[1]);
-               break;
-
-
-          /* List */
-          case 321:
-               ui_print_buf(0, "[%s] *** %s : %s", name, params[1], params[2]);
-               break;
-          case 322:
-               ui_print_buf(0, "[%s] *** %s   %s : %s", name, params[1], params[2], params[3]);
-               break;
-          case 323:
-               ui_print_buf(0, "[%s] *** %s", name, params[1]);
-               break;
-
-          /* Topic / Channel */
-          case 332:
-          case 333:
-               irc_event_topic(session, event, origin, params, count);
-               break;
-          case 328:
-               ui_print_buf(find_bufid(s, params[1]),
-                         "  *** Home page of %c%s%c: %s", B, params[1], B, params[2]);
-               break;
-
-          /* Names */
-          case 353:
-          case 366:
-               irc_event_names(session, event, origin, params, count);
-               break;
-
-          /* Errors */
-          case 263:
-          case 401:
-          case 402:
-          case 403:
-          case 404:
-          case 412:
-          case 421:
-          case 461:
-               ui_print_buf(0, "[%s] *** %s", name, params[2]);
-               break;
-          case 432:
-          case 442:
-               ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
-               break;
-          case 433:
-               ui_print_buf(0, "[%s] *** Nickname %c%s%c already in use", name, B, params[0], B);
-               break;
-          case 451:
-               ui_print_buf(0, "[%s] *** You have not registered", name);
-               break;
-          case 482:
-                ui_print_buf(hftirc->selbuf, "  *** <%s> You're not channel operator", params[1]);
-               break;
-
-          /* Redirection */
-          case 470:
-               ui_print_buf(0, "[%s] *** Channel %c%s%c linked on %c%s",
-                         name, B, params[1], B, B, params[2]);
-
-               if((i = find_bufid(s, params[1])))
-                    strcpy(hftirc->cb[i].name, params[2]);
-
-               break;
-
-          case 479:
-               ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
-
-               if((i = find_bufid(s, params[1])))
-                    ui_buf_close(i);
-
-               ui_buf_set(0);
-               break;
-
-          /* Do nothing */
-          case 376: /* End of MOTD, already managed by connect handle */
-               break;
-
-          default:
-               irc_dump_event(session, event, origin, params, count);
-               break;
-     }
-
-     return;
-}
-
-void
-irc_event_nick(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i, j, s;
-     char nick[NICKLEN] = { 0 };
-     NickStruct *ns;
-
-     if(origin && strchr(origin, '!'))
-          for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
-
-     s = find_sessid(session);
-
-     if(!strcmp(nick, hftirc->conf.serv[s].nick))
-     {
-          strcpy(hftirc->conf.serv[s].nick, params[0]);
-
-          for(j = 0; j < hftirc->nbuf; ++j)
-               if(hftirc->cb[j].sessid == s && j != 0)
-                    ui_print_buf(j, "  *** Your nick is now %c%s", B, hftirc->conf.serv[s].nick);
-
-               return;
-     }
-
-     for(i = 0; i < hftirc->nbuf; ++i)
-          for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
-               if(hftirc->cb[i].sessid == s && ns->nick && !strcmp(nick, ns->nick))
-               {
-                    ui_print_buf(i, "  *** %s is now %c%s", nick, B, params[0]);
-                    strcpy(ns->nick, params[0]);
-               }
-
-     for(i = 0; i < hftirc->nbuf; ++i)
-          if(!strcmp(nick, hftirc->cb[i].name) && s == hftirc->cb[i].sessid)
-               strcpy(hftirc->cb[i].name, params[0]);
-
-     return;
-}
-
-void
-irc_event_mode(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i, s;
-     char nick[NICKLEN] = { 0 };
-     char nicks[BUFSIZE] = { 0 };
-
-     s = find_sessid(session);
-
-     if(strchr(origin, '!'))
-          for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
-     else
-          strcpy(nick, origin);
-
-     /* User mode */
-     if(count == 1)
-     {
-          ui_print_buf(0, "[%s] *** User mode of %c%s%c : [%s]",
-                    hftirc->conf.serv[s].name, B, nick, B, params[0]);
-
-          strcpy(hftirc->conf.serv[s].mode, params[0]);
-
-          return;
-     }
-
-     for(i = 2; i < count; ++i)
-     {
-          strcat(nicks, " ");
-          strcat(nicks, params[i]);
-     }
-
-     ui_print_buf(find_bufid(s, params[0]), "  *** Mode %c%s%c [%s %s] set by %c%s",
-               B, params[0], B, params[1], nicks + 1, B, nick);
-
-     return;
-}
-
-void
-irc_event_connect(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int c, i;
-
-     c = find_sessid(session);
-
-     irc_event_numeric(session, "123456", origin, params, count);
-
-     for(i = 0; i < hftirc->conf.serv[c].nautojoin; ++i)
-     {
-          hftirc->selses = c;
-          input_join(hftirc->conf.serv[c].autojoin[i]);
-     }
-
-     return;
-}
-
-void
-irc_event_join(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int s, j, i = 0;
-     char nick[NICKLEN] = { 0 };
-     NickStruct *ns;
-
-     i = find_bufid((s = find_sessid(session)), params[0]);
-
-     if(origin && strchr(origin, '!'))
-          for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
-
-     if(!strcmp(nick, hftirc->conf.serv[s].nick))
-     {
-          /* Check if the channel isn't already present on buffers */
-          if(i != 0)
-               ui_buf_set(i);
-          /* Else, create a buffer */
-          else
-          {
-               irc_join(session, params[0]);
-               i = hftirc->nbuf - 1;
-          }
-     }
-
-     ui_print_buf(i, "  ->>>> %c%s%c (%s) has joined %c%s",
-               B, nick, B, origin + strlen(nick) + 1, B, params[0]);
-
-     ns = nickstruct_set(nick);
-
-     nick_attach(i, ns);
-
-     return;
-}
-
-
-void
-irc_event_part(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int s, i, j;
-     char nick[NICKLEN] = { 0 };
-     NickStruct *ns;
-
-     irc_send_raw(session, "MODE %s +i", session->nick);
-
-     i = find_bufid((s = find_sessid(session)), params[0]);
-
-     if(origin && strchr(origin, '!'))
-          for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
-
-     for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
-          if(ns->nick && strlen(ns->nick) && !strcmp(ns->nick, nick))
-          {
-               nick_detach(i, ns);
-               free(ns);
-          }
-
-     ui_print_buf(i, "  <<<<- %s (%s) has left %c%s%c [%s]",
-               nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
-
-     return;
-}
-
-void
-irc_event_quit(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i, s;
-     char nick[NICKLEN] = { 0 };
-     NickStruct *ns;
-
-     s = find_sessid(session);
-
-     if(origin && strchr(origin, '!'))
-          for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
-
-     for(i = 0; i < hftirc->nbuf; ++i)
-          for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
-          {
-               if(hftirc->cb[i].sessid == s && strlen(ns->nick) && !strcmp(nick, ns->nick))
-               {
-                    ui_print_buf(i, "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]);
-                    nick_detach(i, ns);
-                    free(ns);
-                    break;
-               }
-          }
-
-     return;
-}
-
-void
-irc_event_channel(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i, j;
-     char nick[NICKLEN] = { 0 };
-
-     i = find_bufid(find_sessid(session), params[0]);
-
-     /* If the message is not from an old buffer, init a new one. */
-     if(i > hftirc->nbuf)
-     {
-          ui_buf_new(params[0], i);
-          i = hftirc->nbuf - 1;
-     }
-
-     if(origin && strchr(origin, '!'))
-          for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
-
-     ui_print_buf(i, "<%s> %s", nick, params[1]);
-
-     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->conf.serv[hftirc->selses].nick))
-          putchar('\a');
-
-     return;
-}
-
-void
-irc_event_privmsg(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i, j;
-     char nick[NICKLEN] = { 0 };
-     NickStruct *ns;
-
-     if(origin && strchr(origin, '!'))
-          for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
-
-     /* If the message is not from an old buffer, init a new one. */
-     if(!(i = find_bufid(find_sessid(session), nick)))
-     {
-          ui_buf_new(nick, find_sessid(session));
-          i = hftirc->nbuf - 1;
-          ns = nickstruct_set(nick);
-          nick_attach(i, ns);
-     }
-
-     ui_print_buf(i, "<%s> %s", nick, params[1]);
-
-     if(hftirc->conf.bell)
-          putchar('\a');
-
-     return;
-}
-
-void
-irc_event_notice(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int j;
-     char nick[NICKLEN] = { 0 };
-
-     if(origin && strchr(origin, '!'))
-          for(nick[0] = ' ', j = 0; origin[j] != '!'; nick[j + 1] = origin[j], ++j);
-
-     ui_print_buf(0, "[%s] ***%s (%s)- %s", hftirc->conf.serv[find_sessid(session)].name,
-               nick, ((origin + strlen(nick)) ? origin + strlen(nick) : nick), params[1]);
-
-     return;
-}
-
-void
-irc_event_topic(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i, j;
-     char nick[NICKLEN] = { 0 };
-
-     i = find_bufid(find_sessid(session), params[((event[0] == '3') ? 1 : 0)]);
-
-     if(!strcmp(event, "333"))
-     {
-          if(strchr(params[2], '!'))
-               for(j = 0; params[2][j] != '!'; nick[j] = params[2][j], ++j);
-          else
-               strcpy(nick, params[2]);
-
-          ui_print_buf(i, "  *** Set by %c%s%c (%s)", B, nick, B, params[3]);
-     }
-     else if(!strcmp(event, "332"))
-     {
-          ui_print_buf(i, "  *** Topic of %c%s%c: %s", B, params[1], B, params[2]);
-          strcpy(hftirc->cb[i].topic, params[2]);
-     }
-     else
-     {
-          if(origin && strchr(origin, '!'))
-               for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
-
-          ui_print_buf(i, "  *** New topic of %c%s%c set by %c%s%c: %s", B, params[0], B, B, nick, B, params[1]);
-
-          strcpy(hftirc->cb[i].topic, params[1]);
-     }
-
-     return;
-}
-
-void
-irc_event_names(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int s, S;
-     unsigned int cn = 0;
-     char *p, *str = " ";
-     NickStruct *ns;
-
-     s = find_bufid((S = find_sessid(session)), params[1]);
-
-     if(!strcmp(event, "366"))
-     {
-
-          for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next, ++cn)
-               asprintf(&str, "%s %c%c%c%s", str, B, (ns->rang) ? ns->rang : ' ', B, ns->nick);
-
-          ui_print_buf(s, "  *** Users of %c%s%c: %c%d%c nick(s)", B, params[1], B, B, cn, B);
-          ui_print_buf(s, "%c[%c", B, B);
-          ui_print_buf(s, " %s",  str);
-          ui_print_buf(s, "%c]%c", B, B);
-
-          hftirc->cb[s].naming = 0;
-
-          free(str);
-     }
-     else
-     {
-          s = find_bufid(S, params[2]);
-
-          /* Empty the list */
-          if(!hftirc->cb[s].naming)
-          {
-               /* Free the entire tail queue. */
-               for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next)
-               {
-                    nick_detach(s, ns);
-                    free(ns);
-               }
-          }
-
-          p = strtok((char *)params[3], " ");
-
-          while(p)
-          {
-               ns = nickstruct_set(p);
-
-               nick_attach(s, ns);
-
-               p = strtok(NULL, " ");
-          }
-
-          ++hftirc->cb[s].naming;
-     }
-
-     return;
-}
-
-void
-irc_event_action(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i;
-     char nick[NICKLEN] = { 0 };
-
-     if(origin && strchr(origin, '!'))
-          for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
-
-     if(!(i = find_bufid(find_sessid(session), params[0])))
-          i = find_bufid(find_sessid(session), nick);
-
-     ui_print_buf(i, " %c* %s%c %s", B, nick, B, params[1]);
-
-     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->conf.serv[hftirc->selses].nick))
-          putchar('\a');
-
-     return;
-}
-
-void
-irc_event_kick(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i;
-     char ornick[NICKLEN] = { 0 };
-
-     if(origin && strchr(origin, '!'))
-          for(i = 0; origin[i] != '!'; ornick[i] = origin[i], ++i);
-
-     i = find_bufid(find_sessid(session), params[0]);
-
-     ui_print_buf(i, "  *** %c%s%c kicked by %s from %c%s%c [%s]",
-               B, params[1], B, ornick, B, params[0], B, params[2]);
-
-     return;
-}
-
-void
-irc_event_whois(IrcSession *session, unsigned int event, const char *origin, const char **params, unsigned int count)
-{
-     int s, b = 0;
-     char *n = hftirc->conf.serv[(s = find_sessid(session))].name;
-
-     b = find_bufid(s, params[1]);
-
-     switch(event)
-     {
-          /* Whois operator/registered/securingconnection */
-          case 307:
-          case 313:
-          case 320:
-          case 671:
-               ui_print_buf(b, "[%s] ***           %s: %s", n, params[1], params[2]);
-               break;
-
-          /* Whois user */
-          case 311:
-               ui_print_buf(b, "[%s] *** %c%s%c (%s@%s)", n,  B, params[1], B, params[2], params[3]);
-               ui_print_buf(b, "[%s] *** IRCNAME:  %s", n, params[5]);
-               break;
-
-          /* Whois server */
-          case 312:
-               ui_print_buf(b, "[%s] *** SERVER:   %s (%s)", n, params[2], params[3]);
-               break;
-
-          /* Whois away */
-          case 301:
-               /* When whois */
-               ui_print_buf(b, "[%s] *** AWAY:     %s", n,  params[2]);
-               break;
-
-          /* Whois idle */
-          case 317:
-               ui_print_buf(b, "[%s] *** IDLE:     seconds idle: %s signon time: %s", n, params[2], params[3]);
-               break;
-
-          /* End of whois */
-          case 318:
-               ui_print_buf(b, "[%s] *** %s", n, params[2]);
-               break;
-
-          /* Whois channel */
-          case 319:
-               ui_print_buf(b, "[%s] *** CHANNELS: %s", n, params[2]);
-               break;
-
-          /* Whois account */
-          case 330:
-               ui_print_buf(b, "[%s] ***           %s: %s %s", n, params[1], params[3], params[2]);
-               break;
-     }
-
-     return;
-}
-
-void
-irc_event_invite(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i;
-     char nick[NICKLEN] = { 0 };
-
-     if(origin && strchr(origin, '!'))
-          for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
-
-     ui_print_buf(0, "[%s] *** You've been invited by %c%s%c to %c%s",
-               hftirc->conf.serv[find_sessid(session)].name, B, nick, B, B, params[1]);
-
-     return;
-}
-
-void
-irc_event_ctcp(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
-{
-     int i, s;
-     char nick[NICKLEN] = { 0 };
-     char reply[256] = { 0 };
-     struct utsname un;
-
-     if(origin && strchr(origin, '!'))
-          for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
-
-     i = find_bufid((s = find_sessid(session)), nick);
-
-     ui_print_buf(i, "[%s] *** %c%s%c (%s) CTCP request: %c%s%c",
-               hftirc->conf.serv[s].name, B, nick, B, origin + strlen(nick) + 1, B, params[0], B);
-
-     if(!strcasecmp(params[0], "VERSION"))
-     {
-          uname(&un);
-
-          sprintf(reply, "%s HFTirc "HFTIRC_VERSION" - on %s %s", params[0], un.sysname, un.machine);
-          irc_send_raw(session, "NOTICE %s :\x01%s\x01", nick, reply);
-     }
-
-     return;
-}
