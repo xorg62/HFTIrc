@@ -19,7 +19,7 @@
 void
 signal_handler(int signal)
 {
-     int b[2];
+     int b[2], u[2];
 
      switch(signal)
      {
@@ -28,6 +28,14 @@ signal_handler(int signal)
                b[1] = COLS;
                endwin();
                refresh();
+
+               getmaxyx(stdscr, u[0], u[1]);
+               ui_init();
+               ui_print_buf(0, "[HFTIrc] *** Terminal resized: (%dx%d -> %dx%d)",
+                         b[0], b[1], LINES, COLS);
+               ui_buf_set(hftirc->selbuf);
+	
+              break;
      }
 
      return;
