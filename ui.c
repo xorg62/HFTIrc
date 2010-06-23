@@ -20,11 +20,12 @@
 #define COLORMAX      16
 
 /* Colors lists */
-#define COLOR_THEME  COLOR_GREEN
-#define COLOR_SW     (ui_color(COLOR_BLACK,  COLOR_THEME))
+#define COLOR_THEME  COLOR_BLUE
+#define COLOR_SW     (ui_color(COLOR_BLACK, COLOR_THEME))
+#define COLOR_SW2    (ui_color(COLOR_WHITE, COLOR_THEME))
 #define COLOR_HL     (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
 #define COLOR_WROTE  (ui_color(COLOR_CYAN, hftirc->ui->bg))
-#define COLOR_ACT    (ui_color(COLOR_BLACK,  COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_ACT    (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
 #define COLOR_HLACT  (ui_color(COLOR_YELLOW, COLOR_THEME) | A_BOLD | A_UNDERLINE)
 
 void
@@ -147,16 +148,16 @@ ui_update_statuswin(void)
 
      /* Pseudo with mode */
      mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 3, "(");
-     PRINTATTR(hftirc->ui->statuswin, A_BOLD, hftirc->conf.serv[hftirc->selses].nick);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->conf.serv[hftirc->selses].nick);
      waddch(hftirc->ui->statuswin, '(');
-     PRINTATTR(hftirc->ui->statuswin, A_BOLD | A_UNDERLINE, hftirc->conf.serv[hftirc->selses].mode);
+     PRINTATTR(hftirc->ui->statuswin, A_UNDERLINE | COLOR_SW2, hftirc->conf.serv[hftirc->selses].mode);
      waddstr(hftirc->ui->statuswin, "))");
 
      /* Info about current serv/channel */
      wprintw(hftirc->ui->statuswin, " (%d:", hftirc->selbuf);
-     PRINTATTR(hftirc->ui->statuswin, A_BOLD,  hftirc->conf.serv[hftirc->selses].name);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2,  hftirc->conf.serv[hftirc->selses].name);
      waddch(hftirc->ui->statuswin, '/');
-     PRINTATTR(hftirc->ui->statuswin, A_BOLD | A_UNDERLINE, hftirc->cb[hftirc->selbuf].name);
+     PRINTATTR(hftirc->ui->statuswin, A_UNDERLINE | COLOR_SW2, hftirc->cb[hftirc->selbuf].name);
      waddch(hftirc->ui->statuswin, ')');
 
      /* Activity */

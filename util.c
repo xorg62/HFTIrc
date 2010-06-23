@@ -39,7 +39,7 @@ find_bufid(unsigned int id, const char *str)
      for(i = 0; i < hftirc->nbuf; ++i)
           if(hftirc->cb[i].name != NULL
             && strlen(hftirc->cb[i].name) > 1)
-               if(!strcmp(str, hftirc->cb[i].name)
+               if(!strcasecmp(str, hftirc->cb[i].name)
                  && hftirc->cb[i].sessid == id)
                     return i;
 

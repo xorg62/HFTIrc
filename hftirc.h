@@ -31,6 +31,7 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 
 /* Macro */
@@ -174,8 +175,6 @@ typedef struct IrcSession
      int motd_received, connected;
 	unsigned int inoffset;
 	unsigned int outoffset;
-
-     struct in_addr	local_addr;
 } IrcSession;
 
 /* Global struct */
