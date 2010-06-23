@@ -29,10 +29,7 @@
 #include <signal.h>
 #include <locale.h>
 #include <sys/utsname.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
