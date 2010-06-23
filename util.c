@@ -47,7 +47,7 @@ find_bufid(unsigned int id, const char *str)
 }
 
 int
-find_sessid(irc_session_t *session)
+find_sessid(IrcSession *session)
 {
      int i;
 

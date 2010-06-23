@@ -60,7 +60,7 @@ input_join(const char *input)
      }
 
      /* Last arg -> password (TODO) */
-     if(irc_cmd_join(hftirc->session[hftirc->selses], input, NULL))
+     if(irc_send_raw(hftirc->session[hftirc->selses], "JOIN %s", input))
           WARN("Error", "Can't use JOIN command");
 
      return;
@@ -72,7 +72,7 @@ input_nick(const char *input)
      DSINPUT(input);
      NOSERVRET();
 
-     if(irc_cmd_nick(hftirc->session[hftirc->selses], input))
+     if(irc_send_raw(hftirc->session[hftirc->selses], "NICK %s", input))
           WARN("Error", "Can't change nick or invalid nick");
 
      return;
@@ -84,7 +84,7 @@ input_quit(const char *input)
      DSINPUT(input);
 
      if(hftirc->conf.nserv)
-          irc_cmd_quit(hftirc->session[hftirc->selses], input);
+          irc_send_raw(hftirc->session[hftirc->selses], "QUIT :%s", input);
 
      hftirc->running = 0;
 
@@ -97,7 +97,8 @@ input_names(const char *input)
      NOSERVRET();
 
      if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
-          if(irc_cmd_names(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
+          if(irc_send_raw(hftirc->session[hftirc->selses], "NAMES %s",
+                         hftirc->cb[hftirc->selbuf].name))
                WARN("Error", "Can't get names list");
 
      return;
@@ -124,13 +125,14 @@ input_topic(const char *input)
 
      if(strlen(input) > 0)
      {
-          if(irc_cmd_topic(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name, input))
+          if(irc_send_raw(hftirc->session[hftirc->selses], "TOPIC %s :%s", hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't change topic");
      }
      else
           ui_print_buf(hftirc->selbuf, "  *** Topic of %s: %s",
                     hftirc->cb[hftirc->selbuf].name,
                     hftirc->cb[hftirc->selbuf].topic);
+
      return;
 }
 
@@ -156,7 +158,8 @@ input_me(const char *input)
      DSINPUT(input);
      NOSERVRET();
 
-     if(irc_cmd_me(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name, input))
+     if(irc_send_raw(hftirc->session[hftirc->selses], "PRIVMSG %s :\x01" "ACTION %s\x01",
+                    hftirc->cb[hftirc->selbuf].name, input))
           WARN("Error", "Can't send action message");
      else
           ui_print_buf(hftirc->selbuf, " %c* %s%c %s", B, hftirc->conf.serv[hftirc->selses].nick, B, input);
@@ -195,7 +198,7 @@ input_msg(const char *input)
      }
      else
      {
-          if(irc_cmd_msg(hftirc->session[hftirc->selses], nick, msg))
+          if(irc_send_raw(hftirc->session[hftirc->selses], "PRIVMSG %s :%s", nick, msg))
                WARN("Error", "Can't send MSG");
           else if((i = find_bufid(hftirc->selses, nick)))
                 ui_print_buf(i, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, msg);
@@ -232,8 +235,12 @@ input_kick(const char *input)
           return;
      }
 
-     if(irc_cmd_kick(hftirc->session[hftirc->selses], nick, hftirc->cb[hftirc->selbuf].name, reason))
-          WARN("Error", "Can't kick");
+     if(strlen(reason) > 0)
+		irc_send_raw(hftirc->session[hftirc->selses], "KICK %s %s :%s",
+                    nick, hftirc->cb[hftirc->selbuf].name, reason);
+	else
+          irc_send_raw(hftirc->session[hftirc->selses], "KICK %s %s",
+                    nick, hftirc->cb[hftirc->selbuf].name);
 
      return;
 }
@@ -246,7 +253,7 @@ input_whois(const char *input)
 
      if(strlen(input) > 0)
      {
-          if(irc_cmd_whois(hftirc->session[hftirc->selses], input))
+          if(irc_send_raw(hftirc->session[hftirc->selses], "WHOIS %s %s", input, input))
                WARN("Error", "Can't use WHOIS");
      }
      /* No input -> whois current private nick */
@@ -254,7 +261,8 @@ input_whois(const char *input)
      {
           if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
                WARN("Error", "Usage: /whois <nick>");
-          else if(irc_cmd_whois(hftirc->session[hftirc->selses], hftirc->cb[hftirc->selbuf].name))
+          else if(irc_send_raw(hftirc->session[hftirc->selses], "WHOIS %s %s",
+                         hftirc->cb[hftirc->selbuf].name, hftirc->cb[hftirc->selbuf].name))
                WARN("Error", "Can't use WHOIS");
      }
 
@@ -331,7 +339,8 @@ input_umode(const char *input)
 
      if(!strlen(input))
           WARN("Error", "Usage: /umode <mode>");
-     else if(irc_cmd_user_mode(hftirc->session[hftirc->selses], input))
+     else if(irc_send_raw(hftirc->session[hftirc->selses], "MODE %s %s",
+                    hftirc->session[hftirc->selses]->nick, input))
           WARN("Error", "Can't set user mode");
 
      return;
@@ -398,16 +407,8 @@ input_connect(const char *input)
                if(!strcmp(input, hftirc->conf.serv[i].adress)
                          || !strcasecmp(input, hftirc->conf.serv[i].name))
                {
-                    if(irc_is_connected(hftirc->session[i]))
-                    {
-                         WARN("Error", "Already connected to this server");
-                         return;
-                    }
-                    else
-                    {
-                         ++a;
-                         break;
-                    }
+                    ++a;
+                    break;
                }
 
           if(!a)
@@ -420,7 +421,7 @@ input_connect(const char *input)
                strcpy(hftirc->conf.serv[i].adress, input);
           }
 
-          hftirc->session[i] = irc_create_session(&hftirc->callbacks);
+          hftirc->session[i] = irc_session(&hftirc->callbacks);
 
           if(irc_connect(hftirc->session[i],
                          hftirc->conf.serv[i].adress,
@@ -515,7 +516,7 @@ input_ctcp(const char *input)
           return;
      }
 
-     if(irc_cmd_ctcp_request(hftirc->session[hftirc->selses], nick, request))
+     if(irc_send_raw(hftirc->session[hftirc->selses], "PRIVMSG %s :\x01%s\x01", nick, request))
           WARN("Error", "Can't kick");
 
      return;
@@ -573,7 +574,7 @@ input_say(const char *input)
 
      if(strlen(input) > 0)
      {
-          if(irc_cmd_msg(hftirc->session[hftirc->selses],
+          if(irc_send_raw(hftirc->session[hftirc->selses], "PRIVMSG %s :%s",
                          hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't send message");
           else

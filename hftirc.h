@@ -29,12 +29,10 @@
 #include <signal.h>
 #include <locale.h>
 #include <sys/utsname.h>
-#include <libircclient.h>
-#include <libirc_events.h>
 
 /* Macro */
 #define HFTIRC_VERSION    "(devel version)"
-#define BUFSIZE           8192
+#define BUFSIZE           2048
 #define MAXBUF            64
 #define BUFLINES          512
 #define NICKLEN           24
@@ -66,6 +64,7 @@ typedef enum { False, True } Bool;
 
 /* Internal lib */
 #include "parse/parse.h"
+#include "irc/libirc.h"
 
 /* Structures */
 typedef struct
@@ -162,8 +161,8 @@ typedef struct
 {
      int ft, running;
      int nbuf, selbuf, selses;
-     irc_session_t *session[NSERV];
-     irc_callbacks_t callbacks;
+     IrcSession *session[NSERV];
+     IrcCallbacks callbacks;
      ConfStruct conf;
      ChanBuf *cb;
      Ui *ui;
@@ -195,26 +194,26 @@ void ui_get_input(void);
 
 /* irc.c */
 void irc_init(void);
-void irc_join(irc_session_t *session, const char *chan);
+void irc_join(IrcSession *session, const char *chan);
 
-void irc_dump_event(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count);
-void irc_event_nick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_mode(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_connect(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_join(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_part(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_quit(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_channel(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count);
-void irc_event_privmsg(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_notice(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_topic(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_names(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_action(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_kick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count);
-void irc_event_invite(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
-void irc_event_ctcp(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_dump_event(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_numeric(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_nick(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_mode(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_connect(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_join(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_part(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_quit(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_channel(IrcSession * session, const char * event, const char * origin, const char ** params, unsigned int count);
+void irc_event_privmsg(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_notice(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_topic(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_names(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_action(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_kick(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_whois(IrcSession *session, unsigned int event, const char *origin, const char **params, unsigned int count);
+void irc_event_invite(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
+void irc_event_ctcp(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
 
 /* input.c */
 void input_manage(char *input);
@@ -247,7 +246,7 @@ void input_say(const char *input);
 /* util.c */
 void update_date(void);
 int find_bufid(unsigned id, const char *str);
-int find_sessid(irc_session_t *session);
+int find_sessid(IrcSession *session);
 void nick_attach(int buf, NickStruct *nick);
 void nick_detach(int buf, NickStruct *nick);
 NickStruct* nickstruct_set(char *nick);

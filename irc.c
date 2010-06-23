@@ -23,32 +23,31 @@ irc_init(void)
 
      memset(&hftirc->callbacks, 0, sizeof(hftirc->callbacks));
 
-     hftirc->callbacks.event_connect     = irc_event_connect;
-     hftirc->callbacks.event_join        = irc_event_join;
-     hftirc->callbacks.event_nick        = irc_event_nick;
-     hftirc->callbacks.event_quit        = irc_event_quit;
-     hftirc->callbacks.event_part        = irc_event_part;
-     hftirc->callbacks.event_mode        = irc_event_mode;
-     hftirc->callbacks.event_topic       = irc_event_topic;
-     hftirc->callbacks.event_kick        = irc_event_kick;
-     hftirc->callbacks.event_channel     = irc_event_channel;
-     hftirc->callbacks.event_privmsg     = irc_event_privmsg;
-     hftirc->callbacks.event_notice      = irc_event_notice;
-     hftirc->callbacks.event_invite      = irc_event_invite;
-     hftirc->callbacks.event_umode       = irc_event_mode;
-     hftirc->callbacks.event_ctcp_rep    = irc_dump_event;
-     hftirc->callbacks.event_ctcp_action = irc_event_action;
-     hftirc->callbacks.event_ctcp_req    = irc_event_ctcp;
-     hftirc->callbacks.event_unknown     = irc_dump_event;
-     hftirc->callbacks.event_numeric     = irc_event_numeric;
+     hftirc->callbacks.connect   = irc_event_connect;
+     hftirc->callbacks.join      = irc_event_join;
+     hftirc->callbacks.nick      = irc_event_nick;
+     hftirc->callbacks.quit      = irc_event_quit;
+     hftirc->callbacks.part      = irc_event_part;
+     hftirc->callbacks.mode      = irc_event_mode;
+     hftirc->callbacks.topic     = irc_event_topic;
+     hftirc->callbacks.kick      = irc_event_kick;
+     hftirc->callbacks.channel   = irc_event_channel;
+     hftirc->callbacks.privmsg   = irc_event_privmsg;
+     hftirc->callbacks.notice    = irc_event_notice;
+     hftirc->callbacks.invite    = irc_event_invite;
+     hftirc->callbacks.umode     = irc_event_mode;
+     hftirc->callbacks.ctcp_rep  = irc_dump_event;
+     hftirc->callbacks.action    = irc_event_action;
+     hftirc->callbacks.ctcp_req  = irc_event_ctcp;
+     hftirc->callbacks.unknown   = irc_dump_event;
+     hftirc->callbacks.numeric   = irc_event_numeric;
 
      hftirc->selses = 0;
 
      for(i = 0; i < hftirc->conf.nserv; ++i)
      {
-          hftirc->session[i] = irc_create_session(&hftirc->callbacks);
-
-          if((hftirc->conf.serv[i].ipv6 ? (irc_connect6) : (irc_connect)) (hftirc->session[i],
+          hftirc->session[i] = irc_session(&hftirc->callbacks);
+          if(irc_connect(hftirc->session[i],
                          hftirc->conf.serv[i].adress,
                          hftirc->conf.serv[i].port,
                          hftirc->conf.serv[i].password,
@@ -63,7 +62,7 @@ irc_init(void)
 }
 
 void
-irc_join(irc_session_t *session, const char *chan)
+irc_join(IrcSession *session, const char *chan)
 {
      int s;
 
@@ -77,7 +76,7 @@ irc_join(irc_session_t *session, const char *chan)
 }
 
 void
-irc_dump_event(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_dump_event(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      char buf[BUFSIZE] = { 0 };
      unsigned int i;
@@ -97,18 +96,17 @@ irc_dump_event(irc_session_t *session, const char *event, const char *origin, co
 }
 
 void
-irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count)
+irc_event_numeric(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     char num[24];
      char buf[BUFSIZE] = { 0 };
      char name[256] = { 0 };
-     int i, s;
+     int i, s, e;
 
-     sprintf(num, "%d", event);
+     e = atoi(event);
 
      strcpy(name, hftirc->conf.serv[(s = find_sessid(session))].name);
 
-     switch(event)
+     switch(e)
      {
           /* Basic message, just write it in status buffer */
           case 1:
@@ -150,7 +148,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           case 330:
           case 378:
           case 671:
-               irc_event_whois(session, event, origin, params, count);
+               irc_event_whois(session, e, origin, params, count);
                break;
 
           /* Away */
@@ -174,7 +172,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           /* Topic / Channel */
           case 332:
           case 333:
-               irc_event_topic(session, num, origin, params, count);
+               irc_event_topic(session, event, origin, params, count);
                break;
           case 328:
                ui_print_buf(find_bufid(s, params[1]),
@@ -184,7 +182,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
           /* Names */
           case 353:
           case 366:
-               irc_event_names(session, num, origin, params, count);
+               irc_event_names(session, event, origin, params, count);
                break;
 
           /* Errors */
@@ -236,7 +234,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
                break;
 
           default:
-               irc_dump_event(session, num, origin, params, count);
+               irc_dump_event(session, event, origin, params, count);
                break;
      }
 
@@ -244,7 +242,7 @@ irc_event_numeric(irc_session_t *session, unsigned int event, const char *origin
 }
 
 void
-irc_event_nick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_nick(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, j, s;
      char nick[NICKLEN] = { 0 };
@@ -282,7 +280,7 @@ irc_event_nick(irc_session_t *session, const char *event, const char *origin, co
 }
 
 void
-irc_event_mode(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_mode(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, s;
      char nick[NICKLEN] = { 0 };
@@ -319,13 +317,13 @@ irc_event_mode(irc_session_t *session, const char *event, const char *origin, co
 }
 
 void
-irc_event_connect(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_connect(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int c, i;
 
      c = find_sessid(session);
 
-     irc_event_numeric(session, 123456, origin, params, count);
+     irc_event_numeric(session, "123456", origin, params, count);
 
      for(i = 0; i < hftirc->conf.serv[c].nautojoin; ++i)
      {
@@ -337,7 +335,7 @@ irc_event_connect(irc_session_t *session, const char *event, const char *origin,
 }
 
 void
-irc_event_join(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_join(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int s, j, i = 0;
      char nick[NICKLEN] = { 0 };
@@ -373,13 +371,13 @@ irc_event_join(irc_session_t *session, const char *event, const char *origin, co
 
 
 void
-irc_event_part(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_part(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int s, i, j;
      char nick[NICKLEN] = { 0 };
      NickStruct *ns;
 
-     irc_cmd_user_mode(session, "+i");
+     irc_send_raw(session, "MODE %s +i", session->nick);
 
      i = find_bufid((s = find_sessid(session)), params[0]);
 
@@ -400,7 +398,7 @@ irc_event_part(irc_session_t *session, const char *event, const char *origin, co
 }
 
 void
-irc_event_quit(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_quit(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, s;
      char nick[NICKLEN] = { 0 };
@@ -427,7 +425,7 @@ irc_event_quit(irc_session_t *session, const char *event, const char *origin, co
 }
 
 void
-irc_event_channel(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_channel(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, j;
      char nick[NICKLEN] = { 0 };
@@ -453,7 +451,7 @@ irc_event_channel(irc_session_t *session, const char *event, const char *origin,
 }
 
 void
-irc_event_privmsg(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_privmsg(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, j;
      char nick[NICKLEN] = { 0 };
@@ -480,7 +478,7 @@ irc_event_privmsg(irc_session_t *session, const char *event, const char *origin,
 }
 
 void
-irc_event_notice(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_notice(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int j;
      char nick[NICKLEN] = { 0 };
@@ -495,7 +493,7 @@ irc_event_notice(irc_session_t *session, const char *event, const char *origin, 
 }
 
 void
-irc_event_topic(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_topic(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, j;
      char nick[NICKLEN] = { 0 };
@@ -530,7 +528,7 @@ irc_event_topic(irc_session_t *session, const char *event, const char *origin, c
 }
 
 void
-irc_event_names(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_names(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int s, S;
      unsigned int cn = 0;
@@ -587,7 +585,7 @@ irc_event_names(irc_session_t *session, const char *event, const char *origin, c
 }
 
 void
-irc_event_action(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_action(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i;
      char nick[NICKLEN] = { 0 };
@@ -607,7 +605,7 @@ irc_event_action(irc_session_t *session, const char *event, const char *origin, 
 }
 
 void
-irc_event_kick(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_kick(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i;
      char ornick[NICKLEN] = { 0 };
@@ -624,7 +622,7 @@ irc_event_kick(irc_session_t *session, const char *event, const char *origin, co
 }
 
 void
-irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count)
+irc_event_whois(IrcSession *session, unsigned int event, const char *origin, const char **params, unsigned int count)
 {
      int s, b = 0;
      char *n = hftirc->conf.serv[(s = find_sessid(session))].name;
@@ -683,7 +681,7 @@ irc_event_whois(irc_session_t *session, unsigned int event, const char *origin, 
 }
 
 void
-irc_event_invite(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_invite(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i;
      char nick[NICKLEN] = { 0 };
@@ -698,7 +696,7 @@ irc_event_invite(irc_session_t *session, const char *event, const char *origin, 
 }
 
 void
-irc_event_ctcp(irc_session_t *session, const char *event, const char *origin, const char **params, unsigned int count)
+irc_event_ctcp(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, s;
      char nick[NICKLEN] = { 0 };
@@ -718,7 +716,7 @@ irc_event_ctcp(irc_session_t *session, const char *event, const char *origin, co
           uname(&un);
 
           sprintf(reply, "%s HFTirc "HFTIRC_VERSION" - on %s %s", params[0], un.sysname, un.machine);
-          irc_cmd_ctcp_reply(session, nick, reply);
+          irc_send_raw(session, "NOTICE %s :\x01%s\x01", nick, reply);
      }
 
      return;
