@@ -677,7 +677,8 @@ ui_get_input(void)
                          break;
 
                     default:
-                         if(c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE)
+                         if((c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE)
+                                   && !(c >= 1 && c < 27)) /* Block no binded Ctrl-{key} */
                          {
                               if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos] != '\0')
                                    for(i = (int)wcslen(hftirc->ui->ib.buffer);
