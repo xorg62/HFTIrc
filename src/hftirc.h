@@ -159,7 +159,7 @@ typedef struct
 
 } ConfStruct;
 
-typedef struct IrcSession
+typedef struct
 {
      int sock;
      short port;

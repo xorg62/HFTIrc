@@ -309,8 +309,6 @@ input_close(const char *input)
      if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
                input_part(NULL);
 
-     ui_buf_close(hftirc->selbuf);
-
      return;
 }
 

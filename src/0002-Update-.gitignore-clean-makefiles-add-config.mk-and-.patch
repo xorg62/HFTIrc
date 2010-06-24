@@ -1,0 +1,136 @@
+From ee28ef358e4a607eb1dd348f16ae1fbed5ccd036 Mon Sep 17 00:00:00 2001
+From: Marc Lagrange <rhaamo@gruik.at>
+Date: Tue, 15 Jun 2010 20:29:04 +0200
+Subject: [PATCH 2/2] Update .gitignore, clean makefiles, add config.mk and add a 'configure' script
+
+---
+ .gitignore |    1 +
+ Makefile   |   24 ++++++++++--------------
+ config.mk  |    9 +++++++++
+ configure  |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 62 insertions(+), 14 deletions(-)
+ create mode 100644 config.mk
+ create mode 100755 configure
+
+diff --git a/.gitignore b/.gitignore
+index c8acf0b..0ce4672 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,2 +1,3 @@
+ hftirc
+ *.o
++config.local.mk
+diff --git a/Makefile b/Makefile
+index 624b2e1..da27c0f 100755
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,8 @@
+ # HFTIRC Makefile
++PREFIX?=	/usr/local
++
++include	config.mk
++include config.local.mk
+ 
+ EXEC=hftirc
+ SRC= confparse/util.c      \
+@@ -12,20 +16,12 @@ SRC= confparse/util.c      \
+      input.c  \
+      hftirc.h
+ 
+-CFLAGS+=-Wall -g -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES -I/usr/include/libircclient
+-LDFLAGS+=-lncursesw /usr/lib/libircclient.a
+-
+-OBJ=$(SRC:.c=.o)
+-UNAME=$(shell uname)
++CFLAGS+=	${INCLUDES} ${NCURSES5INCDIR} ${INCLIBIRCCLIENT}
++CFLAGS+=	-Wall -g -D_XOPEN_SOURCE_EXTENDED -D_XOPEN_SOURCE -D_XOPEN_CURSES
+ 
+-ifeq ($(UNAME),Linux)
+-	CFLAGS += -D_GNU_SOURCE
+-endif
++LDFLAGS+=	${LIBDIR} ${NCURSES5LIBDIR} ${LIBIRCCLIENTLIB}
+ 
+-ifeq ($(UNAME),FreeBSD)
+-    CFLAGS+=-I/usr/local/include
+-    LDFLAGS+=-L/usr/local/lib
+-endif
++OBJ=$(SRC:.c=.o)
+ 
+ all: $(EXEC)
+ 
+@@ -40,7 +36,7 @@ $(EXEC): $(OBJ)
+ .PHONY: clean mrproper
+ 
+ clean:
+-	@rm -rf *.o
++	rm -rf *.o
+ 
+ mrproper: clean
+-	@rm -rf $(EXEC)
++	rm -rf $(EXEC)
+diff --git a/config.mk b/config.mk
+new file mode 100644
+index 0000000..18493f9
+--- /dev/null
++++ b/config.mk
+@@ -0,0 +1,9 @@
++INCLUDES=	-I${PREFIX}/include
++INCLIBIRCCLIENT=	-I${PREFIX}/include/libircclient
++
++LIBDIR=		-I${PREFIX}/lib
++LIBIRCCLIENTLIB=	-lircclient
++
++CC?=	gcc
++AR?=	ar
++RANLIB?=	ranlib
+diff --git a/configure b/configure
+new file mode 100755
+index 0000000..ad966da
+--- /dev/null
++++ b/configure
+@@ -0,0 +1,42 @@
++#!/bin/sh
++# Shitty script to generate custom .mk
++# WHY?
++#  Send all your love to GNUMake with is not capable to be REAL MAKE COMPATIBLE
++# .
++
++UNAME="`uname`"
++NCURSES="w5"
++
++echo "Configure script is now configuring your config.local.mk"
++echo "Checking OS... ${UNAME}"
++
++rm -f "config.local.mk"
++touch "config.local.mk"
++
++if [ "${UNAME}" = "Linux" ]; then
++    echo "CFLAGS += -D_GNU_SOURCE" >> "config.local.mk"
++fi
++
++if [ "${UNAME}" = "NetBSD" ]; then
++    NCURSES="5"
++fi
++
++printf "Checking for ncursesw5... "
++
++if [ "${NCURSES}" = "w5" ]; then
++    NC_LIBS="`ncursesw5-config --libs`"
++    NC_INCS="`ncursesw5-config --cflags`"
++fi
++
++if [ "${NCURSES}" = "5" ]; then
++    NC_LIBS="`ncurses5-config --libs`"
++    NC_INCS="`ncurses5-config --cflags`"
++fi
++
++echo "NCURSES5INCDIR= ${NC_INCS}" >> "config.local.mk"
++echo "NCURSES5LIBDIR= ${NC_LIBS}" >> "config.local.mk"
++
++echo "done"
++
++echo "Checking beer in fridge... nop :("
++echo "Done."
+-- 
+1.7.1
+

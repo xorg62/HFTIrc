@@ -206,7 +206,6 @@ ui_update_topicwin(void)
      return;
 }
 
-
 void
 ui_print(WINDOW *w, char *str)
 {

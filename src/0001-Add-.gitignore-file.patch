@@ -1,0 +1,21 @@
+From c367b8f3d5d32b67b3290138ac499e73eb69eac2 Mon Sep 17 00:00:00 2001
+From: Marc Lagrange <rhaamo@gruik.at>
+Date: Tue, 15 Jun 2010 20:02:46 +0200
+Subject: [PATCH 1/2] Add .gitignore file
+
+---
+ .gitignore |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+ create mode 100644 .gitignore
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..c8acf0b
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++hftirc
++*.o
+-- 
+1.7.1
+
