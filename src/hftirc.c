@@ -45,9 +45,8 @@ int
 main(int argc, char **argv)
 {
     struct sigaction sig;
-    int i;
-    int maxfd = 0;
-    fd_set iset, oset;
+    int i, maxfd = 0;
+    fd_set iset;
     static struct timeval tv;
 
     hftirc     = malloc(sizeof(HFTIrc));
@@ -68,27 +67,34 @@ main(int argc, char **argv)
 
     while(hftirc->running)
     {
+         if(hftirc->running < 0)
+              ++hftirc->running;
+
          tv.tv_sec = 0;
          tv.tv_usec = 250000;
 
          FD_ZERO(&iset);
-         FD_ZERO(&oset);
 
          FD_SET(STDIN_FILENO, &iset);
 
          maxfd = STDIN_FILENO;
 
          for(i = 0; i < hftirc->conf.nserv; ++i)
-              irc_add_select_descriptors(hftirc->session[i], &iset, &oset, &maxfd);
+              if(hftirc->session[i]->sock > 0 && hftirc->session[i]->connected)
+              {
+                   if(maxfd < hftirc->session[i]->sock)
+                        maxfd = hftirc->session[i]->sock;
 
-         if(select(maxfd + hftirc->conf.nserv + 1, &iset, &oset, NULL, &tv) > 0)
+                   FD_SET(hftirc->session[i]->sock, &iset);
+              }
+
+         if(select(maxfd + hftirc->conf.nserv + 1, &iset, NULL, NULL, &tv) > 0)
          {
               if(FD_ISSET(STDIN_FILENO, &iset))
                    ui_get_input();
               else
                    for(i = 0; i < hftirc->conf.nserv; ++i)
-                        if(hftirc->session[i]->connected)
-                             irc_run_process(hftirc->session[i], &iset, &oset);
+                        irc_run_process(hftirc->session[i], &iset);
          }
 
          update_date();

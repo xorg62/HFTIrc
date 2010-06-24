@@ -91,7 +91,7 @@ irc_disconnect(IrcSession *s)
 }
 
 int
-irc_run_process(IrcSession *session, fd_set *inset, fd_set *outset)
+irc_run_process(IrcSession *session, fd_set *inset)
 {
      int length, offset;
      unsigned int amount;
@@ -99,7 +99,7 @@ irc_run_process(IrcSession *session, fd_set *inset, fd_set *outset)
      if(session->sock < 0 || !session->connected)
           return 1;
 
-     /* Read time */
+     /* Read incoming socket */
      if(FD_ISSET(session->sock, inset))
      {
           amount = (sizeof(session->inbuf) - 1) - session->inoffset;
@@ -109,7 +109,7 @@ irc_run_process(IrcSession *session, fd_set *inset, fd_set *outset)
 
           session->inoffset += length;
 
-          /* Process the incoming data */
+          /* Parse incoming data */
           for(; ((offset = irc_findcrlf(session->inbuf, session->inoffset)) > 0); session->inoffset -= offset)
           {
                irc_manage_event(session, offset - 2);
@@ -118,35 +118,6 @@ irc_run_process(IrcSession *session, fd_set *inset, fd_set *outset)
                     memmove(session->inbuf, session->inbuf + offset, session->inoffset - offset);
           }
      }
-     /* Send time */
-     if(FD_ISSET(session->sock, outset))
-     {
-          if((length = send(session->sock, session->outbuf, session->outoffset, 0)) <= 0)
-               return 1;
-
-          if(session->outoffset - length > 0)
-               memmove (session->outbuf, session->outbuf + length, session->outoffset - length);
-
-          session->outoffset -= length;
-     }
-
-     return 0;
-}
-
-int
-irc_add_select_descriptors(IrcSession *session, fd_set *inset, fd_set *outset, int *maxfd)
-{
-     if(session->sock < 0 || !session->connected)
-          return 1;
-
-     if(session->inoffset < (sizeof (session->inbuf) - 1))
-          FD_SET(session->sock, inset);
-
-     if(irc_findcrlf(session->outbuf, session->outoffset) > 0)
-          FD_SET(session->sock, outset);
-
-     if(*maxfd < session->sock)
-          *maxfd = session->sock;
 
      return 0;
 }
@@ -161,14 +132,12 @@ irc_send_raw(IrcSession *session, const char *format, ...)
      vsnprintf(buf, sizeof(buf), format, va_alist);
      va_end(va_alist);
 
-     if((strlen(buf) + 2) >= (sizeof(session->outbuf) - session->outoffset))
+     if(!session->sock)
           return 1;
 
-     strcpy(session->outbuf + session->outoffset, buf);
+     strcat(buf, "\r\n");
 
-     session->outoffset += strlen(buf);
-     session->outbuf[session->outoffset++] = '\r';
-     session->outbuf[session->outoffset++] = '\n';
+     send(session->sock, buf, strlen(buf), 0);
 
      return 0;
 }

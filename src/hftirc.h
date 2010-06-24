@@ -168,13 +168,9 @@ typedef struct
      char *username;
      char *realname;
      char *password;
-
 	char	inbuf[BUFSIZE];
-	char outbuf[BUFSIZE];
-
      int motd_received, connected;
 	unsigned int inoffset;
-	unsigned int outoffset;
 } IrcSession;
 
 /* Global struct */
@@ -236,8 +232,7 @@ void event_ctcp(IrcSession *session, const char *event, const char *origin, cons
 void irc_init(void);
 void irc_join(IrcSession *session, const char *chan);
 
-int irc_run_process(IrcSession *session, fd_set *inset, fd_set *outset);
-int irc_add_select_descriptors(IrcSession *session, fd_set *inset, fd_set *outset, int *maxfd);
+int irc_run_process(IrcSession *session, fd_set *inset);
 void irc_disconnect(IrcSession *s);
 int irc_connect(IrcSession *s,
           const char *server,

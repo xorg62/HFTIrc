@@ -83,10 +83,9 @@ input_quit(const char *input)
 {
      DSINPUT(input);
 
-     if(hftirc->conf.nserv)
-          irc_send_raw(hftirc->session[hftirc->selses], "QUIT :%s", input);
+     irc_send_raw(hftirc->session[hftirc->selses], "QUIT :%s", input);
 
-     hftirc->running = 0;
+     hftirc->running = -1;
 
      return;
 }
