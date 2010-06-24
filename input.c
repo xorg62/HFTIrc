@@ -162,7 +162,7 @@ input_me(const char *input)
                     hftirc->cb[hftirc->selbuf].name, input))
           WARN("Error", "Can't send action message");
      else
-          ui_print_buf(hftirc->selbuf, " %c* %s%c %s", B, hftirc->conf.serv[hftirc->selses].nick, B, input);
+          ui_print_buf(hftirc->selbuf, " %c* %s%c %s", B, hftirc->session[hftirc->selses]->nick, B, input);
 
      return;
 }
@@ -201,7 +201,7 @@ input_msg(const char *input)
           if(irc_send_raw(hftirc->session[hftirc->selses], "PRIVMSG %s :%s", nick, msg))
                WARN("Error", "Can't send MSG");
           else if((i = find_bufid(hftirc->selses, nick)))
-                ui_print_buf(i, "<%s> %s", hftirc->conf.serv[hftirc->selses].nick, msg);
+                ui_print_buf(i, "<%s> %s", hftirc->session[hftirc->selses]->nick, msg);
      }
 
      return;
@@ -237,10 +237,10 @@ input_kick(const char *input)
 
      if(strlen(reason) > 0)
 		irc_send_raw(hftirc->session[hftirc->selses], "KICK %s %s :%s",
-                    nick, hftirc->cb[hftirc->selbuf].name, reason);
+                    hftirc->cb[hftirc->selbuf].name, nick, reason);
 	else
           irc_send_raw(hftirc->session[hftirc->selses], "KICK %s %s",
-                    nick, hftirc->cb[hftirc->selbuf].name);
+                     hftirc->cb[hftirc->selbuf].name, nick);
 
      return;
 }
@@ -525,7 +525,7 @@ input_ctcp(const char *input)
      }
 
      if(irc_send_raw(hftirc->session[hftirc->selses], "PRIVMSG %s :\x01%s\x01", nick, request))
-          WARN("Error", "Can't kick");
+          WARN("Error", "Can't send ctcp");
 
      return;
 }

@@ -194,13 +194,11 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
 
      s = find_sessid(session);
 
-     if(!strcmp(nick, hftirc->conf.serv[s].nick))
+     if(!strcmp(nick, hftirc->session[s]->nick))
      {
-          strcpy(hftirc->conf.serv[s].nick, params[0]);
-
           for(j = 0; j < hftirc->nbuf; ++j)
                if(hftirc->cb[j].sessid == s && j != 0)
-                    ui_print_buf(j, "  *** Your nick is now %c%s", B, hftirc->conf.serv[s].nick);
+                    ui_print_buf(j, "  *** Your nick is now %c%s", B, hftirc->session[s]->nick);
 
                return;
      }
@@ -287,7 +285,7 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
-     if(!strcmp(nick, hftirc->conf.serv[s].nick))
+     if(!strcmp(nick, hftirc->session[s]->nick))
      {
           /* Check if the channel isn't already present on buffers */
           if(i != 0)
@@ -385,7 +383,7 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
 
      ui_print_buf(i, "<%s> %s", nick, params[1]);
 
-     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->conf.serv[hftirc->selses].nick))
+     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->session[hftirc->selses]->nick))
           putchar('\a');
 
      return;
@@ -539,7 +537,8 @@ event_action(IrcSession *session, const char *event, const char *origin, const c
 
      ui_print_buf(i, " %c* %s%c %s", B, nick, B, params[1]);
 
-     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->conf.serv[hftirc->selses].nick))
+     if(hftirc->conf.bell && hftirc->conf.serv
+               && strstr(params[1], hftirc->session[hftirc->selses]->nick))
           putchar('\a');
 
      return;

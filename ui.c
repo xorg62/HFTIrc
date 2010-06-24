@@ -148,7 +148,7 @@ ui_update_statuswin(void)
 
      /* Pseudo with mode */
      mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 3, "(");
-     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->conf.serv[hftirc->selses].nick);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->session[hftirc->selses]->nick);
      waddch(hftirc->ui->statuswin, '(');
      PRINTATTR(hftirc->ui->statuswin, A_UNDERLINE | COLOR_SW2, hftirc->conf.serv[hftirc->selses].mode);
      waddstr(hftirc->ui->statuswin, "))");
@@ -193,7 +193,13 @@ ui_update_topicwin(void)
      wbkgd(hftirc->ui->topicwin, COLOR_SW);
 
      /* Write topic */
-     waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
+     /* Channel */
+     if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
+          waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
+     /* Other */
+     else
+          wprintw(hftirc->ui->topicwin, "%s (%s)",
+                    hftirc->cb[hftirc->selbuf].name, hftirc->conf.serv[hftirc->selses].name);
 
      wrefresh(hftirc->ui->topicwin);
 
@@ -213,13 +219,13 @@ ui_print(WINDOW *w, char *str)
      /* Wrote lines */
      if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
                && (p = strchr(str, '<')) && sscanf(p, "%128s", nick)
-               && strstr(nick, hftirc->conf.serv[hftirc->selses].nick))
+               && strstr(nick, hftirc->session[hftirc->selses]->nick))
           mask |= COLOR_WROTE;
 
      /* Highlight line */
      if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
                && strchr(str, '<') && strchr(str, '>')
-               && strstr(str + strlen(hftirc->date.str) + 4,  hftirc->conf.serv[hftirc->selses].nick))
+               && strstr(str + strlen(hftirc->date.str) + 4,  hftirc->session[hftirc->selses]->nick))
      {
           mask &= ~(COLOR_WROTE);
           mask |= COLOR_HL;
@@ -294,7 +300,7 @@ ui_print_buf(int id, char *format, ...)
 
           /* Highlight test (if hl or private message) */
           if(hftirc->conf.serv && id  && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
-                              && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->conf.serv[hftirc->selses].nick))
+                              && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->session[hftirc->selses]->nick))
                          || !strchr("#&", hftirc->cb[id].name[0])))
                /* No HL on status buffer (0) */
                hftirc->cb[id].act = (id) ? 2 : 1;
