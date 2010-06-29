@@ -41,13 +41,14 @@ add_executable(hftirc ${hftirc_src})
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -ansi -D_GNU_SOURCE")
 
 # Linker FLAGS
-set(DEFAULT_LDFLAGS "-L /usr/local/lib -lncurses")
+set(DEFAULT_LDFLAGS "")
 
 if(CMAKE_SYSTEM_NAME MATCHES NetBSD)
     message("-- NetBSD system found - Using /usr/pkg/lib for linker")
-    set(LDFLAGS "${DEFAULT_LDFLAGS} -L /usr/pkg/lib")
+    set(LDFLAGS "${DEFAULT_LDFLAGS} -lncursesw -Wl -R /usr/pkg/lib -L /usr/pkg/lib")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/pkg/include")
 else(CMAKE_SYSTEM_NAME MATCHES NetBSD)
-    set(LDFLAGS ${DEFAULT_LDFLAGS})
+    set(LDFLAGS "${DEFAULT_LDFLAGS} -L /usr/local/lib -lncurses")
 endif(CMAKE_SYSTEM_NAME MATCHES NetBSD)
 
 set_target_properties(hftirc PROPERTIES LINK_FLAGS ${LDFLAGS})

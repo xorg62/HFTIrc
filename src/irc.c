@@ -161,7 +161,7 @@ irc_parse_in(char *buf,
      }
 
      /* Parse command */
-     if(isdigit(p[0]) && isdigit(p[1]) && isdigit(p[2]))
+     if(isdigit((int)p[0]) && isdigit((int)p[1]) && isdigit((int)p[2]))
      {
           p[3] = '\0';
           *code = atoi (p);
