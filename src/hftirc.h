@@ -18,7 +18,12 @@
 #define HFTIRC_H
 
 /* Libs */
-#include <ncurses.h>
+#if !defined (__NetBSD__)
+    #include <ncurses.h>
+#else
+    #include <ncurses/ncurses.h>
+#endif
+
 #include <wchar.h>
 #include <stdlib.h>
 #include <stdarg.h>
