@@ -37,6 +37,7 @@ static const InputStruct input_struct[] =
      { "query",       input_query },
      { "quit",        input_quit },
      { "raw",         input_raw },
+     { "reconnect",   input_reconnect },
      { "redraw",      input_redraw },
      { "say",         input_say },
      { "serv",        input_serv },

@@ -155,6 +155,13 @@ ui_update_statuswin(void)
      /* Info about current serv/channel */
      wprintw(hftirc->ui->statuswin, " (%d:", hftirc->selbuf);
      PRINTATTR(hftirc->ui->statuswin, COLOR_SW2,  hftirc->conf.serv[hftirc->selses].name);
+
+     /* if connected or not ( {} needed for macro ) */
+     if(!hftirc->session[hftirc->selses]->connected)
+     {
+          PRINTATTR(hftirc->ui->statuswin, 0, " (disconnected)");
+     }
+
      waddch(hftirc->ui->statuswin, '/');
      PRINTATTR(hftirc->ui->statuswin, A_UNDERLINE | COLOR_SW2, hftirc->cb[hftirc->selbuf].name);
      waddch(hftirc->ui->statuswin, ')');
@@ -459,10 +466,12 @@ ui_get_input(void)
                switch(c)
                {
                     case KEY_F(1):
+                    case C('p'):
                          ui_buf_set(hftirc->selbuf - 1);
                          break;
 
                     case KEY_F(2):
+                    case C('n'):
                          ui_buf_set(hftirc->selbuf + 1);
                          break;
 

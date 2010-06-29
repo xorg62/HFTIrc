@@ -94,7 +94,8 @@ main(int argc, char **argv)
                    ui_get_input();
               else
                    for(i = 0; i < hftirc->conf.nserv; ++i)
-                        irc_run_process(hftirc->session[i], &iset);
+                        if(irc_run_process(hftirc->session[i], &iset))
+                             hftirc->session[i]->connected = 0;
          }
 
          update_date();

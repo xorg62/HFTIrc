@@ -73,7 +73,10 @@ input_nick(const char *input)
      NOSERVRET();
 
      if(!hftirc->session[hftirc->selses]->motd_received)
+     {
           strcpy(hftirc->session[hftirc->selses]->nick, input);
+          strcpy(hftirc->conf.serv[hftirc->selses].nick, input);
+     }
 
      if(irc_send_raw(hftirc->session[hftirc->selses], "NICK %s", input))
           WARN("Error", "Can't change nick or invalid nick");
@@ -594,5 +597,26 @@ input_say(const char *input)
      return;
 }
 
+void
+input_reconnect(const char *input)
+{
+     int i;
 
+     DSINPUT(input);
+     NOSERVRET();
 
+     i = hftirc->selses;
+
+     irc_disconnect(hftirc->session[i]);
+
+     if(irc_connect(hftirc->session[i],
+                    hftirc->conf.serv[i].adress,
+                    hftirc->conf.serv[i].port,
+                    hftirc->conf.serv[i].password,
+                    hftirc->conf.serv[i].nick,
+                    hftirc->conf.serv[i].username,
+                    hftirc->conf.serv[i].realname))
+          ui_print_buf(0, "Error: Can't connect to %s", hftirc->conf.serv[i].adress);
+
+     return;
+}

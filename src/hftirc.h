@@ -280,6 +280,7 @@ void input_buffer(const char *input);
 void input_buffer_list(const char *input);
 void input_buffer_swap(const char *input);
 void input_say(const char *input);
+void input_reconnect(const char *input);
 
 /* util.c */
 void update_date(void);
