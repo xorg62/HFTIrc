@@ -274,7 +274,7 @@ irc_manage_event(IrcSession *session, int process_length)
           /* Mode / User mode */
           else if(!strcmp(command, "MODE"))
           {
-               /* User mode  case */
+               /* User mode case */
                if(paramindex > 0 && !strcmp(params[0], session->nick))
                {
                     params[0] = params[1];
@@ -331,7 +331,7 @@ irc_manage_event(IrcSession *session, int process_length)
                msglen = strlen(params[1]);
 
                /* CTCP request */
-               if(paramindex > 1 && params[1][0] == 0x01 && params[1][msglen-1] == 0x01)
+               if(paramindex > 1 && params[1][0] == 0x01 && params[1][msglen - 1] == 0x01)
                {
                     msglen -= 2;
 

@@ -52,7 +52,7 @@ input_join(const char *input)
      DSINPUT(input);
      NOSERVRET();
 
-     if(input[0] != '#' && input[0] != '&')
+     if(!strchr("#&", input[0]))
      {
           WARN("Error", "Usage: /join #<channel>");
 
@@ -71,6 +71,9 @@ input_nick(const char *input)
 {
      DSINPUT(input);
      NOSERVRET();
+
+     if(!hftirc->session[hftirc->selses]->motd_received)
+          strcpy(hftirc->session[hftirc->selses]->nick, input);
 
      if(irc_send_raw(hftirc->session[hftirc->selses], "NICK %s", input))
           WARN("Error", "Can't change nick or invalid nick");
@@ -170,7 +173,7 @@ void
 input_msg(const char *input)
 {
      int i, b = 0;
-     char nick[64] = { 0 };
+     char nick[NICKLEN] = { 0 };
      char msg[BUFSIZE] = { 0 };
 
      DSINPUT(input);
@@ -210,7 +213,7 @@ void
 input_kick(const char *input)
 {
      int i;
-     char nick[64] = { 0 };
+     char nick[NICKLEN] = { 0 };
      char reason[BUFSIZE] = { 0 };
 
      DSINPUT(input);
@@ -497,7 +500,7 @@ void
 input_ctcp(const char *input)
 {
      int i;
-     char nick[64] = { 0 };
+     char nick[NICKLEN] = { 0 };
      char request[BUFSIZE] = { 0 };
 
      DSINPUT(input);

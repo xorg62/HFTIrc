@@ -114,7 +114,6 @@ ui_init_color(void)
      return;
 }
 
-
 int
 ui_color(int fg, int bg)
 {
@@ -620,8 +619,7 @@ ui_get_input(void)
                          wmove(hftirc->ui->inputwin, 0, (int)wcslen(hftirc->ui->ib.buffer));
                          hftirc->ui->ib.pos = (int)wcslen(hftirc->ui->ib.buffer);
 
-                         if(hftirc->ui->ib.spting
-                                   || (int)wcslen(hftirc->ui->ib.buffer) > COLS - 1)
+                         if(hftirc->ui->ib.spting || (int)wcslen(hftirc->ui->ib.buffer) > COLS - 1)
                          {
                               werase(hftirc->ui->inputwin);
                               hftirc->ui->ib.spting = 1;
@@ -630,6 +628,7 @@ ui_get_input(void)
                          }
                          else
                               hftirc->ui->ib.cpos = (int)wcslen(hftirc->ui->ib.buffer);
+
                          break;
 
                     case KEY_RESIZE:
