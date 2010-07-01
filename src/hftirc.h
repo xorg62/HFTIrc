@@ -52,7 +52,7 @@
 #define HISTOLEN          256
 #define MAINWIN_LINES     LINES - 2
 #define DATELEN           (strlen(hftirc->date.str))
-#define CONFPATH          "hftirc.conf"
+#define DEF_CONF          ".config/hftirc/hftirc.conf"
 #define B                 C('B')
 #define U                 C('_')
 
@@ -194,7 +194,7 @@ typedef struct
 /* Prototypes */
 
 /* config.c */
-void config_parse(char *file);
+void config_parse(void);
 
 /* ui.c */
 void ui_init(void);

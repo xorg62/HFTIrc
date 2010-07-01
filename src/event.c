@@ -127,10 +127,12 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                break;
 
           /* Errors */
-          case 263:
           case 401:
-          case 402:
           case 403:
+               ui_print_buf(find_bufid(s, params[1]), "[%s] *** %s", name, params[2]);
+               break;
+          case 263:
+          case 402:
           case 404:
           case 412:
           case 421:

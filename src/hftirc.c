@@ -49,7 +49,34 @@ main(int argc, char **argv)
     fd_set iset;
     static struct timeval tv;
 
-    hftirc     = malloc(sizeof(HFTIrc));
+    sprintf(conf.confpath, "%s/"DEF_CONF, getenv("HOME"));
+
+    while((i = getopt(argc, argv, "hvc:")) != -1)
+    {
+         switch(i)
+         {
+              case 'h':
+              default:
+                   printf("usage: %s [-hv] [-c <file>]\n"
+                          "   -h         Show this page\n"
+                          "   -v         Show version\n"
+                          "   -c <file>  Load a configuration file\n", argv[0]);
+                   break;
+
+              case 'v':
+                   printf("HFTIrc version: "HFTIRC_VERSION"\n");
+                   break;
+
+              case 'c':
+                   hftirc = malloc(sizeof(HFTIrc));
+                   strcpy(hftirc->conf.path, optarg);
+                   break;
+         }
+    }
+
+    if(!hftirc)
+         hftirc = malloc(sizeof(HFTIrc));
+
     hftirc->ui = malloc(sizeof(Ui));
     hftirc->ft = 1;
 
@@ -62,7 +89,7 @@ main(int argc, char **argv)
 
     ui_init();
     update_date();
-    config_parse(CONFPATH);
+    config_parse();
     irc_init();
 
     while(hftirc->running)
