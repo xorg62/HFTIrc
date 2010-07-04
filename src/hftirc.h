@@ -39,6 +39,9 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+/* Local headers */
+#include "config.h"
+
 /* Macro */
 #define HFTIRC_VERSION    "(devel version)"
 #define BUFSIZE           2048

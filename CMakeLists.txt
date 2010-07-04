@@ -90,10 +90,29 @@ set(PROJECT_DATA_PATH share/${PROJECT_NAME})
 set(PROJECT_TODO ${SOURCE_DIR}/TODO)
 set(PROJECT_README ${SOURCE_DIR}/README)
 set(PROJECT_DEFAULT_CONF ${SOURCE_DIR}/hftirc.conf)
+set(PROJECT_SYSCONFDIR ${XDG_CONFIG_DIR}/${PROJECT_NAME})
+
+# Configure files
+set(hftirc_configure_files src/config.h.in)
+
+macro(a_configure_file file)
+string(REGEX REPLACE ".in\$" "" outfile ${file})
+message(STATUS "Configuring ${outfile}")
+configure_file(${SOURCE_DIR}/${file}
+          ${SOURCE_DIR}/${outfile}
+          ESCAPE_QUOTE
+          @ONLY)
+endmacro()
+
+foreach(file ${hftirc_configure_files})
+a_configure_file(${file})
+endforeach()
+
+# install sets
+set(PROJECT_DATA_PATH share/${PROJECT_NAME})
+set(PROJECT_DEFAULT_CONF ${SOURCE_DIR}/hftirc.conf)
 
 # installs
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-
-install(FILES ${PROJECT_TODO} ${PROJECT_README}
-  ${PROJECT_DEFAULT_CONF} DESTINATION ${PROJECT_DATA_PATH})
+install(FILES ${PROJECT_DEFAULT_CONF} DESTINATION ${PROJECT_SYSCONFDIR})
 

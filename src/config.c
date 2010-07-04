@@ -17,7 +17,6 @@
 #include "hftirc.h"
 
 #define SSTRCPY(dest, src) if(src) strcpy((dest), (src))
-#define XDG_CONFIG_DIR "/etc/xdg"
 
 void
 config_server(void)
@@ -81,7 +80,7 @@ config_parse(void)
      if(get_conf(hftirc->conf.path) == -1)
      {
           ui_print_buf(0, "parsing configuration file (%s) failed.", hftirc->conf.path);
-          sprintf(hftirc->conf.path, "%s/wmfs/wmfsrc", XDG_CONFIG_DIR);
+          sprintf(hftirc->conf.path, "%s/hftirc/hftirc.conf", XDG_CONFIG_DIR);
           get_conf(hftirc->conf.path);
      }
 
