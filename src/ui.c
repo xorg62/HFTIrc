@@ -26,7 +26,7 @@
 #define COLOR_HL     (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
 #define COLOR_WROTE  (ui_color(COLOR_CYAN, hftirc->ui->bg))
 #define COLOR_ACT    (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
-#define COLOR_HLACT  (ui_color(COLOR_YELLOW, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_HLACT  (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
 
 void
 ui_init(void)
@@ -174,6 +174,8 @@ ui_update_statuswin(void)
                wattron(hftirc->ui->statuswin,
                          ((hftirc->cb[i].act == 2) ? COLOR_HLACT : COLOR_ACT));
                wprintw(hftirc->ui->statuswin, "%d", i);
+               wattroff(hftirc->ui->statuswin, A_UNDERLINE);
+               wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
                wattroff(hftirc->ui->statuswin,
                          ((hftirc->cb[i].act == 2) ? COLOR_HLACT : COLOR_ACT));
                waddch(hftirc->ui->statuswin, ' ');
