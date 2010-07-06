@@ -51,6 +51,11 @@ else(CMAKE_SYSTEM_NAME MATCHES NetBSD)
     set(LDFLAGS "${DEFAULT_LDFLAGS} -L /usr/local/lib -lncurses")
 endif(CMAKE_SYSTEM_NAME MATCHES NetBSD)
 
+if(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
+     set(LDFLAGS "${DEFAULT_LDFLAGS} -lncursesw -R /usr/local/lib -L /usr/local/lib")
+endif(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
+
+
 set_target_properties(hftirc PROPERTIES LINK_FLAGS ${LDFLAGS})
 # Includes dir for libs in build_dir
 include_directories(${BUILD_DIR}/src)
