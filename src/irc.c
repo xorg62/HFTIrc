@@ -41,7 +41,7 @@ irc_connect(IrcSession *s,
      struct hostent *hp;
      struct sockaddr_in a;
 
-     if (!server || !nick)
+     if(!server || !nick)
           return 1;
 
      s->username = (username) ? strdup(username) : NULL;
