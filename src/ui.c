@@ -459,7 +459,7 @@ ui_get_input(void)
      int i, n, b = 1, t;
      wint_t c;
      wchar_t tmpbuf[BUFSIZE], *cmp;
-     char s, buf[BUFSIZE];
+     char buf[BUFSIZE];
 
      switch((t = get_wch(&c)))
      {
