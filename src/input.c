@@ -19,7 +19,7 @@
 void
 input_manage(char *input)
 {
-     int i, n;
+     int i;
 
      if(input[0] == '/')
      {
