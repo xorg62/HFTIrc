@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Martin Duquesnoy <xorg62@gmail.com>
+ * copyright (c) 2010 Martin Duquesnoy <xorg62@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -456,7 +456,7 @@ ui_scroll_down(int buf)
 void
 ui_get_input(void)
 {
-     int i, b = 1, t;
+     int i, n, b = 1, t;
      wint_t c;
      wchar_t tmpbuf[BUFSIZE], *cmp;
      char buf[BUFSIZE];
@@ -719,6 +719,21 @@ ui_get_input(void)
 
      mvwaddwstr(hftirc->ui->inputwin, 0, 0,
                hftirc->ui->ib.buffer + hftirc->ui->ib.split);
+
+     wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
+
+     /* /<num> to go on the buffer num */
+     if(sscanf(buf, "/%d", &n) == 1)
+     {
+          ui_buf_set(n);
+          werase(hftirc->ui->inputwin);
+          wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
+
+          hftirc->ui->ib.pos = hftirc->ui->ib.cpos = hftirc->ui->ib.split
+               = hftirc->ui->ib.hits = 0;
+
+          wmove(hftirc->ui->inputwin, 0, 0);
+     }
 
      wrefresh(hftirc->ui->inputwin);
 

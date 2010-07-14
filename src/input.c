@@ -29,13 +29,6 @@ input_manage(char *input)
           /* Erase spaces at the end */
           for(; *(input + strlen(input) - 1) == ' '; *(input + strlen(input) - 1) = '\0');
 
-          /* /<num> to go on the buffer num */
-          if(sscanf(input, "%d", &n) == 1)
-          {
-               ui_buf_set(n);
-               return;
-          }
-
           for(i = 0; i < LEN(input_struct); ++i)
                if(!strncmp(input, input_struct[i].cmd, strlen(input_struct[i].cmd)))
                     input_struct[i].func(input + strlen(input_struct[i].cmd));
