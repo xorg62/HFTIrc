@@ -40,6 +40,7 @@ static const InputStruct input_struct[] =
      { "reconnect",   input_reconnect },
      { "redraw",      input_redraw },
      { "say",         input_say },
+     { "/",           input_say },
      { "serv",        input_serv },
      { "server",      input_connect },
      { "topic",       input_topic },
