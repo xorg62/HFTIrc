@@ -459,7 +459,7 @@ ui_get_input(void)
      int i, n, b = 1, t;
      wint_t c;
      wchar_t tmpbuf[BUFSIZE], *cmp;
-     char buf[BUFSIZE];
+     char s, buf[BUFSIZE];
 
      switch((t = get_wch(&c)))
      {
@@ -723,7 +723,9 @@ ui_get_input(void)
      wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
 
      /* /<num> to go on the buffer num */
-     if(sscanf(buf, "/%d", &n) == 1)
+     if(buf[0] == '/' &&
+        ((isdigit(buf[1]) && (n = atoi(&buf[1])) >= 0 && n < 10)
+         || (buf[1] == ' ' && (n = atoi(&buf[2])) > 9)))
      {
           ui_buf_set(n);
           werase(hftirc->ui->inputwin);
