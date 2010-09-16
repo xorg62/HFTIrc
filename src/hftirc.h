@@ -65,10 +65,10 @@
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
 #define DSINPUT(i) for(; i && i[0] == ' '; ++i)
 #define PRINTATTR(w, attr, s)  wattron(w, attr); waddstr(w, s); wattroff(w, attr);
-#define NOSERVRET(r) if(!hftirc->conf.nserv)                     \
-                     {                                           \
-                          WARN("Error", "You're not connected"); \
-                          return r;                              \
+#define NOSERVRET(r) if(!hftirc->conf.nserv || !hftirc->session[hftirc->selses]->connected)    \
+                     {                                                                         \
+                          WARN("Error", "You're not connected");                               \
+                          return r;                                                            \
                      }
 
 
