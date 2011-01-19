@@ -146,6 +146,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                break;
           case 432:
           case 442:
+          case 473:
                ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
                break;
           case 433:
