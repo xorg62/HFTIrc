@@ -159,7 +159,7 @@ ui_update_statuswin(void)
      /* if connected or not ( {} needed for macro ) */
      if(!hftirc->session[hftirc->selses]->connected)
      {
-          PRINTATTR(hftirc->ui->statuswin, 0, " (disconnected)");
+          PRINTATTR(hftirc->ui->statuswin, A_BOLD, " (Disconnected)");
      }
 
      waddch(hftirc->ui->statuswin, '/');

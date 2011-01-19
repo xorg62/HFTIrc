@@ -61,7 +61,7 @@
 #define U                 C('_')
 
 #define C(c) ((c) & 037)
-#define LEN(x) (sizeof(x)/sizeof(x[0]))
+#define LEN(x) (sizeof(x) / sizeof(x[0]))
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
 #define DSINPUT(i) for(; i && i[0] == ' '; ++i)
 #define PRINTATTR(w, attr, s)  wattron(w, attr); waddstr(w, s); wattroff(w, attr);

@@ -98,7 +98,6 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                ui_print_buf(0, "[%s] *** %s", name, params[1]);
                break;
 
-
           /* List */
           case 321:
                ui_print_buf(0, "[%s] *** %s : %s", name, params[1], params[2]);
@@ -124,6 +123,11 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
           case 353:
           case 366:
                event_names(session, se, origin, params, count);
+               break;
+
+          /* Identify */
+          case 396:
+               ui_print_buf(0, "[%s] *** %c%s%c(%s) %s", name, B, params[0], B, params[1], params[2]);
                break;
 
           /* Errors */
