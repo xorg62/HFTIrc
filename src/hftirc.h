@@ -87,8 +87,9 @@ typedef struct
      WINDOW *inputwin;
      WINDOW *statuswin;
      WINDOW *topicwin;
+     WINDOW *rosterwin;
 
-     int bg, c;
+     int bg, c, roster;
      /* Input buffer struct */
      struct
      {
@@ -165,6 +166,7 @@ typedef struct
      char path[512];
      int nserv;
      int bell;
+     int roster;
      ServInfo serv[NSERV];
 
 } ConfStruct;
@@ -208,6 +210,7 @@ int ui_color(int fg, int bg);
 void ui_update_statuswin(void);
 void ui_update_topicwin(void);
 void ui_update_infowin(void);
+void ui_update_rosterwin(void);
 void ui_print(WINDOW *w, char *str);
 void ui_print_buf(int id, char *format, ...);
 void ui_draw_buf(int id);
@@ -216,6 +219,7 @@ void ui_buf_close(int buf);
 void ui_buf_set(int buf);
 void ui_scroll_up(int buf);
 void ui_scroll_down(int buf);
+void ui_roster_toggle(void);
 void ui_get_input(void);
 
 /* event.c */
@@ -290,6 +294,7 @@ void input_buffer_list(const char *input);
 void input_buffer_swap(const char *input);
 void input_say(const char *input);
 void input_reconnect(const char *input);
+void input_roster_toggle(const char *input);
 
 /* util.c */
 void update_date(void);

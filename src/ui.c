@@ -18,6 +18,7 @@
 
 /* Will be configurable */
 #define COLORMAX      16
+#define ROSTERSIZE    18
 
 /* Colors lists */
 #define COLOR_THEME  COLOR_BLUE
@@ -35,6 +36,7 @@ ui_init(void)
      if(hftirc->ft)
      {
           hftirc->selbuf = 0;
+          hftirc->ui->roster = hftirc->conf.roster;
 
           ui_buf_new("status", 0);
 
@@ -70,7 +72,7 @@ ui_init(void)
           ui_init_color();
 
      /* Init main window and the borders */
-     hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
+     hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - (hftirc->ui->roster ? ROSTERSIZE : 0), 1, 0);
      scrollok(hftirc->ui->mainwin, TRUE);
      wrefresh(hftirc->ui->mainwin);
 
@@ -78,6 +80,10 @@ ui_init(void)
      hftirc->ui->topicwin = newwin(1, COLS, 0, 0);
      wbkgd(hftirc->ui->topicwin, COLOR_SW);
      wrefresh(hftirc->ui->statuswin);
+
+     /* Init roster window */
+     hftirc->ui->rosterwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
+     wrefresh(hftirc->ui->rosterwin);
 
      /* Init input window */
      hftirc->ui->inputwin = newwin(1, COLS, LINES - 1, 0);
@@ -215,6 +221,25 @@ ui_update_topicwin(void)
 }
 
 void
+ui_update_rosterwin(void)
+{
+     int c;
+     NickStruct *ns;
+
+     if(!hftirc->ui->roster)
+          return;
+
+     werase(hftirc->ui->rosterwin);
+
+     for(c = 0, ns = hftirc->cb[hftirc->selbuf].nickhead; ns && c < LINES - 3; ns = ns->next, ++c)
+          wprintw(hftirc->ui->rosterwin, "%c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
+
+     wrefresh(hftirc->ui->rosterwin);
+
+     return;
+}
+
+void
 ui_print(WINDOW *w, char *str)
 {
      int i, mask = A_NORMAL;
@@ -336,6 +361,8 @@ ui_draw_buf(int id)
           if(i < BUFLINES)
                ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"));
 
+     ui_update_rosterwin();
+
      wrefresh(hftirc->ui->mainwin);
 
      return;
@@ -455,6 +482,31 @@ ui_scroll_down(int buf)
 }
 
 void
+ui_roster_toggle(void)
+{
+     delwin(hftirc->ui->mainwin);
+
+     if((hftirc->ui->roster = !hftirc->ui->roster))
+     {
+          hftirc->ui->rosterwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
+          wrefresh(hftirc->ui->rosterwin);
+          hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - ROSTERSIZE, 1, 0);
+          ui_update_rosterwin();
+     }
+     else
+     {
+          delwin(hftirc->ui->rosterwin);
+          hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
+     }
+
+     scrollok(hftirc->ui->mainwin, TRUE);
+
+     ui_draw_buf(hftirc->selbuf);
+
+     return;
+}
+
+void
 ui_get_input(void)
 {
      int i, n, b = 1, t;
@@ -476,6 +528,10 @@ ui_get_input(void)
                     case KEY_F(2):
                     case C('n'):
                          ui_buf_set(hftirc->selbuf + 1);
+                         break;
+
+                    case KEY_F(3):
+                         ui_roster_toggle();
                          break;
 
                     case KEY_PPAGE:

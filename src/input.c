@@ -613,3 +613,11 @@ input_reconnect(const char *input)
 
      return;
 }
+
+void
+input_roster_toggle(const char *input)
+{
+     ui_roster_toggle();
+
+     return;
+}

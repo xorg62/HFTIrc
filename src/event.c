@@ -536,6 +536,8 @@ event_names(IrcSession *session, const char *event, const char *origin, const ch
           }
 
           ++hftirc->cb[s].naming;
+
+          ui_update_rosterwin();
      }
 
      return;
