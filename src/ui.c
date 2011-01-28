@@ -257,7 +257,7 @@ ui_print(WINDOW *w, char *str)
      /* Highlight line */
      if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
                && strchr(str, '<') && strchr(str, '>')
-               && strstr(str + strlen(hftirc->date.str) + 4,  hftirc->session[hftirc->selses]->nick))
+               && strcasestr(str + strlen(hftirc->date.str) + 4,  hftirc->session[hftirc->selses]->nick))
      {
           mask &= ~(COLOR_WROTE);
           mask |= COLOR_HL;
@@ -332,7 +332,7 @@ ui_print_buf(int id, char *format, ...)
 
           /* Highlight test (if hl or private message) */
           if(hftirc->conf.serv && id  && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
-                              && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->session[hftirc->selses]->nick))
+                              && strcasestr(buf + strlen(hftirc->date.str) + 4, hftirc->session[hftirc->selses]->nick))
                          || !ISCHAN(hftirc->cb[id].name[0])))
                /* No HL on status buffer (0) */
                hftirc->cb[id].act = (id) ? 2 : 1;
