@@ -125,7 +125,7 @@ main(int argc, char **argv)
               else
                    for(i = 0; i < hftirc->conf.nserv; ++i)
                         if(irc_run_process(hftirc->session[i], &iset))
-                             hftirc->session[i]->connected = 0;
+                              hftirc->session[i]->connected = 0;
          }
 
          update_date();

@@ -178,8 +178,18 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                ui_buf_set(0);
                break;
 
-          /* Do nothing */
-          case 376: /* End of MOTD, already managed by connect handle */
+          /* End of MOTD, already managed by connect handle if motd is not received */
+          case 376:
+               /* Re-join every channel opened previously in the same session */
+               if(session->motd_received)
+               {
+                    for(i = 0; i < hftirc->nbuf; ++i)
+                         if(hftirc->cb[i].sessid == find_sessid(session)
+                                   && ISCHAN(hftirc->cb[i].name[0]))
+                              irc_send_raw(hftirc->session[hftirc->selses], "JOIN %s",
+                                        hftirc->cb[i].name);
+               }
+
                break;
 
           default:
@@ -270,13 +280,13 @@ event_connect(IrcSession *session, const char *event, const char *origin, const 
 
      c = find_sessid(session);
 
+     /* 123456 for write on buffer with default parse (event_numeric) */
      event_numeric(session, 123456, origin, params, count);
 
+     hftirc->selses = c;
+
      for(i = 0; i < hftirc->conf.serv[c].nautojoin; ++i)
-     {
-          hftirc->selses = c;
           input_join(hftirc->conf.serv[c].autojoin[i]);
-     }
 
      return;
 }

@@ -319,6 +319,7 @@ ui_print_buf(int id, char *format, ...)
      return;
 }
 
+/* TODO: Try to fix blank buffer bug every x lines.. */
 void
 ui_draw_buf(int id)
 {

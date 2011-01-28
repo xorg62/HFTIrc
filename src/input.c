@@ -45,15 +45,15 @@ input_join(const char *input)
      DSINPUT(input);
      NOSERVRET();
 
-     if(!strchr("#&", input[0]))
+     if(!input && !ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
      {
-          WARN("Error", "Usage: /join #<channel>");
-
-          return;
+               WARN("Error", "Usage: /join #<channel>");
+               return;
      }
 
      /* Last arg -> password (TODO) */
-     if(irc_send_raw(hftirc->session[hftirc->selses], "JOIN %s", input))
+     if(irc_send_raw(hftirc->session[hftirc->selses], "JOIN %s",
+                    ((strlen(input)) ? input : hftirc->cb[hftirc->selbuf].name)))
           WARN("Error", "Can't use JOIN command");
 
      return;
@@ -596,11 +596,11 @@ input_reconnect(const char *input)
      int i;
 
      DSINPUT(input);
-     NOSERVRET();
 
      i = hftirc->selses;
 
-     irc_disconnect(hftirc->session[i]);
+     if(hftirc->session[i]->connected)
+          irc_disconnect(hftirc->session[i]);
 
      if(irc_connect(hftirc->session[i],
                     hftirc->conf.serv[i].adress,

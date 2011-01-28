@@ -61,6 +61,7 @@
 #define U                 C('_')
 
 #define C(c) ((c) & 037)
+#define ISCHAN(c) ((c == '#' || c ==  '&'))
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
 #define DSINPUT(i) for(; i && i[0] == ' '; ++i)
@@ -239,9 +240,9 @@ void event_ctcp(IrcSession *session, const char *event, const char *origin, cons
 
 /* irc.c */
 void irc_init(void);
-void irc_join(IrcSession *session, const char *chan);
+void irc_join(IrcSession *s, const char *chan);
 
-int irc_run_process(IrcSession *session, fd_set *inset);
+int irc_run_process(IrcSession *s, fd_set *inset);
 void irc_disconnect(IrcSession *s);
 int irc_connect(IrcSession *s,
           const char *server,
@@ -251,7 +252,7 @@ int irc_connect(IrcSession *s,
           const char *username,
           const char *realname);
 
-int irc_send_raw(IrcSession *session, const char *format, ...);
+int irc_send_raw(IrcSession *s, const char *format, ...);
 void irc_parse_in(char *buf,
           const char *prefix,
           const char *command,
@@ -295,6 +296,7 @@ void input_reconnect(const char *input);
 void update_date(void);
 int find_bufid(unsigned id, const char *str);
 int find_sessid(IrcSession *session);
+void msg_sessbuf(int sess, char *str);
 void nick_attach(int buf, NickStruct *nick);
 void nick_detach(int buf, NickStruct *nick);
 NickStruct* nickstruct_set(char *nick);

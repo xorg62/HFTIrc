@@ -84,38 +84,45 @@ irc_disconnect(IrcSession *s)
           close(s->sock);
 
      s->sock = -1;
-
      s->connected = 0;
+
+     /* Signal disconnection on each channel */
+     msg_sessbuf(find_sessid(s), "  *** Server disconnected by client");
 
      return;
 }
 
 int
-irc_run_process(IrcSession *session, fd_set *inset)
+irc_run_process(IrcSession *s, fd_set *inset)
 {
      int length, offset;
      unsigned int amount;
 
-     if(session->sock < 0 || !session->connected)
+     if(s->sock < 0 || !s->connected)
+     {
+          /* Signal disconnection on each channel */
+          msg_sessbuf(find_sessid(s), "  *** Server disconnected");
+
           return 1;
+     }
 
      /* Read incoming socket */
-     if(FD_ISSET(session->sock, inset))
+     if(FD_ISSET(s->sock, inset))
      {
-          amount = (sizeof(session->inbuf) - 1) - session->inoffset;
+          amount = (sizeof(s->inbuf) - 1) - s->inoffset;
 
-          if((length = recv(session->sock, session->inbuf + session->inoffset, amount, 0)) <= 0)
+          if((length = recv(s->sock, s->inbuf + s->inoffset, amount, 0)) <= 0)
                return 1;
 
-          session->inoffset += length;
+          s->inoffset += length;
 
           /* Parse incoming data */
-          for(; ((offset = irc_findcrlf(session->inbuf, session->inoffset)) > 0); session->inoffset -= offset)
+          for(; ((offset = irc_findcrlf(s->inbuf, s->inoffset)) > 0); s->inoffset -= offset)
           {
-               irc_manage_event(session, offset - 2);
+               irc_manage_event(s, offset - 2);
 
-               if(session->inoffset - offset > 0)
-                    memmove(session->inbuf, session->inbuf + offset, session->inoffset - offset);
+               if(s->inoffset - offset > 0)
+                    memmove(s->inbuf, s->inbuf + offset, s->inoffset - offset);
           }
      }
 
@@ -123,7 +130,7 @@ irc_run_process(IrcSession *session, fd_set *inset)
 }
 
 int
-irc_send_raw(IrcSession *session, const char *format, ...)
+irc_send_raw(IrcSession *s, const char *format, ...)
 {
      char buf[BUFSIZE];
      va_list va_alist;
@@ -132,12 +139,12 @@ irc_send_raw(IrcSession *session, const char *format, ...)
      vsnprintf(buf, sizeof(buf), format, va_alist);
      va_end(va_alist);
 
-     if(!session->sock)
+     if(!s->sock)
           return 1;
 
      strcat(buf, "\r\n");
 
-     send(session->sock, buf, strlen(buf), 0);
+     send(s->sock, buf, strlen(buf), 0);
 
      return 0;
 }
@@ -396,13 +403,13 @@ irc_init(void)
 }
 
 void
-irc_join(IrcSession *session, const char *chan)
+irc_join(IrcSession *s, const char *chan)
 {
-     int s;
+     int sess;
 
-     s = find_sessid(session);
+     sess = find_sessid(s);
 
-     ui_buf_new(chan, s);
+     ui_buf_new(chan, sess);
 
      ui_buf_set(hftirc->nbuf - 1);
 

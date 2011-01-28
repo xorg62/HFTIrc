@@ -28,6 +28,7 @@ update_date(void)
      return;
 }
 
+/* Find buffer id with name */
 int
 find_bufid(unsigned int id, const char *str)
 {
@@ -46,6 +47,7 @@ find_bufid(unsigned int id, const char *str)
      return 0;
 }
 
+/* Find session id by Irc Session */
 int
 find_sessid(IrcSession *session)
 {
@@ -59,6 +61,22 @@ find_sessid(IrcSession *session)
                break;
 
      return i;
+}
+
+/* Send message to each buffer with session id = sess */
+void
+msg_sessbuf(int sess, char *str)
+{
+     int i;
+
+     if(!str)
+          return;
+
+     for(i = 1; i < hftirc->nbuf; ++i)
+          if(hftirc->cb[i].sessid == sess)
+               ui_print_buf(i, str);
+
+     return;
 }
 
 void
