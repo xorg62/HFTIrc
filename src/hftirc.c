@@ -90,9 +90,9 @@ main(int argc, char **argv)
 
     hftirc->running = 1;
 
+    config_parse();
     ui_init();
     update_date();
-    config_parse();
     irc_init();
 
     while(hftirc->running)
