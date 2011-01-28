@@ -95,7 +95,7 @@ irc_disconnect(IrcSession *s)
 int
 irc_run_process(IrcSession *s, fd_set *inset)
 {
-     int length, offset;
+     int i, length, offset;
      unsigned int amount;
 
      if(s->sock < 0 || !s->connected)
@@ -117,13 +117,23 @@ irc_run_process(IrcSession *s, fd_set *inset)
           s->inoffset += length;
 
           /* Parse incoming data */
-          for(; ((offset = irc_findcrlf(s->inbuf, s->inoffset)) > 0); s->inoffset -= offset)
+          do
           {
+               /* Find CR-LF sequence separators */
+               for(i = offset = 0; i < ((int)(s->inoffset) - 1); ++i)
+                    if(s->inbuf[i] == '\r' && s->inbuf[i + 1] == '\n')
+                    {
+                         offset = i + 2;
+                         break;
+                    }
+
                irc_manage_event(s, offset - 2);
 
                if(s->inoffset - offset > 0)
                     memmove(s->inbuf, s->inbuf + offset, s->inoffset - offset);
-          }
+
+               s->inoffset -= offset;
+          } while(offset > 0);
      }
 
      return 0;
@@ -364,18 +374,6 @@ irc_manage_event(IrcSession *session, int process_length)
      }
 
      return;
-}
-
-int
-irc_findcrlf(const char *buf, int length)
-{
-     int offset = 0;
-
-     for(; offset < (length - 1); ++offset)
-          if(buf[offset] == '\r' && buf[offset + 1] == '\n')
-               return offset + 2;
-
-     return 0;
 }
 
 void

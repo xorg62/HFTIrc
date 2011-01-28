@@ -261,7 +261,6 @@ void irc_parse_in(char *buf,
           int *paramindex);
 IrcSession* irc_session(void);
 void irc_manage_event(IrcSession *session, int process_length);
-int irc_findcrlf(const char *buf, int length);
 
 /* input.c */
 void input_manage(char *input);
