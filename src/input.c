@@ -94,7 +94,7 @@ input_names(const char *input)
 {
      NOSERVRET();
 
-     if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
+     if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
           if(irc_send_raw(hftirc->session[hftirc->selses], "NAMES %s",
                          hftirc->cb[hftirc->selbuf].name))
                WARN("Error", "Can't get names list");
@@ -257,7 +257,7 @@ input_whois(const char *input)
      /* No input -> whois current private nick */
      else
      {
-          if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
+          if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
                WARN("Error", "Usage: /whois <nick>");
           else if(irc_send_raw(hftirc->session[hftirc->selses], "WHOIS %s %s",
                          hftirc->cb[hftirc->selbuf].name, hftirc->cb[hftirc->selbuf].name))
@@ -304,7 +304,7 @@ input_close(const char *input)
      if(hftirc->selbuf == 0)
           return;
 
-     if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
+     if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
                input_part(NULL);
 
      return;

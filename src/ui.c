@@ -202,7 +202,7 @@ ui_update_topicwin(void)
 
      /* Write topic */
      /* Channel */
-     if(strchr("#&", hftirc->cb[hftirc->selbuf].name[0]))
+     if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
           waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
      /* Other */
      else
@@ -308,7 +308,7 @@ ui_print_buf(int id, char *format, ...)
           /* Highlight test (if hl or private message) */
           if(hftirc->conf.serv && id  && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
                               && strstr(buf + strlen(hftirc->date.str) + 4, hftirc->session[hftirc->selses]->nick))
-                         || !strchr("#&", hftirc->cb[id].name[0])))
+                         || !ISCHAN(hftirc->cb[id].name[0])))
                /* No HL on status buffer (0) */
                hftirc->cb[id].act = (id) ? 2 : 1;
      }
