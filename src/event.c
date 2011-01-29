@@ -413,7 +413,8 @@ void
 event_channel(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, j;
-     char nick[NICKLEN] = { 0 };
+     char r, nick[NICKLEN] = { 0 };
+     NickStruct *ns;
 
      i = find_bufid(find_sessid(session), params[0]);
 
@@ -427,7 +428,18 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
-     ui_print_buf(i, "<%s> %s", nick, params[1]);
+     /* Find nick in linked list of chan to find rang */
+     for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
+          if(!strcasecmp(nick, ns->nick))
+          {
+               r = ns->rang;
+               break;
+          }
+
+     if(!ns->rang)
+          ui_print_buf(i, "<%s> %s", nick, params[1]);
+     else
+          ui_print_buf(i, "<%c%c%c%s> %s", B, r, B, nick, params[1]);
 
      if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->session[hftirc->selses]->nick))
           putchar('\a');
@@ -659,7 +671,7 @@ event_whois(IrcSession *session, unsigned int event, const char *origin, const c
                ui_print_buf(b, "[%s] *** CHANNELS: %s", n, params[2]);
                break;
 
-          /* Whois account */
+           /* Whois account */
           case 330:
                ui_print_buf(b, "[%s] ***           %s: %s %s", n, params[1], params[3], params[2]);
                break;
