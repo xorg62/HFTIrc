@@ -239,9 +239,11 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
 void
 event_mode(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, s;
+     int i, b, s;
      char nick[NICKLEN] = { 0 };
      char nicks[BUFSIZE] = { 0 };
+     char r[2] = { 0 };
+     NickStruct *ns;
 
      s = find_sessid(session);
 
@@ -267,8 +269,34 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
           strcat(nicks, params[i]);
      }
 
-     ui_print_buf(find_bufid(s, params[0]), "  *** Mode %c%s%c [%s %s] set by %c%s",
-               B, params[0], B, params[1], nicks + 1, B, nick);
+     b = find_bufid(s, params[0]);
+
+     r[0] = params[1][0];
+     r[1] = params[1][1];
+
+     for(ns = hftirc->cb[b].nickhead; ns; ns = ns->next)
+          if(!strcasecmp(nicks + 1, ns->nick))
+          {
+               switch(r[1])
+               {
+                    case 'o':
+                         ns->rang = (r[0] == '+') ? '@' : '\0';
+                         break;
+                    case 'v':
+                         ns->rang = (r[0] == '+') ? '+' : '\0';
+                         break;
+                    case 'h':
+                         ns->rang = (r[0] == '+') ? '%' : '\0';
+                         break;
+                    default:
+                         break;
+               }
+
+               break;
+          }
+
+     ui_print_buf(b, "  *** Mode %c%s%c [%s %s] set by %c%s",
+          B, params[0], B, params[1], nicks + 1, B, nick);
 
      return;
 }

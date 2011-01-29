@@ -129,8 +129,11 @@ main(int argc, char **argv)
          }
 
          update_date();
+
          ui_update_statuswin();
          ui_update_topicwin();
+         ui_update_rosterwin();
+
          refresh();
          wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
          wrefresh(hftirc->ui->inputwin);

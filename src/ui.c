@@ -381,8 +381,6 @@ ui_draw_buf(int id)
           if(i < BUFLINES)
                ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"));
 
-     ui_update_rosterwin();
-
      wrefresh(hftirc->ui->mainwin);
 
      return;
