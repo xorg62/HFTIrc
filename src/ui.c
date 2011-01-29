@@ -26,6 +26,7 @@
 #define COLOR_SW2    (ui_color(COLOR_WHITE, COLOR_THEME))
 #define COLOR_HL     (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
 #define COLOR_WROTE  (ui_color(COLOR_CYAN, hftirc->ui->bg))
+#define COLOR_ROSTER (ui_color(COLOR_THEME, hftirc->ui->bg))
 #define COLOR_ACT    (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
 #define COLOR_HLACT  (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
 
@@ -233,7 +234,7 @@ ui_update_topicwin(void)
 void
 ui_update_rosterwin(void)
 {
-     int c;
+     int i, c;
      NickStruct *ns;
 
      if(!hftirc->ui->roster)
@@ -241,8 +242,17 @@ ui_update_rosterwin(void)
 
      werase(hftirc->ui->rosterwin);
 
+     /* Travel in nick linked list */
      for(c = 0, ns = hftirc->cb[hftirc->selbuf].nickhead; ns && c < LINES - 3; ns = ns->next, ++c)
-          wprintw(hftirc->ui->rosterwin, "%c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
+          wprintw(hftirc->ui->rosterwin, " %c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
+
+     /* Draw | separation bar */
+     wattron(hftirc->ui->rosterwin, COLOR_ROSTER);
+
+     for(i = 0; i < LINES - 3; ++i)
+          mvwaddch(hftirc->ui->rosterwin, i, 0, ACS_VLINE);
+
+     wattroff(hftirc->ui->rosterwin, COLOR_ROSTER);
 
      wrefresh(hftirc->ui->rosterwin);
 

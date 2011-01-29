@@ -54,7 +54,7 @@
 #define NSERV             32
 #define HFTIRC_KEY_ENTER  10
 #define HISTOLEN          256
-#define MAINWIN_LINES     LINES - 2
+#define MAINWIN_LINES     (LINES - 2)
 #define DATELEN           (strlen(hftirc->date.str))
 #define DEF_CONF          ".config/hftirc/hftirc.conf"
 #define B                 C('B')
