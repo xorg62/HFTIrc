@@ -565,8 +565,19 @@ input_buffer_list(const char *input)
 void
 input_buffer_swap(const char *input)
 {
+    int i;
 
-
+    if(strlen(input) > 0)
+    {
+        if(sscanf(input, "%d", &i) == 1)
+        {
+            ui_buf_swap(i);
+            return;
+        }
+     }
+     else
+        WARN("Error", "Usage: /buffer_swap <num>");
+     
      return;
 }
 

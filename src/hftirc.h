@@ -218,6 +218,7 @@ void ui_draw_buf(int id);
 void ui_buf_new(const char *name, unsigned int id);
 void ui_buf_close(int buf);
 void ui_buf_set(int buf);
+void ui_buf_swap(int buf);
 void ui_scroll_up(int buf);
 void ui_scroll_down(int buf);
 void ui_roster_toggle(void);

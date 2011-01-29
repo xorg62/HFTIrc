@@ -541,6 +541,25 @@ ui_roster_scroll(int v)
 }
 
 void
+ui_buf_swap(int n)
+{
+    ChanBuf old_buffer;
+
+    if(!n || !hftirc->selbuf || hftirc->selbuf == 0 
+          ||  n <= 0 || n > hftirc->nbuf -1) {
+        return;
+    }
+
+    old_buffer = hftirc->cb[ n ];
+    hftirc->cb[ n ] = hftirc->cb[ hftirc->selbuf ];
+    hftirc->cb[ hftirc->selbuf ] = old_buffer;
+
+    ui_buf_set(n);
+
+    return;
+}
+
+void
 ui_get_input(void)
 {
      int i, n, b = 1, t;
