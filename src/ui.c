@@ -234,7 +234,7 @@ ui_update_topicwin(void)
 void
 ui_update_rosterwin(void)
 {
-     int i, c;
+     int i, c, p;
      NickStruct *ns;
 
      if(!hftirc->ui->roster)
@@ -243,8 +243,9 @@ ui_update_rosterwin(void)
      werase(hftirc->ui->rosterwin);
 
      /* Travel in nick linked list */
-     for(c = 0, ns = hftirc->cb[hftirc->selbuf].nickhead; ns && c < LINES - 3; ns = ns->next, ++c)
-          wprintw(hftirc->ui->rosterwin, " %c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
+     for(c = p = 0, ns = hftirc->cb[hftirc->selbuf].nickhead; ns && c < LINES - 3; ns = ns->next, ++c, ++p)
+          if(p >= hftirc->cb[hftirc->selbuf].rosterscroll)
+               wprintw(hftirc->ui->rosterwin, " %c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
 
      /* Draw | separation bar */
      wattron(hftirc->ui->rosterwin, COLOR_ROSTER);
@@ -424,7 +425,7 @@ ui_buf_new(const char *name, unsigned int id)
 
      for(j = 0; j < BUFLINES;cbs[i].buffer[j++] = NULL);
 
-     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = cbs[i].naming = 0;
+     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = cbs[i].naming = cbs[i].rosterscroll = 0;
      cbs[i].sessid = id;
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
@@ -525,6 +526,19 @@ ui_roster_toggle(void)
 }
 
 void
+ui_roster_scroll(int v)
+{
+     if(hftirc->cb[hftirc->selbuf].rosterscroll + v < 0)
+          return;
+
+     hftirc->cb[hftirc->selbuf].rosterscroll += v;
+
+     ui_update_rosterwin();
+
+     return;
+}
+
+void
 ui_get_input(void)
 {
      int i, n, b = 1, t;
@@ -550,6 +564,14 @@ ui_get_input(void)
 
                     case KEY_F(3):
                          ui_roster_toggle();
+                         break;
+
+                    case KEY_F(11):
+                         ui_roster_scroll(-3);
+                         break;
+
+                    case KEY_F(12):
+                         ui_roster_scroll(+3);
                          break;
 
                     case KEY_PPAGE:

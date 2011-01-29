@@ -120,6 +120,7 @@ typedef struct
      /* For ui use */
      char *buffer[BUFLINES];
      int bufpos, scrollpos, naming;
+     int rosterscroll;
 
      /* For irc info */
      unsigned int sessid;
@@ -220,6 +221,7 @@ void ui_buf_set(int buf);
 void ui_scroll_up(int buf);
 void ui_scroll_down(int buf);
 void ui_roster_toggle(void);
+void ui_roster_scroll(int v);
 void ui_get_input(void);
 
 /* event.c */
@@ -263,6 +265,7 @@ void irc_parse_in(char *buf,
           const char **params,
           int *code,
           int *paramindex);
+
 IrcSession* irc_session(void);
 void irc_manage_event(IrcSession *session, int process_length);
 
@@ -294,6 +297,7 @@ void input_buffer_list(const char *input);
 void input_buffer_swap(const char *input);
 void input_say(const char *input);
 void input_reconnect(const char *input);
+void input_roster_scroll(const char *input);
 void input_roster_toggle(const char *input);
 
 /* util.c */

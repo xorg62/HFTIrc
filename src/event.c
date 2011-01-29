@@ -242,7 +242,7 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
      int i, b, s;
      char nick[NICKLEN] = { 0 };
      char nicks[BUFSIZE] = { 0 };
-     char r[2] = { 0 };
+     char r[2] = { params[1][0], params[1][1] };
      NickStruct *ns;
 
      s = find_sessid(session);
@@ -270,9 +270,6 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
      }
 
      b = find_bufid(s, params[0]);
-
-     r[0] = params[1][0];
-     r[1] = params[1][1];
 
      for(ns = hftirc->cb[b].nickhead; ns; ns = ns->next)
           if(!strcasecmp(nicks + 1, ns->nick))
@@ -671,7 +668,7 @@ event_whois(IrcSession *session, unsigned int event, const char *origin, const c
                ui_print_buf(b, "[%s] *** CHANNELS: %s", n, params[2]);
                break;
 
-           /* Whois account */
+          /* Whois account */
           case 330:
                ui_print_buf(b, "[%s] ***           %s: %s %s", n, params[1], params[3], params[2]);
                break;

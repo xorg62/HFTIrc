@@ -39,6 +39,7 @@ static const InputStruct input_struct[] =
      { "raw",           input_raw },
      { "reconnect",     input_reconnect },
      { "redraw",        input_redraw },
+     { "roster_scroll", input_roster_scroll },
      { "roster_toggle", input_roster_toggle },
      { "say",           input_say },
      { "serv",          input_serv },

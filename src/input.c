@@ -615,6 +615,20 @@ input_reconnect(const char *input)
 }
 
 void
+input_roster_scroll(const char *input)
+{
+     DSINPUT(input);
+     NOSERVRET();
+
+     if(strlen(input) > 0)
+          ui_roster_scroll(atoi(input));
+     else
+          WARN("Error", "Usage: /roster_scroll +/-<value>");
+
+     return;
+}
+
+void
 input_roster_toggle(const char *input)
 {
      ui_roster_toggle();
