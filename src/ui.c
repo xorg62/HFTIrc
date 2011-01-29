@@ -243,7 +243,9 @@ ui_update_rosterwin(void)
      werase(hftirc->ui->rosterwin);
 
      /* Travel in nick linked list */
-     for(c = p = 0, ns = hftirc->cb[hftirc->selbuf].nickhead; ns && c < LINES - 3; ns = ns->next, ++c, ++p)
+     for(c = p = 0, ns = hftirc->cb[hftirc->selbuf].nickhead;
+               ns && c < (LINES - 3 + hftirc->cb[hftirc->selbuf].rosterscroll);
+                    ns = ns->next, ++c, ++p)
           if(p >= hftirc->cb[hftirc->selbuf].rosterscroll)
                wprintw(hftirc->ui->rosterwin, " %c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
 
