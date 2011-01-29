@@ -48,7 +48,7 @@ if(CMAKE_SYSTEM_NAME MATCHES NetBSD)
     set(LDFLAGS "${DEFAULT_LDFLAGS} -lncursesw -Wl -R /usr/pkg/lib -L /usr/pkg/lib")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/pkg/include")
 else(CMAKE_SYSTEM_NAME MATCHES NetBSD)
-    set(LDFLAGS "${DEFAULT_LDFLAGS} -L /usr/local/lib -lncurses")
+    set(LDFLAGS "${DEFAULT_LDFLAGS} -L /usr/local/lib -lncursesw")
 endif(CMAKE_SYSTEM_NAME MATCHES NetBSD)
 
 if(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
