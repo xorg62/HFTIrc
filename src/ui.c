@@ -546,7 +546,9 @@ ui_buf_swap(int n)
     ChanBuf old_buffer;
 
     if(!n || !hftirc->selbuf || hftirc->selbuf == 0 
-          ||  n <= 0 || n > hftirc->nbuf -1) {
+          ||  n <= 0 || n > hftirc->nbuf -1 
+          || n == hftirc->selbuf) 
+    {
         return;
     }
 
