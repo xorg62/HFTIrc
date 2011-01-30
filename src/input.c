@@ -536,7 +536,7 @@ input_buffer(const char *input)
 
      if(strlen(input) > 0)
      {
-          if(sscanf(input, "%d", &i) == 1)
+          if((i = atoi(input)))
           {
                ui_buf_set(i);
                return;
@@ -569,7 +569,7 @@ input_buffer_swap(const char *input)
 
     if(strlen(input) > 0)
     {
-        if(sscanf(input, "%d", &i) == 1)
+        if((i = atoi(input)))
         {
             ui_buf_swap(i);
             return;
