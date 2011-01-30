@@ -81,24 +81,24 @@ msg_sessbuf(int sess, char *str)
 
 static void
 nick_sort_abc(NickStruct *head)
-{
-     int i;
+{/*
      NickStruct newhead;
-     NickStruct *ns, *ns2;
+     NickStruct *ns, *ns2, sns;
 
-     ns2 = &newhead;
+     if(!head)
+          return;
 
-     for(i = 65; i < 91; ++i)
-          for(ns = head; ns; ns = ns->next)
+     for(ns = head; ns; ns = ns->next, ns2 = ns->prev)
+          if(strcmp(ns2->nick, ns->nick) > 0)
           {
-               if(ns->nick[0] == (char)i
-                         || ns->nick[0] == (char)(i + 32))
-                    ns2->next = ns;
+
+               sns = *ns2;
+               strcpy(ns2->nick, ns->nick);
+               ns2->rang = ns->rang;
+               ns = &sns;
           }
 
-     head = &newhead;
-
-     return;
+     return;*/
 }
 
 void
@@ -152,6 +152,31 @@ nickstruct_set(char *nick)
      return ret;
 }
 
+static int
+hft_wcsncasecmp(const wchar_t *s1, const wchar_t *s2, int n)
+{
+	int lc1, lc2, diff;
+
+     if(!s1 || !s2)
+          return -1;
+
+	for (lc1 = lc2 = diff = 0 ; n-- > 0 ;++s1, ++s2)
+     {
+		lc1 = towlower(*s1);
+		lc2 = towlower(*s2);
+
+		diff = lc1 - lc2;
+
+		if (diff)
+			return diff;
+
+		if (!lc1)
+			return 0;
+     }
+
+     return 0;
+}
+
 wchar_t*
 complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
 {
@@ -175,7 +200,7 @@ complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
      for(ns = hftirc->cb[buf].nickhead; ns; ns = ns->next)
      {
           swprintf(wbuf, BUFSIZE, L"%s", ns->nick);
-          if(!wcsncasecmp(wbuf, start, wcslen(start)))
+          if(!hft_wcsncasecmp(wbuf, start, wcslen(start)))
                if(++c == hits)
                     return wcsdup(wbuf + wcslen(start));
      }
@@ -198,7 +223,7 @@ complete_input(int buf, unsigned int hits, wchar_t *start)
      for(i = 0; i < LEN(input_struct); ++i)
      {
           swprintf(wbuf, BUFSIZE, L"%s", input_struct[i].cmd);
-          if(!wcsncasecmp(wbuf, start, wcslen(start)))
+          if(!hft_wcsncasecmp(wbuf, start, wcslen(start)))
                if(++c == hits)
                     return wcsdup(wbuf + wcslen(start));
      }

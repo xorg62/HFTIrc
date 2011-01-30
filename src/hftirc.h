@@ -24,7 +24,9 @@
     #include <ncurses/ncurses.h>
 #endif
 
+#include <assert.h>
 #include <wchar.h>
+#include <wctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
