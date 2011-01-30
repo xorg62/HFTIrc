@@ -238,6 +238,8 @@ ui_update_nicklistwin(void)
      char ord[4] = { '@', '%', '+', '\0' };
      NickStruct *ns;
 
+     nick_sort_abc(hftirc->selbuf);
+
      if(!hftirc->ui->nicklist)
           return;
 
@@ -443,9 +445,10 @@ ui_buf_new(const char *name, unsigned int id)
      memset(cbs[i].topic, 0, sizeof(cbs[i].topic));
      strcpy(cbs[i].name, name);
 
-     for(j = 0; j < BUFLINES;cbs[i].buffer[j++] = NULL);
+     for(j = 0; j < BUFLINES; cbs[i].buffer[j++] = NULL);
 
-     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = cbs[i].naming = cbs[i].nicklistscroll = 0;
+     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
+     cbs[i].naming = cbs[i].nicklistscroll = cbs[i].neednicksort = 0;
      cbs[i].sessid = id;
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
@@ -467,6 +470,7 @@ ui_buf_close(int buf)
 
      if(buf <= 0 || buf > hftirc->nbuf - 1)
           return;
+
 
      --hftirc->nbuf;
 

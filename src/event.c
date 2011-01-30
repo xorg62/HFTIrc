@@ -216,7 +216,10 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
      {
           for(j = 0; j < hftirc->nbuf; ++j)
                if(hftirc->cb[j].sessid == s && j != 0)
+               {
                     ui_print_buf(j, "  *** Your nick is now %c%s", B, hftirc->session[s]->nick);
+                    hftirc->cb[i].neednicksort = 1;
+               }
 
                return;
      }
@@ -227,6 +230,7 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
                {
                     ui_print_buf(i, "  *** %s is now %c%s", nick, B, params[0]);
                     strcpy(ns->nick, params[0]);
+                    hftirc->cb[i].neednicksort = 1;
                }
 
      for(i = 0; i < hftirc->nbuf; ++i)
@@ -294,6 +298,8 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
 
      ui_print_buf(b, "  *** Mode %c%s%c [%s %s] set by %c%s",
           B, params[0], B, params[1], nicks + 1, B, nick);
+
+     /* nick_sort_abc(b) </// Maybe nick_sort will sort rank too. */
 
      return;
 }
@@ -438,7 +444,8 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
      else
           ui_print_buf(i, "<%c%c%c%s> %s", B, r, B, nick, params[1]);
 
-     if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], hftirc->session[hftirc->selses]->nick))
+     if(hftirc->conf.bell && hftirc->conf.serv
+               && strstr(params[1], hftirc->session[hftirc->selses]->nick))
           putchar('\a');
 
      return;
@@ -533,6 +540,7 @@ event_names(IrcSession *session, const char *event, const char *origin, const ch
 
      if(!strcmp(event, "366"))
      {
+          nick_sort_abc(s);
 
           for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next, ++cn)
                asprintf(&str, "%s %c%c%c%s", str, B, (ns->rang) ? ns->rang : ' ', B, ns->nick);

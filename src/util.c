@@ -17,6 +17,8 @@
 #include "hftirc.h"
 #include "input.h"
 
+static void nick_swap(NickStruct *x, NickStruct *y);
+
 void
 update_date(void)
 {
@@ -80,25 +82,44 @@ msg_sessbuf(int sess, char *str)
 }
 
 static void
-nick_sort_abc(NickStruct *head)
-{/*
-     NickStruct newhead;
-     NickStruct *ns, *ns2, sns;
+nick_swap(NickStruct *x, NickStruct *y)
+{
+     NickStruct t = *x;
 
-     if(!head)
+     strcpy(x->nick, y->nick);
+     x->rang = y->rang;
+
+     strcpy(y->nick, t.nick);
+     y->rang = t.rang;
+
+     return;
+}
+
+/* Sort alphabetically nick list */
+void
+nick_sort_abc(int buf)
+{
+     int swap = 1;
+     NickStruct *ns;
+
+     if(!buf || !hftirc->cb[buf].neednicksort)
           return;
 
-     for(ns = head; ns; ns = ns->next, ns2 = ns->prev)
-          if(strcmp(ns2->nick, ns->nick) > 0)
-          {
+     /* Alphabetical bubble sort */
+     while(swap)
+     {
+          swap = 0;
+          for(ns = hftirc->cb[buf].nickhead; ns->next; ns = ns->next)
+               if(strcasecmp(ns->nick, ns->next->nick) > 0)
+               {
+                    swap = 1;
+                    nick_swap(ns, ns->next);
+               }
+     }
 
-               sns = *ns2;
-               strcpy(ns2->nick, ns->nick);
-               ns2->rang = ns->rang;
-               ns = &sns;
-          }
+    hftirc->cb[buf].neednicksort = 0;
 
-     return;*/
+    return;
 }
 
 void
@@ -110,7 +131,7 @@ nick_attach(int buf, NickStruct *nick)
      nick->next = hftirc->cb[buf].nickhead;
      hftirc->cb[buf].nickhead = nick;
 
-     nick_sort_abc(hftirc->cb[buf].nickhead);
+     hftirc->cb[buf].neednicksort = 1;
 
      return;
 }
@@ -126,7 +147,7 @@ nick_detach(int buf, NickStruct *nick)
 
      *ns = nick->next;
 
-     nick_sort_abc(hftirc->cb[buf].nickhead);
+     hftirc->cb[buf].neednicksort = 1;
 
      return;
 }
@@ -152,26 +173,27 @@ nickstruct_set(char *nick)
      return ret;
 }
 
+/* For compatibility with FreeBSD 7.x */
 static int
 hft_wcsncasecmp(const wchar_t *s1, const wchar_t *s2, int n)
 {
-	int lc1, lc2, diff;
+     int lc1, lc2, diff;
 
      if(!s1 || !s2)
           return -1;
 
-	for (lc1 = lc2 = diff = 0 ; n-- > 0 ;++s1, ++s2)
+     for (lc1 = lc2 = diff = 0 ; n-- > 0 ;++s1, ++s2)
      {
-		lc1 = towlower(*s1);
-		lc2 = towlower(*s2);
 
-		diff = lc1 - lc2;
+          lc1 = towlower(*s1);
+          lc2 = towlower(*s2);
+          diff = lc1 - lc2;
 
-		if (diff)
-			return diff;
+          if(diff)
+               return diff;
 
-		if (!lc1)
-			return 0;
+          if(!lc1)
+               return 0;
      }
 
      return 0;
