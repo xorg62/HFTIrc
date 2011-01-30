@@ -132,7 +132,7 @@ main(int argc, char **argv)
 
          ui_update_statuswin();
          ui_update_topicwin();
-         ui_update_rosterwin();
+         ui_update_nicklistwin();
 
          refresh();
          wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);

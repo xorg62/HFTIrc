@@ -79,6 +79,28 @@ msg_sessbuf(int sess, char *str)
      return;
 }
 
+static void
+nick_sort_abc(NickStruct *head)
+{
+     int i;
+     NickStruct newhead;
+     NickStruct *ns, *ns2;
+
+     ns2 = &newhead;
+
+     for(i = 65; i < 91; ++i)
+          for(ns = head; ns; ns = ns->next)
+          {
+               if(ns->nick[0] == (char)i
+                         || ns->nick[0] == (char)(i + 32))
+                    ns2->next = ns;
+          }
+
+     head = &newhead;
+
+     return;
+}
+
 void
 nick_attach(int buf, NickStruct *nick)
 {
@@ -87,6 +109,8 @@ nick_attach(int buf, NickStruct *nick)
 
      nick->next = hftirc->cb[buf].nickhead;
      hftirc->cb[buf].nickhead = nick;
+
+     nick_sort_abc(hftirc->cb[buf].nickhead);
 
      return;
 }
@@ -101,6 +125,8 @@ nick_detach(int buf, NickStruct *nick)
                ; ns = &(*ns)->next);
 
      *ns = nick->next;
+
+     nick_sort_abc(hftirc->cb[buf].nickhead);
 
      return;
 }

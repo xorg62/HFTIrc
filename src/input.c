@@ -577,7 +577,7 @@ input_buffer_swap(const char *input)
      }
      else
         WARN("Error", "Usage: /buffer_swap <num>");
-     
+
      return;
 }
 
@@ -626,23 +626,23 @@ input_reconnect(const char *input)
 }
 
 void
-input_roster_scroll(const char *input)
+input_nicklist_scroll(const char *input)
 {
      DSINPUT(input);
      NOSERVRET();
 
      if(strlen(input) > 0)
-          ui_roster_scroll(atoi(input));
+          ui_nicklist_scroll(atoi(input));
      else
-          WARN("Error", "Usage: /roster_scroll +/-<value>");
+          WARN("Error", "Usage: /nicklist_scroll +/-<value>");
 
      return;
 }
 
 void
-input_roster_toggle(const char *input)
+input_nicklist_toggle(const char *input)
 {
-     ui_roster_toggle();
+     ui_nicklist_toggle();
 
      return;
 }

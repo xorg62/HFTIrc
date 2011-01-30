@@ -88,7 +88,7 @@ config_parse(void)
      misc = fetch_section_first(NULL, "misc");
 
      hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolp;
-     hftirc->conf.roster = fetch_opt_first(misc, "false", "roster_enable").boolp;
+     hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolp;
 
      free(misc);
 

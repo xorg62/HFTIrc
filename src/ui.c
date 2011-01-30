@@ -18,7 +18,7 @@
 
 /* Will be configurable */
 #define COLORMAX      16
-#define ROSTERSIZE    18
+#define ROSTERSIZE    20
 
 /* Colors lists */
 #define COLOR_THEME  COLOR_BLUE
@@ -37,7 +37,7 @@ ui_init(void)
      if(hftirc->ft)
      {
           hftirc->selbuf = 0;
-          hftirc->ui->roster = hftirc->conf.roster;
+          hftirc->ui->nicklist = hftirc->conf.nicklist;
 
           ui_buf_new("status", 0);
 
@@ -73,7 +73,7 @@ ui_init(void)
           ui_init_color();
 
      /* Init main window and the borders */
-     hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - (hftirc->ui->roster ? ROSTERSIZE : 0), 1, 0);
+     hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - (hftirc->ui->nicklist ? ROSTERSIZE : 0), 1, 0);
      scrollok(hftirc->ui->mainwin, TRUE);
      wrefresh(hftirc->ui->mainwin);
 
@@ -82,9 +82,9 @@ ui_init(void)
      wbkgd(hftirc->ui->topicwin, COLOR_SW);
      wrefresh(hftirc->ui->statuswin);
 
-     /* Init roster window */
-     hftirc->ui->rosterwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
-     wrefresh(hftirc->ui->rosterwin);
+     /* Init nicklist window */
+     hftirc->ui->nicklistwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
+     wrefresh(hftirc->ui->nicklistwin);
 
      /* Init input window */
      hftirc->ui->inputwin = newwin(1, COLS, LINES - 1, 0);
@@ -232,32 +232,50 @@ ui_update_topicwin(void)
 }
 
 void
-ui_update_rosterwin(void)
+ui_update_nicklistwin(void)
 {
      int i, c, p;
+     char ord[4] = { '@', '%', '+', '\0' };
      NickStruct *ns;
 
-     if(!hftirc->ui->roster)
+     if(!hftirc->ui->nicklist)
           return;
 
-     werase(hftirc->ui->rosterwin);
+     werase(hftirc->ui->nicklistwin);
 
      /* Travel in nick linked list */
-     for(c = p = 0, ns = hftirc->cb[hftirc->selbuf].nickhead;
-               ns && c < (LINES - 3 + hftirc->cb[hftirc->selbuf].rosterscroll);
-                    ns = ns->next, ++c, ++p)
-          if(p >= hftirc->cb[hftirc->selbuf].rosterscroll)
-               wprintw(hftirc->ui->rosterwin, " %c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
+     /* Order with [ord]:
+      *  | @foo
+      *  | %foo
+      *  | +foo
+      *  |  foo
+      */
+     for(i = c = p = 0; i < LEN(ord); ++i)
+     {
+          for(ns = hftirc->cb[hftirc->selbuf].nickhead;
+                    ns && c < ((LINES - 3) + hftirc->cb[hftirc->selbuf].nicklistscroll); /* </// Scroll limit */
+                    ns = ns->next)
+          {
+               if(ns->rang == ord[i])
+               {
+                    if(p >= hftirc->cb[hftirc->selbuf].nicklistscroll)
+                         wprintw(hftirc->ui->nicklistwin, " %c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
+
+                    ++c;
+                    ++p;
+               }
+          }
+     }
 
      /* Draw | separation bar */
-     wattron(hftirc->ui->rosterwin, COLOR_ROSTER);
+     wattron(hftirc->ui->nicklistwin, COLOR_ROSTER);
 
      for(i = 0; i < LINES - 3; ++i)
-          mvwaddch(hftirc->ui->rosterwin, i, 0, ACS_VLINE);
+          mvwaddch(hftirc->ui->nicklistwin, i, 0, ACS_VLINE);
 
-     wattroff(hftirc->ui->rosterwin, COLOR_ROSTER);
+     wattroff(hftirc->ui->nicklistwin, COLOR_ROSTER);
 
-     wrefresh(hftirc->ui->rosterwin);
+     wrefresh(hftirc->ui->nicklistwin);
 
      return;
 }
@@ -427,7 +445,7 @@ ui_buf_new(const char *name, unsigned int id)
 
      for(j = 0; j < BUFLINES;cbs[i].buffer[j++] = NULL);
 
-     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = cbs[i].naming = cbs[i].rosterscroll = 0;
+     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = cbs[i].naming = cbs[i].nicklistscroll = 0;
      cbs[i].sessid = id;
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
@@ -503,20 +521,20 @@ ui_scroll_down(int buf)
 }
 
 void
-ui_roster_toggle(void)
+ui_nicklist_toggle(void)
 {
      delwin(hftirc->ui->mainwin);
 
-     if((hftirc->ui->roster = !hftirc->ui->roster))
+     if((hftirc->ui->nicklist = !hftirc->ui->nicklist))
      {
-          hftirc->ui->rosterwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
-          wrefresh(hftirc->ui->rosterwin);
+          hftirc->ui->nicklistwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
+          wrefresh(hftirc->ui->nicklistwin);
           hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - ROSTERSIZE, 1, 0);
-          ui_update_rosterwin();
+          ui_update_nicklistwin();
      }
      else
      {
-          delwin(hftirc->ui->rosterwin);
+          delwin(hftirc->ui->nicklistwin);
           hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
      }
 
@@ -528,14 +546,14 @@ ui_roster_toggle(void)
 }
 
 void
-ui_roster_scroll(int v)
+ui_nicklist_scroll(int v)
 {
-     if(hftirc->cb[hftirc->selbuf].rosterscroll + v < 0)
+     if(hftirc->cb[hftirc->selbuf].nicklistscroll + v < 0)
           return;
 
-     hftirc->cb[hftirc->selbuf].rosterscroll += v;
+     hftirc->cb[hftirc->selbuf].nicklistscroll += v;
 
-     ui_update_rosterwin();
+     ui_update_nicklistwin();
 
      return;
 }
@@ -545,9 +563,9 @@ ui_buf_swap(int n)
 {
     ChanBuf old_buffer;
 
-    if(!n || !hftirc->selbuf || hftirc->selbuf == 0 
-          ||  n <= 0 || n > hftirc->nbuf -1 
-          || n == hftirc->selbuf) 
+    if(!n || !hftirc->selbuf || hftirc->selbuf == 0
+          ||  n <= 0 || n > hftirc->nbuf -1
+          || n == hftirc->selbuf)
     {
         return;
     }
@@ -586,15 +604,15 @@ ui_get_input(void)
                          break;
 
                     case KEY_F(3):
-                         ui_roster_toggle();
+                         ui_nicklist_toggle();
                          break;
 
                     case KEY_F(11):
-                         ui_roster_scroll(-3);
+                         ui_nicklist_scroll(-3);
                          break;
 
                     case KEY_F(12):
-                         ui_roster_scroll(+3);
+                         ui_nicklist_scroll(+3);
                          break;
 
                     case KEY_PPAGE:
