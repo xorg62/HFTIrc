@@ -1,0 +1,28 @@
+ABOUT :
+HFTirc.
+   * Hacker Feeding Themselves irc
+
+A highly configurable and simple irc client.
+
+LICENSE : BSD
+
+REQUIREMENT :
+  - cmake
+  - ncurses
+  - libncurses5
+  - libncurses5-dev
+  - libncursesw5
+  - libncuresw5-dev
+
+OS :
+  - GNU/Linux : Supported.
+  - FreeBSD/NetBSD : Supported.
+
+INSTALL :
+cd HFTirc
+cmake .
+make
+sudo make install
+
+DISTROS :
+  - HFTirc is available with AUR in ArchLinux (http://aur.archlinux.org/packages.php?ID=45899)
