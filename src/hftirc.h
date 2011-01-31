@@ -76,8 +76,9 @@
 
 /* Flags definition for Update need */
 #define UNoMask        (0)
-#define UTopicMask     (1 << 1)
-#define UNickSortMask  (1 << 2)
+#define UTopicMask     (1 << 1) /* Need topic bar update */
+#define UNickSortMask  (1 << 2) /* Need nick list sort   */
+#define UNickListMask  (1 << 3) /* Need nicklist update  */
 
 /* Typedef */
 typedef enum { False, True } Bool;

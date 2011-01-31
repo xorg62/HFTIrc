@@ -131,7 +131,7 @@ nick_attach(int buf, NickStruct *nick)
      nick->next = hftirc->cb[buf].nickhead;
      hftirc->cb[buf].nickhead = nick;
 
-     hftirc->cb[buf].umask |= UNickSortMask;
+     hftirc->cb[buf].umask |= (UNickSortMask | UNickListMask);
 
      return;
 }
@@ -147,7 +147,7 @@ nick_detach(int buf, NickStruct *nick)
 
      *ns = nick->next;
 
-     hftirc->cb[buf].umask |= UNickSortMask;
+     hftirc->cb[buf].umask |= (UNickSortMask | UNickListMask);
 
      return;
 }

@@ -212,6 +212,7 @@ ui_update_statuswin(void)
 void
 ui_update_topicwin(void)
 {
+     /* Check if this is needed */
      if(!(hftirc->cb[hftirc->selbuf].umask & UTopicMask))
           return;
 
@@ -246,7 +247,8 @@ ui_update_nicklistwin(void)
 
      nick_sort_abc(hftirc->selbuf);
 
-     if(!hftirc->ui->nicklist)
+     if(!hftirc->ui->nicklist
+               || !(hftirc->cb[hftirc->selbuf].umask & UNickListMask))
           return;
 
      werase(hftirc->ui->nicklistwin);
@@ -284,6 +286,8 @@ ui_update_nicklistwin(void)
      wattroff(hftirc->ui->nicklistwin, COLOR_ROSTER);
 
      wrefresh(hftirc->ui->nicklistwin);
+
+     hftirc->cb[hftirc->selbuf].umask &= ~UNickListMask;
 
      return;
 }
@@ -431,7 +435,7 @@ ui_buf_set(int buf)
      hftirc->selbuf = buf;
      hftirc->selses = hftirc->cb[buf].sessid;
      hftirc->cb[buf].act = 0;
-     hftirc->cb[buf].umask |= UTopicMask;
+     hftirc->cb[buf].umask |= (UTopicMask | UNickListMask);
 
      ui_draw_buf(buf);
 
@@ -465,7 +469,7 @@ ui_buf_new(const char *name, unsigned int id)
      cbs[i].naming = cbs[i].nicklistscroll = 0;
      cbs[i].lastposbold = -1;
      cbs[i].sessid = id;
-     cbs[i].umask |= UTopicMask;
+     cbs[i].umask |= (UTopicMask | UNickListMask);
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
 
@@ -552,6 +556,7 @@ ui_nicklist_toggle(void)
           hftirc->ui->nicklistwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
           wrefresh(hftirc->ui->nicklistwin);
           hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - ROSTERSIZE, 1, 0);
+          hftirc->cb[hftirc->selbuf].umask |= UNickListMask;
           ui_update_nicklistwin();
      }
      else
@@ -575,6 +580,7 @@ ui_nicklist_scroll(int v)
 
      hftirc->cb[hftirc->selbuf].nicklistscroll += v;
 
+     hftirc->cb[hftirc->selbuf].umask |= UNickListMask;
      ui_update_nicklistwin();
 
      return;
