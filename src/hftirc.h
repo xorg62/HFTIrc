@@ -198,7 +198,7 @@ typedef struct
 typedef struct
 {
      int ft, running;
-     int nbuf, selbuf, selses;
+     int nbuf, selbuf, prevbuf, selses;
      IrcSession *session[NSERV];
      ConfStruct conf;
      ChanBuf *cb;

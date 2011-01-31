@@ -432,6 +432,7 @@ ui_buf_set(int buf)
           return;
 
      hftirc->cb[hftirc->selbuf].lastposbold = hftirc->cb[hftirc->selbuf].bufpos - 1;
+     hftirc->prevbuf = hftirc->selbuf; 
      hftirc->selbuf = buf;
      hftirc->selses = hftirc->cb[buf].sessid;
      hftirc->cb[buf].act = 0;
@@ -508,8 +509,7 @@ ui_buf_close(int buf)
 
      free(cbs);
 
-     if(hftirc->selbuf == buf)
-          ui_buf_set(buf - 1);
+     ui_buf_set(hftirc->prevbuf);
 
      return;
 }
