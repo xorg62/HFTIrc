@@ -29,6 +29,7 @@
 #define COLOR_ROSTER (ui_color(COLOR_THEME, hftirc->ui->bg))
 #define COLOR_ACT    (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
 #define COLOR_HLACT  (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
 
 void
 ui_init(void)
@@ -308,7 +309,7 @@ ui_print(WINDOW *w, char *str, int n)
 
      /* Last position tracker with bold line */
      if(hftirc->cb[hftirc->selbuf].lastposbold == n)
-          lastposmask |= A_BOLD;
+          lastposmask |= COLOR_LASTPOS;
 
      for(i = 0; i < strlen(str); ++i)
      {
