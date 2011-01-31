@@ -88,7 +88,7 @@ hft_wcsncasecmp(const wchar_t *s1, const wchar_t *s2, int n)
      if(!s1 || !s2)
           return -1;
 
-     for (lc1 = lc2 = diff = 0 ; n-- > 0 ;++s1, ++s2)
+     for(lc1 = lc2 = diff = 0 ; n-- > 0 ;++s1, ++s2)
      {
 
           lc1 = towlower(*s1);

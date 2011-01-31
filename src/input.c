@@ -584,7 +584,6 @@ input_buffer_swap(const char *input)
 void
 input_say(const char *input)
 {
-     NickStruct *ns;
      DSINPUT(input);
      NOSERVRET();
 
@@ -594,14 +593,7 @@ input_say(const char *input)
                          hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't send message");
           else
-          {
-               /* Find self nick in nick list to know rank */
-               for(ns = hftirc->cb[hftirc->selbuf].nickhead;
-                         strcmp(ns->nick, hftirc->session[hftirc->selses]->nick);
-                         ns = ns->next);
-
-               ui_print_buf(hftirc->selbuf, "<%c%s> %s", (ns->rang ? ns->rang : ' '), ns->nick, input);
-          }
+               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->session[hftirc->selses]->nick, input);
      }
      else
           WARN("Error", "Usage: /say <message>");

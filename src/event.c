@@ -218,7 +218,7 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
                if(hftirc->cb[j].sessid == s && j != 0)
                {
                     ui_print_buf(j, "  *** Your nick is now %c%s", B, hftirc->session[s]->nick);
-                    hftirc->cb[i].neednicksort = 1;
+                    hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
                }
 
                return;
@@ -230,7 +230,7 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
                {
                     ui_print_buf(i, "  *** %s is now %c%s", nick, B, params[0]);
                     strcpy(ns->nick, params[0]);
-                    hftirc->cb[i].neednicksort = 1;
+                    hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
                }
 
      for(i = 0; i < hftirc->nbuf; ++i)
@@ -299,7 +299,7 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
      ui_print_buf(b, "  *** Mode %c%s%c [%s %s] set by %c%s",
           B, params[0], B, params[1], nicks + 1, B, nick);
 
-     /* nick_sort_abc(b) </// Maybe nick_sort will sort rank too. */
+     hftirc->cb[b].umask |= UNickListMask;
 
      return;
 }
@@ -514,6 +514,7 @@ event_topic(IrcSession *session, const char *event, const char *origin, const ch
      {
           ui_print_buf(i, "  *** Topic of %c%s%c: %s", B, params[1], B, params[2]);
           strcpy(hftirc->cb[i].topic, params[2]);
+          hftirc->cb[i].umask |= UTopicMask;
      }
      else
      {
@@ -523,6 +524,7 @@ event_topic(IrcSession *session, const char *event, const char *origin, const ch
           ui_print_buf(i, "  *** New topic of %c%s%c set by %c%s%c: %s", B, params[0], B, B, nick, B, params[1]);
 
           strcpy(hftirc->cb[i].topic, params[1]);
+          hftirc->cb[i].umask |= UTopicMask;
      }
 
      return;

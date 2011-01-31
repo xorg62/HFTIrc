@@ -22,13 +22,14 @@
 
 /* Colors lists */
 #define COLOR_THEME  COLOR_BLUE
-#define COLOR_SW     (ui_color(COLOR_BLACK, COLOR_THEME))
-#define COLOR_SW2    (ui_color(COLOR_WHITE, COLOR_THEME))
-#define COLOR_HL     (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
-#define COLOR_WROTE  (ui_color(COLOR_CYAN, hftirc->ui->bg))
-#define COLOR_ROSTER (ui_color(COLOR_THEME, hftirc->ui->bg))
-#define COLOR_ACT    (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
-#define COLOR_HLACT  (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_SW      (ui_color(COLOR_BLACK, COLOR_THEME))
+#define COLOR_SW2     (ui_color(COLOR_WHITE, COLOR_THEME))
+#define COLOR_HL      (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
+#define COLOR_WROTE   (ui_color(COLOR_CYAN, hftirc->ui->bg))
+#define COLOR_ROSTER  (ui_color(COLOR_THEME, hftirc->ui->bg))
+#define COLOR_ACT     (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
+#define COLOR_HLACT   (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
 
 void
 ui_init(void)
@@ -211,6 +212,10 @@ ui_update_statuswin(void)
 void
 ui_update_topicwin(void)
 {
+     /* Check if this is needed */
+     if(!(hftirc->cb[hftirc->selbuf].umask & UTopicMask))
+          return;
+
      /* Erase all window content */
      werase(hftirc->ui->topicwin);
 
@@ -218,15 +223,17 @@ ui_update_topicwin(void)
      wbkgd(hftirc->ui->topicwin, COLOR_SW);
 
      /* Write topic */
-     /* Channel */
+     /*   Channel   */
      if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
           waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
-     /* Other */
+     /*   Other    */
      else
           wprintw(hftirc->ui->topicwin, "%s (%s)",
                     hftirc->cb[hftirc->selbuf].name, hftirc->conf.serv[hftirc->selses].name);
 
      wrefresh(hftirc->ui->topicwin);
+
+     hftirc->cb[hftirc->selbuf].umask &= ~UTopicMask;
 
      return;
 }
@@ -240,7 +247,8 @@ ui_update_nicklistwin(void)
 
      nick_sort_abc(hftirc->selbuf);
 
-     if(!hftirc->ui->nicklist)
+     if(!hftirc->ui->nicklist
+               || !(hftirc->cb[hftirc->selbuf].umask & UNickListMask))
           return;
 
      werase(hftirc->ui->nicklistwin);
@@ -279,13 +287,15 @@ ui_update_nicklistwin(void)
 
      wrefresh(hftirc->ui->nicklistwin);
 
+     hftirc->cb[hftirc->selbuf].umask &= ~UNickListMask;
+
      return;
 }
 
 void
-ui_print(WINDOW *w, char *str)
+ui_print(WINDOW *w, char *str, int n)
 {
-     int i, mask = A_NORMAL;
+     int i, mask = A_NORMAL, lastposmask = A_NORMAL;
      char *p, nick[128] = { 0 };
 
      if(!str || !w)
@@ -305,6 +315,10 @@ ui_print(WINDOW *w, char *str)
           mask &= ~(COLOR_WROTE);
           mask |= COLOR_HL;
      }
+
+     /* Last position tracker with bold line */
+     if(hftirc->cb[hftirc->selbuf].lastposbold == n)
+          lastposmask |= COLOR_LASTPOS;
 
      for(i = 0; i < strlen(str); ++i)
      {
@@ -326,9 +340,9 @@ ui_print(WINDOW *w, char *str)
 
                default:
                     /* simple waddch doesn't work with some char */
-                    wattron(w, mask);
+                    wattron(w, mask | lastposmask);
                     wprintw(w, "%c", str[i]);
-                    wattroff(w, mask);
+                    wattroff(w, mask | lastposmask);
 
                     break;
           }
@@ -360,7 +374,7 @@ ui_print_buf(int id, char *format, ...)
 
      if(id == hftirc->selbuf && !hftirc->cb[id].scrollpos)
      {
-          ui_print(hftirc->ui->mainwin, buf);
+          ui_print(hftirc->ui->mainwin, buf, 0);
           wrefresh(hftirc->ui->mainwin);
      }
 
@@ -387,7 +401,6 @@ ui_print_buf(int id, char *format, ...)
      return;
 }
 
-/* TODO: Try to fix blank buffer bug every x lines.. */
 void
 ui_draw_buf(int id)
 {
@@ -396,13 +409,16 @@ ui_draw_buf(int id)
      if(id < 0 || id > hftirc->nbuf - 1)
           return;
 
-     werase(hftirc->ui->mainwin);
-
      i = (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos) - MAINWIN_LINES;
 
      for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
           if(i < BUFLINES)
-               ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"));
+          {
+               if(i < 0 && hftirc->cb[id].buffer[BUFLINES + i])
+                    ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[BUFLINES + i], BUFLINES + i);
+               else
+                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"), i);
+          }
 
      wrefresh(hftirc->ui->mainwin);
 
@@ -415,9 +431,11 @@ ui_buf_set(int buf)
      if(buf < 0 || buf > hftirc->nbuf - 1)
           return;
 
+     hftirc->cb[hftirc->selbuf].lastposbold = hftirc->cb[hftirc->selbuf].bufpos - 1;
      hftirc->selbuf = buf;
      hftirc->selses = hftirc->cb[buf].sessid;
      hftirc->cb[buf].act = 0;
+     hftirc->cb[buf].umask |= (UTopicMask | UNickListMask);
 
      ui_draw_buf(buf);
 
@@ -448,8 +466,10 @@ ui_buf_new(const char *name, unsigned int id)
      for(j = 0; j < BUFLINES; cbs[i].buffer[j++] = NULL);
 
      cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
-     cbs[i].naming = cbs[i].nicklistscroll = cbs[i].neednicksort = 0;
+     cbs[i].naming = cbs[i].nicklistscroll = 0;
+     cbs[i].lastposbold = -1;
      cbs[i].sessid = id;
+     cbs[i].umask |= (UTopicMask | UNickListMask);
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
 
@@ -512,8 +532,10 @@ ui_scroll_up(int buf)
 void
 ui_scroll_down(int buf)
 {
-     if(buf < 0 || buf > hftirc->nbuf - 1
-               || hftirc->cb[buf].scrollpos >= 0)
+     if(buf < 0
+               || buf > hftirc->nbuf - 1
+               || hftirc->cb[buf].scrollpos >= 0
+               || hftirc->cb[buf].scrollpos > BUFLINES)
           return;
 
      hftirc->cb[buf].scrollpos += 2;
@@ -534,6 +556,7 @@ ui_nicklist_toggle(void)
           hftirc->ui->nicklistwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
           wrefresh(hftirc->ui->nicklistwin);
           hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - ROSTERSIZE, 1, 0);
+          hftirc->cb[hftirc->selbuf].umask |= UNickListMask;
           ui_update_nicklistwin();
      }
      else
@@ -557,6 +580,7 @@ ui_nicklist_scroll(int v)
 
      hftirc->cb[hftirc->selbuf].nicklistscroll += v;
 
+     hftirc->cb[hftirc->selbuf].umask |= UNickListMask;
      ui_update_nicklistwin();
 
      return;
