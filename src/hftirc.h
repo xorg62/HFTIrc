@@ -122,7 +122,7 @@ typedef struct
      /* For ui use */
      char *buffer[BUFLINES];
      int bufpos, scrollpos, naming;
-     int nicklistscroll;
+     int nicklistscroll, lastposbold;
 
      /* For irc info */
      unsigned int sessid;
@@ -214,7 +214,7 @@ void ui_update_statuswin(void);
 void ui_update_topicwin(void);
 void ui_update_infowin(void);
 void ui_update_nicklistwin(void);
-void ui_print(WINDOW *w, char *str);
+void ui_print(WINDOW *w, char *str, int n);
 void ui_print_buf(int id, char *format, ...);
 void ui_draw_buf(int id);
 void ui_buf_new(const char *name, unsigned int id);

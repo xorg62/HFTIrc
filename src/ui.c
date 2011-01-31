@@ -283,9 +283,9 @@ ui_update_nicklistwin(void)
 }
 
 void
-ui_print(WINDOW *w, char *str)
+ui_print(WINDOW *w, char *str, int n)
 {
-     int i, mask = A_NORMAL;
+     int i, mask = A_NORMAL, lastposmask = A_NORMAL;
      char *p, nick[128] = { 0 };
 
      if(!str || !w)
@@ -305,6 +305,10 @@ ui_print(WINDOW *w, char *str)
           mask &= ~(COLOR_WROTE);
           mask |= COLOR_HL;
      }
+
+     /* Last position tracker with bold line */
+     if(hftirc->cb[hftirc->selbuf].lastposbold == n)
+          lastposmask |= A_BOLD;
 
      for(i = 0; i < strlen(str); ++i)
      {
@@ -326,9 +330,9 @@ ui_print(WINDOW *w, char *str)
 
                default:
                     /* simple waddch doesn't work with some char */
-                    wattron(w, mask);
+                    wattron(w, mask | lastposmask);
                     wprintw(w, "%c", str[i]);
-                    wattroff(w, mask);
+                    wattroff(w, mask | lastposmask);
 
                     break;
           }
@@ -360,7 +364,7 @@ ui_print_buf(int id, char *format, ...)
 
      if(id == hftirc->selbuf && !hftirc->cb[id].scrollpos)
      {
-          ui_print(hftirc->ui->mainwin, buf);
+          ui_print(hftirc->ui->mainwin, buf, 0);
           wrefresh(hftirc->ui->mainwin);
      }
 
@@ -402,7 +406,7 @@ ui_draw_buf(int id)
 
      for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
           if(i < BUFLINES)
-               ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"));
+               ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"), i);
 
      wrefresh(hftirc->ui->mainwin);
 
@@ -415,6 +419,7 @@ ui_buf_set(int buf)
      if(buf < 0 || buf > hftirc->nbuf - 1)
           return;
 
+     hftirc->cb[hftirc->selbuf].lastposbold = hftirc->cb[hftirc->selbuf].bufpos - 1;
      hftirc->selbuf = buf;
      hftirc->selses = hftirc->cb[buf].sessid;
      hftirc->cb[buf].act = 0;
@@ -449,6 +454,7 @@ ui_buf_new(const char *name, unsigned int id)
 
      cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
      cbs[i].naming = cbs[i].nicklistscroll = cbs[i].neednicksort = 0;
+     cbs[i].lastposbold = -1;
      cbs[i].sessid = id;
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
