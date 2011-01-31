@@ -74,6 +74,10 @@
                           return r;                                                            \
                      }
 
+/* Flags definition for Update need */
+#define UNoMask        (0)
+#define UTopicMask     (1 << 1)
+#define UNickSortMask  (1 << 2)
 
 /* Typedef */
 typedef enum { False, True } Bool;
@@ -129,7 +133,8 @@ typedef struct
      char name[HOSTLEN], *names;
      NickStruct *nickhead;
      char topic[BUFSIZE];
-     int act, neednicksort;
+     int act;
+     unsigned int umask;
 } ChanBuf;
 
 /* Date struct */

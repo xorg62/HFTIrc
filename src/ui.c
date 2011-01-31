@@ -212,6 +212,9 @@ ui_update_statuswin(void)
 void
 ui_update_topicwin(void)
 {
+     if(!(hftirc->cb[hftirc->selbuf].umask & UTopicMask))
+          return;
+
      /* Erase all window content */
      werase(hftirc->ui->topicwin);
 
@@ -219,15 +222,17 @@ ui_update_topicwin(void)
      wbkgd(hftirc->ui->topicwin, COLOR_SW);
 
      /* Write topic */
-     /* Channel */
+     /*   Channel   */
      if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
           waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
-     /* Other */
+     /*   Other    */
      else
           wprintw(hftirc->ui->topicwin, "%s (%s)",
                     hftirc->cb[hftirc->selbuf].name, hftirc->conf.serv[hftirc->selses].name);
 
      wrefresh(hftirc->ui->topicwin);
+
+     hftirc->cb[hftirc->selbuf].umask &= ~UTopicMask;
 
      return;
 }
@@ -400,8 +405,6 @@ ui_draw_buf(int id)
      if(id < 0 || id > hftirc->nbuf - 1)
           return;
 
-     werase(hftirc->ui->mainwin);
-
      i = (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos) - MAINWIN_LINES;
 
      for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
@@ -428,6 +431,7 @@ ui_buf_set(int buf)
      hftirc->selbuf = buf;
      hftirc->selses = hftirc->cb[buf].sessid;
      hftirc->cb[buf].act = 0;
+     hftirc->cb[buf].umask |= UTopicMask;
 
      ui_draw_buf(buf);
 
@@ -458,9 +462,10 @@ ui_buf_new(const char *name, unsigned int id)
      for(j = 0; j < BUFLINES; cbs[i].buffer[j++] = NULL);
 
      cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
-     cbs[i].naming = cbs[i].nicklistscroll = cbs[i].neednicksort = 0;
+     cbs[i].naming = cbs[i].nicklistscroll = 0;
      cbs[i].lastposbold = -1;
      cbs[i].sessid = id;
+     cbs[i].umask |= UTopicMask;
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
 

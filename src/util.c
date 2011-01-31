@@ -102,7 +102,7 @@ nick_sort_abc(int buf)
      int swap = 1;
      NickStruct *ns;
 
-     if(!buf || !hftirc->cb[buf].neednicksort)
+     if(!buf || !(hftirc->cb[buf].umask & UNickSortMask))
           return;
 
      /* Alphabetical bubble sort */
@@ -117,7 +117,7 @@ nick_sort_abc(int buf)
                }
      }
 
-    hftirc->cb[buf].neednicksort = 0;
+    hftirc->cb[buf].umask &= ~UNickSortMask;
 
     return;
 }
@@ -131,7 +131,7 @@ nick_attach(int buf, NickStruct *nick)
      nick->next = hftirc->cb[buf].nickhead;
      hftirc->cb[buf].nickhead = nick;
 
-     hftirc->cb[buf].neednicksort = 1;
+     hftirc->cb[buf].umask |= UNickSortMask;
 
      return;
 }
@@ -147,7 +147,7 @@ nick_detach(int buf, NickStruct *nick)
 
      *ns = nick->next;
 
-     hftirc->cb[buf].neednicksort = 1;
+     hftirc->cb[buf].umask |= UNickSortMask;
 
      return;
 }
@@ -182,7 +182,7 @@ hft_wcsncasecmp(const wchar_t *s1, const wchar_t *s2, int n)
      if(!s1 || !s2)
           return -1;
 
-     for (lc1 = lc2 = diff = 0 ; n-- > 0 ;++s1, ++s2)
+     for(lc1 = lc2 = diff = 0 ; n-- > 0 ;++s1, ++s2)
      {
 
           lc1 = towlower(*s1);
