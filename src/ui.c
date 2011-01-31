@@ -22,13 +22,13 @@
 
 /* Colors lists */
 #define COLOR_THEME  COLOR_BLUE
-#define COLOR_SW     (ui_color(COLOR_BLACK, COLOR_THEME))
-#define COLOR_SW2    (ui_color(COLOR_WHITE, COLOR_THEME))
-#define COLOR_HL     (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
-#define COLOR_WROTE  (ui_color(COLOR_CYAN, hftirc->ui->bg))
-#define COLOR_ROSTER (ui_color(COLOR_THEME, hftirc->ui->bg))
-#define COLOR_ACT    (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
-#define COLOR_HLACT  (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_SW      (ui_color(COLOR_BLACK, COLOR_THEME))
+#define COLOR_SW2     (ui_color(COLOR_WHITE, COLOR_THEME))
+#define COLOR_HL      (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
+#define COLOR_WROTE   (ui_color(COLOR_CYAN, hftirc->ui->bg))
+#define COLOR_ROSTER  (ui_color(COLOR_THEME, hftirc->ui->bg))
+#define COLOR_ACT     (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
+#define COLOR_HLACT   (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
 #define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
 
 void
