@@ -47,15 +47,15 @@
 
 /* Macro */
 #define HFTIRC_VERSION    "(devel version)"
-#define BUFSIZE           2048
-#define MAXBUF            64
-#define BUFLINES          512
-#define NICKLEN           24
-#define CHANLEN           24
-#define HOSTLEN           128
-#define NSERV             32
-#define HFTIRC_KEY_ENTER  10
-#define HISTOLEN          256
+#define BUFSIZE           (2048)
+#define MAXBUF            (64)
+#define BUFLINES          (512)
+#define NICKLEN           (24)
+#define CHANLEN           (24)
+#define HOSTLEN           (128)
+#define NSERV             (32)
+#define HFTIRC_KEY_ENTER  (10)
+#define HISTOLEN          (256)
 #define MAINWIN_LINES     (LINES - 2)
 #define DATELEN           (strlen(hftirc->date.str))
 #define DEF_CONF          ".config/hftirc/hftirc.conf"

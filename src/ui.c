@@ -392,7 +392,6 @@ ui_print_buf(int id, char *format, ...)
      return;
 }
 
-/* TODO: Try to fix blank buffer bug every x lines.. */
 void
 ui_draw_buf(int id)
 {
@@ -407,7 +406,12 @@ ui_draw_buf(int id)
 
      for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
           if(i < BUFLINES)
-               ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"), i);
+          {
+               if(i < 0 && hftirc->cb[id].buffer[BUFLINES + i])
+                    ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[BUFLINES + i], BUFLINES + i);
+               else
+                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"), i);
+          }
 
      wrefresh(hftirc->ui->mainwin);
 
@@ -519,8 +523,10 @@ ui_scroll_up(int buf)
 void
 ui_scroll_down(int buf)
 {
-     if(buf < 0 || buf > hftirc->nbuf - 1
-               || hftirc->cb[buf].scrollpos >= 0)
+     if(buf < 0
+               || buf > hftirc->nbuf - 1
+               || hftirc->cb[buf].scrollpos >= 0
+               || hftirc->cb[buf].scrollpos > BUFLINES)
           return;
 
      hftirc->cb[buf].scrollpos += 2;
