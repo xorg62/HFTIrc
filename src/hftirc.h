@@ -308,12 +308,14 @@ void update_date(void);
 int find_bufid(unsigned id, const char *str);
 int find_sessid(IrcSession *session);
 void msg_sessbuf(int sess, char *str);
+wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
+wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
+
+/* nick.c  */
 void nick_attach(int buf, NickStruct *nick);
 void nick_detach(int buf, NickStruct *nick);
 NickStruct* nickstruct_set(char *nick);
 void nick_sort_abc(int buf);
-wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
-wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
 
 /* main.c */
 void signal_handler(int signal);

@@ -17,8 +17,6 @@
 #include "hftirc.h"
 #include "input.h"
 
-static void nick_swap(NickStruct *x, NickStruct *y);
-
 void
 update_date(void)
 {
@@ -79,98 +77,6 @@ msg_sessbuf(int sess, char *str)
                ui_print_buf(i, str);
 
      return;
-}
-
-static void
-nick_swap(NickStruct *x, NickStruct *y)
-{
-     NickStruct t = *x;
-
-     strcpy(x->nick, y->nick);
-     x->rang = y->rang;
-
-     strcpy(y->nick, t.nick);
-     y->rang = t.rang;
-
-     return;
-}
-
-/* Sort alphabetically nick list */
-void
-nick_sort_abc(int buf)
-{
-     int swap = 1;
-     NickStruct *ns;
-
-     if(!buf || !hftirc->cb[buf].neednicksort)
-          return;
-
-     /* Alphabetical bubble sort */
-     while(swap)
-     {
-          swap = 0;
-          for(ns = hftirc->cb[buf].nickhead; ns->next; ns = ns->next)
-               if(strcasecmp(ns->nick, ns->next->nick) > 0)
-               {
-                    swap = 1;
-                    nick_swap(ns, ns->next);
-               }
-     }
-
-    hftirc->cb[buf].neednicksort = 0;
-
-    return;
-}
-
-void
-nick_attach(int buf, NickStruct *nick)
-{
-     if(hftirc->cb[buf].nickhead)
-          hftirc->cb[buf].nickhead->prev = nick;
-
-     nick->next = hftirc->cb[buf].nickhead;
-     hftirc->cb[buf].nickhead = nick;
-
-     hftirc->cb[buf].neednicksort = 1;
-
-     return;
-}
-
-void
-nick_detach(int buf, NickStruct *nick)
-{
-     NickStruct **ns;
-
-     for(ns = &hftirc->cb[buf].nickhead
-               ; *ns && *ns != nick
-               ; ns = &(*ns)->next);
-
-     *ns = nick->next;
-
-     hftirc->cb[buf].neednicksort = 1;
-
-     return;
-}
-
-NickStruct*
-nickstruct_set(char *nick)
-{
-     NickStruct *ret;
-
-     ret = malloc(sizeof(NickStruct));
-
-     memset(ret->nick, 0, NICKLEN);
-     ret->rang = '\0';
-
-     if(strchr("@+%", nick[0]))
-     {
-          ret->rang = nick[0];
-          strcpy(ret->nick, nick + 1);
-     }
-     else
-          strcpy(ret->nick, nick);
-
-     return ret;
 }
 
 /* For compatibility with FreeBSD 7.x */

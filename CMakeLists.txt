@@ -32,6 +32,7 @@ set(hftirc_src
   src/irc.c
   src/event.c
   src/hftirc.c
+  src/nick.c
   )
 
 # Set the executable from the hftirc_src
