@@ -22,6 +22,7 @@ static const InputStruct input_struct[] =
      { "buffer",          input_buffer },
      { "buffer_list",     input_buffer_list },
      { "buffer_swap",     input_buffer_swap },
+     { "buffer_prev",     input_buffer_prev},
      { "close",           input_close },
      { "connect",         input_connect },
      { "ctcp",            input_ctcp },

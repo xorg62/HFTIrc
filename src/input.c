@@ -582,6 +582,17 @@ input_buffer_swap(const char *input)
 }
 
 void
+input_buffer_prev(const char *input)
+{
+     DSINPUT(input);
+     NOSERVRET();
+
+     ui_buf_set(hftirc->prevbuf);
+
+     return;
+}
+
+void
 input_say(const char *input)
 {
      DSINPUT(input);
@@ -646,3 +657,4 @@ input_nicklist_toggle(const char *input)
 
      return;
 }
+

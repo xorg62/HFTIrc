@@ -304,6 +304,7 @@ void input_ctcp(const char *input);
 void input_buffer(const char *input);
 void input_buffer_list(const char *input);
 void input_buffer_swap(const char *input);
+void input_buffer_prev(const char *input);
 void input_say(const char *input);
 void input_reconnect(const char *input);
 void input_nicklist_scroll(const char *input);
