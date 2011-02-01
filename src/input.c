@@ -563,6 +563,18 @@ input_buffer_list(const char *input)
 }
 
 void
+input_buffer_prev(const char *input)
+{
+     DSINPUT(input);
+     NOSERVRET();
+
+     ui_buf_set(hftirc->prevbuf);
+
+     return;
+}
+
+
+void
 input_buffer_swap(const char *input)
 {
     int i;
@@ -577,17 +589,6 @@ input_buffer_swap(const char *input)
      }
      else
         WARN("Error", "Usage: /buffer_swap <num>");
-
-     return;
-}
-
-void
-input_buffer_prev(const char *input)
-{
-     DSINPUT(input);
-     NOSERVRET();
-
-     ui_buf_set(hftirc->prevbuf);
 
      return;
 }
