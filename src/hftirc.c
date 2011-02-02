@@ -128,9 +128,13 @@ main(int argc, char **argv)
                               hftirc->session[i]->connected = 0;
          }
 
+         /* Updating date */
          update_date();
 
+         /* Update status win with date */
          ui_update_statuswin();
+
+         /* topic win and nicklist updated only if needed with umask */
          ui_update_topicwin();
          ui_update_nicklistwin();
 

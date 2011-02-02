@@ -80,9 +80,12 @@ input_nick(const char *input)
 void
 input_quit(const char *input)
 {
+     int i;
+
      DSINPUT(input);
 
-     irc_send_raw(hftirc->session[hftirc->selses], "QUIT :%s", input);
+     for(i = 0; i < hftirc->conf.nserv; ++i)
+          irc_send_raw(hftirc->session[i], "QUIT :%s", input);
 
      hftirc->running = -1;
 

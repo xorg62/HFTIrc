@@ -150,13 +150,13 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
                break;
           case 433:
-               /* ui_print_buf(0, "[%s] *** Nickname is already in use", name); */
+               ui_print_buf(0, "[%s] *** Nickname is already in use", name);
                i = find_sessid(session);
 
-               if(!strcmp(hftirc->conf.serv[i].nick, params[1]))
+               if(!strcmp(hftirc->session[i]->nick, params[1]))
                {
-                   strcat(hftirc->conf.serv[i].nick, "_");
-                   irc_send_raw(hftirc->session[i], "NICK %s", hftirc->conf.serv[i].nick);
+                   strcat(hftirc->session[i]->nick, "_");
+                   irc_send_raw(hftirc->session[i], "NICK %s", hftirc->session[i]->nick);
                }
 
                break;
@@ -211,7 +211,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
 void
 event_nick(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j, s;
+     int i, s;
      char nick[NICKLEN] = { 0 };
      NickStruct *ns;
 
@@ -220,30 +220,25 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
 
      s = find_sessid(session);
 
-     if(!strcmp(nick, hftirc->session[s]->nick))
-     {
-          for(j = 0; j < hftirc->nbuf; ++j)
-               if(hftirc->cb[j].sessid == s && j != 0)
-               {
-                    ui_print_buf(j, "  *** Your nick is now %c%s", B, hftirc->session[s]->nick);
-                    hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
-               }
-
-               return;
-     }
-
      for(i = 0; i < hftirc->nbuf; ++i)
           for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
                if(hftirc->cb[i].sessid == s && ns->nick && !strcmp(nick, ns->nick))
                {
+                    hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
+
+                    if(!strcmp(nick, hftirc->session[s]->nick))
+                         strcpy(hftirc->session[s]->nick, params[0]);
+
                     ui_print_buf(i, "  *** %s is now %c%s", nick, B, params[0]);
                     strcpy(ns->nick, params[0]);
-                    hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
                }
 
      for(i = 0; i < hftirc->nbuf; ++i)
           if(!strcmp(nick, hftirc->cb[i].name) && s == hftirc->cb[i].sessid)
+          {
                strcpy(hftirc->cb[i].name, params[0]);
+               hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
+          }
 
      return;
 }
