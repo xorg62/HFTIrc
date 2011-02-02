@@ -139,10 +139,9 @@ ui_color(int fg, int bg)
      return 0;
 }
 
-void
 ui_update_statuswin(void)
 {
-     int i, j, x, y;
+     int i, j, c, x, y;
 
      /* Erase all window content */
      werase(hftirc->ui->statuswin);
@@ -178,25 +177,28 @@ ui_update_statuswin(void)
      wprintw(hftirc->ui->statuswin, " (Bufact: ");
 
      /* First pritority is when ISCHAN(..) == 0, second for == j.
-      * Priority: Private conversation, channel.
+      * Priority: Private conversation, highlight channel, and normal active channel.
       */
      for(j = 0; j < 2; ++j)
      {
-          for(i = 0; i < hftirc->nbuf; ++i)
-          {
-               if(ISCHAN(hftirc->cb[i].name[0]) == j
-                         && hftirc->cb[i].act)
-               {
-                    wattron(hftirc->ui->statuswin,
-                              ((hftirc->cb[i].act == 2) ? COLOR_HLACT : COLOR_ACT));
-                    wprintw(hftirc->ui->statuswin, "%d", i);
-                    wattroff(hftirc->ui->statuswin, A_UNDERLINE);
-                    wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
-                    wattroff(hftirc->ui->statuswin,
-                              ((hftirc->cb[i].act == 2) ? COLOR_HLACT : COLOR_ACT));
-                    waddch(hftirc->ui->statuswin, ' ');
-               }
-          }
+         for ( c = 2; c > 0; --c )
+         {
+             for(i = 0; i < hftirc->nbuf; ++i)
+              {
+                  if(ISCHAN(hftirc->cb[i].name[0]) == j
+                         && hftirc->cb[i].act == c)
+                  {
+                      wattron(hftirc->ui->statuswin,
+                              ((c == 2) ? COLOR_HLACT : COLOR_ACT));
+                      wprintw(hftirc->ui->statuswin, "%d", i);
+                      wattroff(hftirc->ui->statuswin, A_UNDERLINE);
+                      wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
+                      wattroff(hftirc->ui->statuswin,
+                              ((c == 2) ? COLOR_HLACT : COLOR_ACT));
+                      waddch(hftirc->ui->statuswin, ' ');
+                  }
+              }
+         }
      }
 
      /* Remove last char in () -> a space and put the ) instead it */
