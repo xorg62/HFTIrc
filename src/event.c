@@ -150,7 +150,15 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                ui_print_buf(0, "[%s] *** %c%s%c: %s", name, B, params[1], B, params[2]);
                break;
           case 433:
-               ui_print_buf(0, "[%s] *** Nickname is already in use", name);
+               /* ui_print_buf(0, "[%s] *** Nickname is already in use", name); */
+               i = find_sessid(session);
+
+               if(!strcmp(hftirc->conf.serv[i].nick, params[1]))
+               {
+                   strcat(hftirc->conf.serv[i].nick, "_");
+                   irc_send_raw(hftirc->session[i], "NICK %s", hftirc->conf.serv[i].nick);
+               }
+
                break;
           case 451:
                ui_print_buf(0, "[%s] *** You have not registered", name);
