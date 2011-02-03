@@ -176,6 +176,7 @@ typedef struct
      int nserv;
      int bell;
      int nicklist;
+     int lastlinepos; 
      ServInfo serv[NSERV];
 
 } ConfStruct;

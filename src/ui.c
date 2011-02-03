@@ -312,7 +312,7 @@ ui_print(WINDOW *w, char *str, int n)
      }
 
      /* Last position tracker with bold line */
-     if(hftirc->cb[hftirc->selbuf].lastposbold == n)
+     if(hftirc->conf.lastlinepos && hftirc->cb[hftirc->selbuf].lastposbold == n)
           lastposmask |= COLOR_LASTPOS;
 
      for(i = 0; i < strlen(str); ++i)

@@ -89,6 +89,7 @@ config_parse(void)
 
      hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolp;
      hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolp;
+     hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolp;
 
      free(misc);
 
