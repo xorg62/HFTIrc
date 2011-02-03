@@ -186,13 +186,11 @@ ui_update_statuswin(void)
                     if(ISCHAN(hftirc->cb[i].name[0]) == j
                               && hftirc->cb[i].act == c)
                     {
-                         wattron(hftirc->ui->statuswin,
-                                   ((c == 2) ? COLOR_HLACT : COLOR_ACT));
+                         wattron(hftirc->ui->statuswin, ((c == 2) ? COLOR_HLACT : COLOR_ACT));
                          wprintw(hftirc->ui->statuswin, "%d", i);
                          wattroff(hftirc->ui->statuswin, A_UNDERLINE);
                          wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
-                         wattroff(hftirc->ui->statuswin,
-                                   ((c == 2) ? COLOR_HLACT : COLOR_ACT));
+                         wattroff(hftirc->ui->statuswin, ((c == 2) ? COLOR_HLACT : COLOR_ACT));
                          waddch(hftirc->ui->statuswin, ' ');
                     }
 
