@@ -139,6 +139,7 @@ ui_color(int fg, int bg)
      return 0;
 }
 
+void
 ui_update_statuswin(void)
 {
      int i, j, c, x, y;
@@ -180,26 +181,20 @@ ui_update_statuswin(void)
       * Priority: Private conversation, highlight channel, and normal active channel.
       */
      for(j = 0; j < 2; ++j)
-     {
-         for ( c = 2; c > 0; --c )
-         {
-             for(i = 0; i < hftirc->nbuf; ++i)
-              {
-                  if(ISCHAN(hftirc->cb[i].name[0]) == j
-                         && hftirc->cb[i].act == c)
-                  {
-                      wattron(hftirc->ui->statuswin,
-                              ((c == 2) ? COLOR_HLACT : COLOR_ACT));
-                      wprintw(hftirc->ui->statuswin, "%d", i);
-                      wattroff(hftirc->ui->statuswin, A_UNDERLINE);
-                      wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
-                      wattroff(hftirc->ui->statuswin,
-                              ((c == 2) ? COLOR_HLACT : COLOR_ACT));
-                      waddch(hftirc->ui->statuswin, ' ');
-                  }
-              }
-         }
-     }
+          for ( c = 2; c > 0; --c )
+               for(i = 0; i < hftirc->nbuf; ++i)
+                    if(ISCHAN(hftirc->cb[i].name[0]) == j
+                              && hftirc->cb[i].act == c)
+                    {
+                         wattron(hftirc->ui->statuswin,
+                                   ((c == 2) ? COLOR_HLACT : COLOR_ACT));
+                         wprintw(hftirc->ui->statuswin, "%d", i);
+                         wattroff(hftirc->ui->statuswin, A_UNDERLINE);
+                         wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
+                         wattroff(hftirc->ui->statuswin,
+                                   ((c == 2) ? COLOR_HLACT : COLOR_ACT));
+                         waddch(hftirc->ui->statuswin, ' ');
+                    }
 
      /* Remove last char in () -> a space and put the ) instead it */
      getyx(hftirc->ui->statuswin, x, y);
@@ -434,7 +429,7 @@ ui_buf_set(int buf)
           return;
 
      hftirc->cb[hftirc->selbuf].lastposbold = hftirc->cb[hftirc->selbuf].bufpos - 1;
-     hftirc->prevbuf = hftirc->selbuf; 
+     hftirc->prevbuf = hftirc->selbuf;
      hftirc->selbuf = buf;
      hftirc->selses = hftirc->cb[buf].sessid;
      hftirc->cb[buf].act = 0;

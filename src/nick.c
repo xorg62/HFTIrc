@@ -49,7 +49,7 @@ nick_sort_abc(int buf)
      while(swap)
      {
           swap = 0;
-          for(ns = hftirc->cb[buf].nickhead; ns->next; ns = ns->next)
+          for(ns = hftirc->cb[buf].nickhead; ns && ns->next; ns = ns->next)
                if(strcasecmp(ns->nick, ns->next->nick) > 0)
                {
                     swap = 1;
