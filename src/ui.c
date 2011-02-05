@@ -785,10 +785,7 @@ ui_get_input(void)
                                              hftirc->ui->ib.buffer[j] = hftirc->ui->ib.buffer[j + 1], ++j);
                                    wdelch(hftirc->ui->inputwin);
                               }
-                              hftirc->ui->ib.buffer[i] = '\0';
                               hftirc->ui->ib.altbp = 1;
-                              /*++hftirc->ui->ib.pos;*/
-                              /*--hftirc->ui->ib.cpos;*/
                          }
                          break;
 
