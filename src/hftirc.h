@@ -54,7 +54,6 @@
 #define CHANLEN           (24)
 #define HOSTLEN           (128)
 #define NSERV             (32)
-#define HFTIRC_KEY_ENTER  (10)
 #define HISTOLEN          (256)
 #define MAINWIN_LINES     (LINES - 2)
 #define DATELEN           (strlen(hftirc->date.str))
@@ -108,6 +107,7 @@ typedef struct
           int cpos;
           int split;
           int spting;
+          unsigned int altbp;
      } ib;
 } Ui;
 
@@ -176,7 +176,7 @@ typedef struct
      int nserv;
      int bell;
      int nicklist;
-     int lastlinepos; 
+     int lastlinepos;
      ServInfo serv[NSERV];
 
 } ConfStruct;
@@ -232,6 +232,7 @@ void ui_scroll_up(int buf);
 void ui_scroll_down(int buf);
 void ui_nicklist_toggle(void);
 void ui_nicklist_scroll(int v);
+void ui_refresh_curpos(void);
 void ui_get_input(void);
 
 /* event.c */

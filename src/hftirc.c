@@ -131,16 +131,15 @@ main(int argc, char **argv)
          /* Updating date */
          update_date();
 
-         /* Update status win with date */
+         /* Update status win with date/chan act/user info */
          ui_update_statuswin();
 
          /* topic win and nicklist updated only if needed with umask */
          ui_update_topicwin();
          ui_update_nicklistwin();
 
-         refresh();
-         wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
-         wrefresh(hftirc->ui->inputwin);
+         /* Refresh cursor position in input win */
+         ui_refresh_curpos();
     }
 
     endwin();

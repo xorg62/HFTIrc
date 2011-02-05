@@ -20,6 +20,11 @@
 #define COLORMAX      16
 #define ROSTERSIZE    20
 
+/* Some keys */
+#define HFTIRC_KEY_ENTER  (10)
+#define HFTIRC_KEY_ALTBP  (27)
+#define HFTIRC_NB_SPACE   (160)
+
 /* Colors lists */
 #define COLOR_THEME  COLOR_BLUE
 #define COLOR_SW      (ui_color(COLOR_BLACK, COLOR_THEME))
@@ -603,9 +608,25 @@ ui_buf_swap(int n)
 }
 
 void
+ui_refresh_curpos(void)
+{
+     wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
+     wrefresh(hftirc->ui->inputwin);
+
+     /* Alt-backspace handle need this */
+     if(hftirc->ui->ib.altbp)
+     {
+          hftirc->ui->ib.altbp = 0;
+          ui_get_input();
+     }
+
+     return;
+}
+
+void
 ui_get_input(void)
 {
-     int i, n, b = 1, t;
+     int i, j, n, b = 1, t;
      wint_t c;
      wchar_t tmpbuf[BUFSIZE], *cmp;
      char buf[BUFSIZE];
@@ -667,9 +688,7 @@ ui_get_input(void)
                               input_manage(buf);
                               werase(hftirc->ui->inputwin);
                               wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
-                              hftirc->ui->ib.pos = hftirc->ui->ib.cpos = hftirc->ui->ib.split
-                                   = hftirc->ui->ib.hits = 0;
-                              wmove(hftirc->ui->inputwin, 0, 0);
+                              hftirc->ui->ib.pos = hftirc->ui->ib.cpos = hftirc->ui->ib.split = hftirc->ui->ib.hits = 0;
                          }
                          break;
 
@@ -682,7 +701,7 @@ ui_get_input(void)
                               wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
                               wcscpy(hftirc->ui->ib.buffer, hftirc->ui->ib.histo[hftirc->ui->ib.nhisto - ++hftirc->ui->ib.histpos]);
                               werase(hftirc->ui->inputwin);
-                              wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
+                              hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer);
                          }
                          break;
 
@@ -716,8 +735,6 @@ ui_get_input(void)
                               }
                               else
                                    --(hftirc->ui->ib.cpos);
-
-                              wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
                          }
                          break;
 
@@ -731,17 +748,47 @@ ui_get_input(void)
                                    werase(hftirc->ui->inputwin);
                                    ++(hftirc->ui->ib.split);
                               }
-                              else if(hftirc->ui->ib.cpos == COLS -1
-                                        && !hftirc->ui->ib.spting)
+                              else if(hftirc->ui->ib.cpos == COLS -1 && !hftirc->ui->ib.spting)
                               {
                                    werase(hftirc->ui->inputwin);
                                    ++(hftirc->ui->ib.split);
                               }
                               else if(hftirc->ui->ib.cpos != COLS - 1)
                                    ++(hftirc->ui->ib.cpos);
+                         }
+                         break;
 
+                    /* Alt-Backspace, Erase last word */
+                    case HFTIRC_KEY_ALTBP:
+                         if(hftirc->ui->ib.pos > 0)
+                         {
+                              for(i = hftirc->ui->ib.pos - 1;
+                                        (i + 1) && hftirc->ui->ib.buffer[i - 1] != HFTIRC_NB_SPACE; --i)
+                              {
+                                   --(hftirc->ui->ib.pos);
 
-                              wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
+                                   if(hftirc->ui->ib.spting)
+                                   {
+                                        werase(hftirc->ui->inputwin);
+                                        --(hftirc->ui->ib.split);
+
+                                        if(hftirc->ui->ib.split <= 1)
+                                             hftirc->ui->ib.spting = 0;
+                                   }
+                                   else
+                                        --(hftirc->ui->ib.cpos);
+
+                                   wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
+
+                                   for(j = hftirc->ui->ib.pos;
+                                             hftirc->ui->ib.buffer[j];
+                                             hftirc->ui->ib.buffer[j] = hftirc->ui->ib.buffer[j + 1], ++j);
+                                   wdelch(hftirc->ui->inputwin);
+                              }
+                              hftirc->ui->ib.buffer[i] = '\0';
+                              hftirc->ui->ib.altbp = 1;
+                              /*++hftirc->ui->ib.pos;*/
+                              /*--hftirc->ui->ib.cpos;*/
                          }
                          break;
 
@@ -842,14 +889,18 @@ ui_get_input(void)
                               hftirc->ui->ib.hits = 0;
 
                          werase(hftirc->ui->inputwin);
-                         wmove(hftirc->ui->inputwin, 0,
-                                   (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
+                         hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer);
 
                          break;
 
+                    /* Non-breaking space for wide char conversion.
+                     * Will be normal space in final buf.
+                     */
+                    case ' ':
+                         c = HFTIRC_NB_SPACE;
                     default:
                          if((c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE)
-                                   && !(c > 0 && c < 27)) /* Block no binded Ctrl-{key} */
+                                   && !(c > 0 && c < 26)) /* Block no binded Ctrl-{key} */
                          {
                               if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos] != '\0')
                                    for(i = (int)wcslen(hftirc->ui->ib.buffer);
@@ -869,7 +920,6 @@ ui_get_input(void)
 
                               ++(hftirc->ui->ib.pos);
                               ++(hftirc->ui->ib.cpos);
-                              wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
                          }
                          break;
                }
@@ -885,8 +935,8 @@ ui_get_input(void)
 
      /* /<num> to go on the buffer num */
      if(buf[0] == '/' &&
-        ((isdigit(buf[1]) && (n = atoi(&buf[1])) >= 0 && n < 10)
-         || (buf[1] == ' ' && (n = atoi(&buf[2])) > 9)))
+        ((isdigit(buf[1]) && (n = atoi(&buf[1])) >= 0 && n < 10) /* /n   */
+         || (buf[1] == ' ' && (n = atoi(&buf[2])) > 9)))         /* / nn */
      {
           ui_buf_set(n);
           werase(hftirc->ui->inputwin);
