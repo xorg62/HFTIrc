@@ -107,39 +107,6 @@ hft_wcsncasecmp(const wchar_t *s1, const wchar_t *s2, int n)
      return 0;
 }
 
-/* We need to keep space in input buffer:
- * wcstombs remove what it think as useless space.
- * Here we count how many space there is before
- * convertion and add its after to final string.
- */
-size_t
-hft_wcstombs(char *str, wchar_t *wstr, int n)
-{
-     int nspace, i;
-     size_t r;
-     char ustr[512];
-
-     if(!str || !wstr)
-          return 0;
-
-     for(nspace = 0; wstr[nspace] == L' '; ++nspace);
-
-     r = wcstombs(str, (const wchar_t*)wstr, n);
-
-     /* Add missing space to final str */
-     for(i = 0; i < strlen(str) + (nspace + 1); ++i)
-     {
-          if(i < nspace)
-               ustr[i] = ' ';
-          else
-               ustr[i] = str[i];
-     }
-
-     strcpy(str, ustr);
-
-     return r;
-}
-
 wchar_t*
 complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
 {

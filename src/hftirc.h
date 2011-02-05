@@ -318,7 +318,6 @@ void update_date(void);
 int find_bufid(unsigned id, const char *str);
 int find_sessid(IrcSession *session);
 void msg_sessbuf(int sess, char *str);
-size_t hft_wcstombs(char *str, wchar_t *wstr, int n);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
 wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
 

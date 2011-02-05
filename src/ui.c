@@ -682,7 +682,7 @@ ui_get_input(void)
                               /* Store in histo array */
                               wcscpy(hftirc->ui->ib.histo[hftirc->ui->ib.nhisto++], hftirc->ui->ib.buffer);
                               hftirc->ui->ib.histpos = 0;
-                              hft_wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
+                              wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
                               input_manage(buf);
                               werase(hftirc->ui->inputwin);
                               wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
@@ -921,7 +921,7 @@ ui_get_input(void)
      mvwaddwstr(hftirc->ui->inputwin, 0, 0,
                hftirc->ui->ib.buffer + hftirc->ui->ib.split);
 
-     hft_wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
+     wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
 
      /* /<num> to go on the buffer num */
      if(buf[0] == '/' &&
