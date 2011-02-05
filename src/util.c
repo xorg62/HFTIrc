@@ -17,8 +17,17 @@
 #include "hftirc.h"
 #include "input.h"
 
-#define HFTIRC_NB_SPACE   (160)
-
+struct { char name[10]; int id; } colordef[9] =
+{
+     { "black",   COLOR_BLACK },
+     { "red",     COLOR_RED },
+     { "green",   COLOR_GREEN },
+     { "yellow",  COLOR_YELLOW },
+     { "blue",    COLOR_BLUE },
+     { "magenta", COLOR_MAGENTA },
+     { "cyan",    COLOR_CYAN },
+     { "white",   COLOR_WHITE }
+};
 void
 update_date(void)
 {
@@ -105,6 +114,18 @@ hft_wcsncasecmp(const wchar_t *s1, const wchar_t *s2, int n)
      }
 
      return 0;
+}
+
+int
+color_to_id(char *name)
+{
+     int i;
+
+     for(i = 0; i < LEN(colordef); ++i)
+          if(!strcasecmp(colordef[i].name, name))
+               return colordef[i].id;
+
+     return COLOR_THEME_DEF;
 }
 
 wchar_t*

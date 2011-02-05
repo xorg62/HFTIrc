@@ -671,3 +671,15 @@ input_nicklist_toggle(const char *input)
      return;
 }
 
+void
+input_color_theme(const char *input)
+{
+     DSINPUT(input);
+
+     if(strlen(input) > 0)
+          ui_set_color_theme(color_to_id((char*)input));
+     else
+          WARN("Error", "Usage: /color_theme <colorname>");
+
+     return;
+}

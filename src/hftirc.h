@@ -55,6 +55,7 @@
 #define HOSTLEN           (128)
 #define NSERV             (32)
 #define HISTOLEN          (256)
+#define COLOR_THEME_DEF   (COLOR_BLUE)
 
 #define MAINWIN_LINES     (LINES - 2)
 #define DATELEN           (strlen(hftirc->date.str))
@@ -97,6 +98,7 @@ typedef struct
      WINDOW *nicklistwin;
 
      int bg, c, nicklist;
+     int tcolor;
      /* Input buffer struct */
      struct
      {
@@ -178,6 +180,7 @@ typedef struct
      int bell;
      int nicklist;
      int lastlinepos;
+     int tcolor;
      ServInfo serv[NSERV];
 
 } ConfStruct;
@@ -234,6 +237,7 @@ void ui_scroll_down(int buf);
 void ui_nicklist_toggle(void);
 void ui_nicklist_scroll(int v);
 void ui_refresh_curpos(void);
+void ui_set_color_theme(int col);
 void ui_get_input(void);
 
 /* event.c */
@@ -312,12 +316,14 @@ void input_say(const char *input);
 void input_reconnect(const char *input);
 void input_nicklist_scroll(const char *input);
 void input_nicklist_toggle(const char *input);
+void input_color_theme(const char *input);
 
 /* util.c */
 void update_date(void);
 int find_bufid(unsigned id, const char *str);
 int find_sessid(IrcSession *session);
 void msg_sessbuf(int sess, char *str);
+int color_to_id(char *name);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
 wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
 

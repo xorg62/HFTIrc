@@ -25,14 +25,14 @@
 #define HFTIRC_KEY_ALTBP  (27)
 
 /* Colors lists */
-#define COLOR_THEME  COLOR_BLUE
-#define COLOR_SW      (ui_color(COLOR_BLACK, COLOR_THEME))
-#define COLOR_SW2     (ui_color(COLOR_WHITE, COLOR_THEME))
+#define COLOR_THEME_DEFAULT  COLOR_BLUE
+#define COLOR_SW      (ui_color(COLOR_BLACK, hftirc->ui->tcolor))
+#define COLOR_SW2     (ui_color(COLOR_WHITE, hftirc->ui->tcolor))
 #define COLOR_HL      (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
 #define COLOR_WROTE   (ui_color(COLOR_CYAN, hftirc->ui->bg))
-#define COLOR_ROSTER  (ui_color(COLOR_THEME, hftirc->ui->bg))
-#define COLOR_ACT     (ui_color(COLOR_WHITE,  COLOR_THEME) | A_UNDERLINE)
-#define COLOR_HLACT   (ui_color(COLOR_RED, COLOR_THEME) | A_BOLD | A_UNDERLINE)
+#define COLOR_ROSTER  (ui_color(hftirc->ui->tcolor, hftirc->ui->bg))
+#define COLOR_ACT     (ui_color(COLOR_WHITE,  hftirc->ui->tcolor) | A_UNDERLINE)
+#define COLOR_HLACT   (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD | A_UNDERLINE)
 #define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
 
 void
@@ -122,6 +122,8 @@ ui_init_color(void)
           init_pair(i, ((i - 1) % cn), (((i - 1) < cn) ? -1 : (i - 1) / cn));
 
      hftirc->ui->c = i;
+
+     hftirc->ui->tcolor = hftirc->conf.tcolor;
 
      return;
 }
@@ -604,6 +606,18 @@ ui_buf_swap(int n)
     ui_buf_set(n);
 
     return;
+}
+
+void
+ui_set_color_theme(int col)
+{
+     if(col < -1 || col > 7)
+          return;
+
+     hftirc->ui->tcolor = col;
+     hftirc->cb[hftirc->selbuf].umask |= (UTopicMask | UNickListMask);
+
+     return;
 }
 
 void

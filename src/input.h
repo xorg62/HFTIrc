@@ -24,6 +24,7 @@ static const InputStruct input_struct[] =
      { "buffer_prev",     input_buffer_prev},
      { "buffer_swap",     input_buffer_swap },
      { "close",           input_close },
+     { "color_theme",     input_color_theme },
      { "connect",         input_connect },
      { "ctcp",            input_ctcp },
      { "disconnect",      input_disconnect },

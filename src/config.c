@@ -15,6 +15,7 @@
  */
 
 #include "hftirc.h"
+#include "config.h"
 
 #define SSTRCPY(dest, src) if(src) strcpy((dest), (src))
 
@@ -75,7 +76,7 @@ config_server(void)
 void
 config_parse(void)
 {
-     struct conf_sec *misc;
+     struct conf_sec *misc, *ui;
 
      if(get_conf(hftirc->conf.path) == -1)
      {
@@ -91,7 +92,12 @@ config_parse(void)
      hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolp;
      hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolp;
 
+     ui = fetch_section_first(NULL, "ui");
+
+     hftirc->conf.tcolor = color_to_id(fetch_opt_first(ui, "blue", "color_theme").str);
+
      free(misc);
+     free(ui);
 
      /* Servers section */
      config_server();
