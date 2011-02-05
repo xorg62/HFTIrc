@@ -576,7 +576,8 @@ ui_nicklist_toggle(void)
 void
 ui_nicklist_scroll(int v)
 {
-     if(hftirc->cb[hftirc->selbuf].nicklistscroll + v < 0)
+     if(hftirc->cb[hftirc->selbuf].nicklistscroll + v < 0
+               || hftirc->cb[hftirc->selbuf].nicklistscroll + v > hftirc->cb[hftirc->selbuf].nnick + 2)
           return;
 
      hftirc->cb[hftirc->selbuf].nicklistscroll += v;

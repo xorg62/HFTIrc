@@ -45,6 +45,11 @@ nick_sort_abc(int buf)
      if(!buf || !(hftirc->cb[buf].umask & UNickSortMask))
           return;
 
+     /* Count nicks for nnick */
+     for(hftirc->cb[buf].nnick = 0, ns = hftirc->cb[buf].nickhead;
+               ns;
+               ns = ns->next, ++hftirc->cb[buf].nnick);
+
      /* Alphabetical bubble sort */
      while(swap)
      {

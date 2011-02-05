@@ -136,6 +136,7 @@ typedef struct
      unsigned int sessid;
      char name[HOSTLEN], *names;
      NickStruct *nickhead;
+     int nnick;
      char topic[BUFSIZE];
      int act;
      unsigned int umask;

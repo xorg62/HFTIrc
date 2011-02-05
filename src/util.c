@@ -28,6 +28,7 @@ struct { char name[10]; int id; } colordef[9] =
      { "cyan",    COLOR_CYAN },
      { "white",   COLOR_WHITE }
 };
+
 void
 update_date(void)
 {
