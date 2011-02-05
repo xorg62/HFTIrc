@@ -55,6 +55,7 @@
 #define HOSTLEN           (128)
 #define NSERV             (32)
 #define HISTOLEN          (256)
+
 #define MAINWIN_LINES     (LINES - 2)
 #define DATELEN           (strlen(hftirc->date.str))
 #define DEF_CONF          ".config/hftirc/hftirc.conf"

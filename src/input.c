@@ -16,10 +16,16 @@
 
 #include "input.h"
 
+static int say_without_cmd = 0;
+
 void
 input_manage(char *input)
 {
      int i;
+
+     /* Replace non-breaking space by space in usable string */
+     for(i = 0; i < strlen(input); ++i)
+          ui_print_buf(0, "%c %d", input[i], input[i]);
 
      if(input[0] == '/')
      {
@@ -34,7 +40,10 @@ input_manage(char *input)
                     input_struct[i].func(input + strlen(input_struct[i].cmd));
      }
      else
+     {
+          say_without_cmd = 1;
           input_say(input);
+     }
 
      return;
 }
@@ -599,8 +608,12 @@ input_buffer_swap(const char *input)
 void
 input_say(const char *input)
 {
-     DSINPUT(input);
      NOSERVRET();
+
+     if(!say_without_cmd)
+          DSINPUT(input);
+     else
+          say_without_cmd = 0;
 
      if(strlen(input) > 0)
      {

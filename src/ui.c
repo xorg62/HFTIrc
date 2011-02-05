@@ -682,7 +682,6 @@ ui_get_input(void)
                               /* Store in histo array */
                               wcscpy(hftirc->ui->ib.histo[hftirc->ui->ib.nhisto++], hftirc->ui->ib.buffer);
                               hftirc->ui->ib.histpos = 0;
-
                               hft_wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
                               input_manage(buf);
                               werase(hftirc->ui->inputwin);
