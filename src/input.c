@@ -23,10 +23,6 @@ input_manage(char *input)
 {
      int i;
 
-     /* Replace non-breaking space by space in usable string */
-     for(i = 0; i < strlen(input); ++i)
-          ui_print_buf(0, "%c %d", input[i], input[i]);
-
      if(input[0] == '/')
      {
           /* Erase / */
