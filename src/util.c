@@ -17,6 +17,8 @@
 #include "hftirc.h"
 #include "input.h"
 
+#define HFTIRC_NB_SPACE   (160)
+
 void
 update_date(void)
 {
@@ -103,6 +105,29 @@ hft_wcsncasecmp(const wchar_t *s1, const wchar_t *s2, int n)
      }
 
      return 0;
+}
+
+/* Because we need to keep real space ' ' in input buffer:
+ * wcstombs remove simple space -> we need to use non-breaking space,
+ * it is converted as a space by wcstombs.
+ */
+size_t
+hft_wcstombs(char *str, wchar_t *wstr, int n)
+{
+     int i;
+     wchar_t uwstr[512];
+
+     if(!str || !wstr)
+          return 0;
+
+     wcscpy(uwstr, wstr);
+
+     /* Replace space by non-breaking space */
+     for(i = 0; i < wcslen(uwstr); ++i)
+          if(uwstr[i] == L' ')
+               uwstr[i] = HFTIRC_NB_SPACE;
+
+     return wcstombs(str, (const wchar_t*)uwstr, n);
 }
 
 wchar_t*

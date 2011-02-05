@@ -23,7 +23,6 @@
 /* Some keys */
 #define HFTIRC_KEY_ENTER  (10)
 #define HFTIRC_KEY_ALTBP  (27)
-#define HFTIRC_NB_SPACE   (160)
 
 /* Colors lists */
 #define COLOR_THEME  COLOR_BLUE
@@ -763,7 +762,7 @@ ui_get_input(void)
                          if(hftirc->ui->ib.pos > 0)
                          {
                               for(i = hftirc->ui->ib.pos - 1;
-                                        (i + 1) && hftirc->ui->ib.buffer[i - 1] != HFTIRC_NB_SPACE; --i)
+                                        (i + 1) && hftirc->ui->ib.buffer[i - 1] != ' '; --i)
                               {
                                    --(hftirc->ui->ib.pos);
 
@@ -864,7 +863,7 @@ ui_get_input(void)
 
                          if(hftirc->ui->ib.pos)
                          {
-                              cmp = (hftirc->ui->ib.buffer[0] == '/' && !wcschr(tmpbuf, HFTIRC_NB_SPACE))
+                              cmp = (hftirc->ui->ib.buffer[0] == '/' && !wcschr(tmpbuf, ' '))
                                    /* Input /cmd completion */
                                    ? complete_input(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf)
                                    /* Nick completion */
@@ -890,11 +889,6 @@ ui_get_input(void)
 
                          break;
 
-                    /* Non-breaking space for wide char conversion.
-                     * Will be normal space in final buf.
-                     */
-                    case ' ':
-                         c = HFTIRC_NB_SPACE;
                     default:
                          if((c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE)
                                    && !(c > 0 && c < 26)) /* Block no binded Ctrl-{key} */
@@ -928,7 +922,7 @@ ui_get_input(void)
      mvwaddwstr(hftirc->ui->inputwin, 0, 0,
                hftirc->ui->ib.buffer + hftirc->ui->ib.split);
 
-     wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
+     hft_wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
 
      /* /<num> to go on the buffer num */
      if(buf[0] == '/' &&
