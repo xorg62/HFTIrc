@@ -25,6 +25,9 @@
 #define HFTIRC_KEY_ALTBP  (27)
 #define HFTIRC_END_COLOR  (15)
 
+/* Test control-bind */
+#define IS_CTRLK(c)  (c > 0 && c < 32)
+
 /* Colors lists */
 #define COLOR_THEME_DEFAULT  COLOR_BLUE
 #define COLOR_SW      (ui_color(COLOR_BLACK, hftirc->ui->tcolor))
@@ -798,6 +801,11 @@ ui_get_input(void)
                               wcscpy(hftirc->ui->ib.buffer, hftirc->ui->ib.histo[hftirc->ui->ib.nhisto - ++hftirc->ui->ib.histpos]);
                               werase(hftirc->ui->inputwin);
                               hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer);
+
+                              /* Ctrl-key are 2 char long */
+                              for(i = 0; i < wcslen(hftirc->ui->ib.buffer); ++i)
+                                   if(IS_CTRLK(hftirc->ui->ib.buffer[i]))
+                                        ++hftirc->ui->ib.cpos;
                          }
                          break;
 
@@ -808,7 +816,12 @@ ui_get_input(void)
                               wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
                               wcscpy(hftirc->ui->ib.buffer, hftirc->ui->ib.histo[hftirc->ui->ib.nhisto - --hftirc->ui->ib.histpos]);
                               werase(hftirc->ui->inputwin);
-                              wmove(hftirc->ui->inputwin, 0, (hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer)));
+                              hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer);
+
+                              /* Ctrl-key are 2 char long */
+                              for(i = 0; i < wcslen(hftirc->ui->ib.buffer); ++i)
+                                   if(IS_CTRLK(hftirc->ui->ib.buffer[i]))
+                                        ++hftirc->ui->ib.cpos;
                          }
                          else
                               werase(hftirc->ui->inputwin);
@@ -819,9 +832,12 @@ ui_get_input(void)
                          if(hftirc->ui->ib.pos >= 1
                            && hftirc->ui->ib.cpos >= 1)
                          {
-                              --(hftirc->ui->ib.pos);
+                               if(IS_CTRLK(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1]))
+                                    --(hftirc->ui->ib.cpos);
 
-                              if(hftirc->ui->ib.spting)
+                               --(hftirc->ui->ib.pos);
+
+                               if(hftirc->ui->ib.spting)
                               {
                                     werase(hftirc->ui->inputwin);
                                    --(hftirc->ui->ib.split);
@@ -837,6 +853,9 @@ ui_get_input(void)
                     case KEY_RIGHT:
                          if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos] != 0)
                          {
+                              if(IS_CTRLK(hftirc->ui->ib.buffer[hftirc->ui->ib.pos]))
+                                   ++(hftirc->ui->ib.cpos);
+
                               ++(hftirc->ui->ib.pos);
 
                               if(hftirc->ui->ib.spting)
@@ -862,8 +881,7 @@ ui_get_input(void)
                                         (i + 1) && hftirc->ui->ib.buffer[i - 1] != ' '; --i)
                               {
                                    /* Ctrl-key */
-                                   if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] > 0
-                                             && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 32)
+                                   if(IS_CTRLK(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1]))
                                    {
                                         wmove(hftirc->ui->inputwin, 0, --hftirc->ui->ib.cpos);
                                         wdelch(hftirc->ui->inputwin);
@@ -898,8 +916,7 @@ ui_get_input(void)
                          if(hftirc->ui->ib.pos >= 1)
                          {
                               /* Ctrl-key */
-                              if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] > 0
-                                        && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 32)
+                              if(IS_CTRLK(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1]))
                               {
                                    wmove(hftirc->ui->inputwin, 0, --hftirc->ui->ib.cpos);
                                    wdelch(hftirc->ui->inputwin);
@@ -998,7 +1015,7 @@ ui_get_input(void)
                               hftirc->ui->ib.hits = 0;
 
                          werase(hftirc->ui->inputwin);
-                         hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer);
+                         hftirc->ui->ib.pos = hftirc->ui->ib.cpos = wcslen(hftirc->ui->ib.buffer);
 
                          break;
 
@@ -1006,7 +1023,7 @@ ui_get_input(void)
                          if((c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE))
                          {
                               /* Ctrl-key */
-                              if(c > 0 && c < 32)
+                              if(IS_CTRLK(c))
                                    ++hftirc->ui->ib.cpos;
 
                               if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos] != '\0')
@@ -1039,6 +1056,7 @@ ui_get_input(void)
                hftirc->ui->ib.buffer + hftirc->ui->ib.split);
 
      wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
+
 
      /* /<num> to go on the buffer num */
      if(buf[0] == '/' &&
