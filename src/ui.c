@@ -36,25 +36,38 @@
 #define COLOR_HLACT   (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD | A_UNDERLINE)
 #define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
 
-/* Irc color (^C<fg>,<bg>) */
-const int irccol[] =
+/* mIRC colours:
+ * From http://www.mirc.net/newbie/colors.php:
+ *
+ *  0  white	 8  yellow
+ *  1  black	 9  lightgreen
+ *  2  blue	 10  cyan
+ *  3  green	 11	lightcyan
+ *  4  lightred 12	lightblue
+ *  5  brown	 13  pink
+ *  6  purple	 14  grey
+ *  7  orange	 15  lightg
+ *
+ */
+const struct { int c, m; } irccol[] =
 {
-     0,
-     COLOR_WHITE,
-     COLOR_BLACK,
-     COLOR_BLUE,
-     COLOR_GREEN,
-     COLOR_RED,
-     COLOR_RED,
-     COLOR_MAGENTA,
-     COLOR_YELLOW,
-     COLOR_YELLOW,
-     COLOR_GREEN,
-     COLOR_CYAN,
-     COLOR_CYAN,
-     COLOR_BLUE,
-     COLOR_MAGENTA,
-     COLOR_BLACK,
+     { 0, 0},
+     { COLOR_WHITE,   A_BOLD   },
+     { COLOR_BLACK,   A_NORMAL },
+     { COLOR_BLUE,    A_NORMAL },
+     { COLOR_GREEN,   A_NORMAL },
+     { COLOR_RED,     A_BOLD   },
+     { COLOR_RED,     A_NORMAL },
+     { COLOR_MAGENTA, A_NORMAL },
+     { COLOR_YELLOW,  A_NORMAL },
+     { COLOR_YELLOW,  A_BOLD   },
+     { COLOR_GREEN,   A_BOLD   },
+     { COLOR_CYAN,    A_NORMAL },
+     { COLOR_CYAN,    A_BOLD   },
+     { COLOR_BLUE,    A_BOLD   },
+     { COLOR_MAGENTA, A_BOLD   },
+     { COLOR_BLACK,   A_BOLD   },
+     { COLOR_WHITE,   A_NORMAL },
 };
 
 void
@@ -71,7 +84,7 @@ ui_init(void)
           hftirc->ft = 0;
      }
 
-     setlocale(LC_ALL,"");
+     setlocale(LC_ALL, "");
      initscr();
      raw();
      noecho();
@@ -133,7 +146,7 @@ ui_init(void)
 void
 ui_init_color(void)
 {
-     int i, y, n = 0;
+     int i, j, n = 0;
 
      start_color();
 
@@ -141,10 +154,10 @@ ui_init_color(void)
      hftirc->ui->c = 1;
 
      for(i = 0; i < 8; ++i)
-          for(y = 0; y < 8; ++y)
-               init_pair(++n, i, y);
+          for(j = 0; j < 8; ++j)
+               init_pair(++n, j, (!i ? hftirc->ui->bg : i));
 
-     hftirc->ui->c = i * y;
+     hftirc->ui->c = n;
 
      hftirc->ui->tcolor = hftirc->conf.tcolor;
 
@@ -157,7 +170,10 @@ ui_color(int fg, int bg)
      int i;
      short f, b;
 
-     for(i = 1; i < hftirc->ui->c + 1; ++i)
+     if(bg == COLOR_BLACK && hftirc->ui->bg != COLOR_BLACK)
+          bg = hftirc->ui->bg;
+
+     for(i = 0; i < hftirc->ui->c + 1; ++i)
      {
           pair_content(i, &f, &b);
 
@@ -321,7 +337,7 @@ ui_print(WINDOW *w, char *str, int n)
 {
      int i;
      int hmask = A_NORMAL, mask = A_NORMAL, lastposmask = A_NORMAL;
-     int fg = 0, bg  = 14, mcol = 0, lcol = 0;
+     int fg = 1, bg  = 0, mcol = 0, lcol = 0;
      char *p, nick[128] = { 0 };
 
      if(!str || !w)
@@ -360,8 +376,7 @@ ui_print(WINDOW *w, char *str, int n)
                     mask ^= A_UNDERLINE;
                     break;
 
-
-               /* Cancel color */
+               /* Cancel masks */
                case HFTIRC_END_COLOR:
                     hmask &= ~lcol;
                     mask = 0;
@@ -383,6 +398,7 @@ ui_print(WINDOW *w, char *str, int n)
                               fg = fg * 10 + (str[i + 1] - '0');
                               ++i;
                          }
+                         ++fg;
                          mcol = 1;
                     }
 
@@ -397,13 +413,13 @@ ui_print(WINDOW *w, char *str, int n)
                               bg = bg * 10 + (str[i + 1] - '0');
                               ++i;
                          }
+                         ++bg;
                          mcol = 1;
                     }
 
-                    ++fg;
-                    ++bg;
-
-                    hmask ^= (lcol = (ui_color(irccol[fg % COLORMAX], irccol[bg % COLORMAX])));
+                    if(mcol)
+                            hmask ^= (lcol = (ui_color(irccol[fg % COLORMAX].c, irccol[bg % COLORMAX].c)
+                                           | irccol[fg % COLORMAX].m));
 
                     break;
 
@@ -560,7 +576,6 @@ ui_buf_close(int buf)
 
      if(buf <= 0 || buf > hftirc->nbuf - 1)
           return;
-
 
      --hftirc->nbuf;
 
@@ -848,7 +863,7 @@ ui_get_input(void)
                               {
                                    /* Ctrl-key */
                                    if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] > 0
-                                             && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 26)
+                                             && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 32)
                                    {
                                         wmove(hftirc->ui->inputwin, 0, --hftirc->ui->ib.cpos);
                                         wdelch(hftirc->ui->inputwin);
@@ -884,7 +899,7 @@ ui_get_input(void)
                          {
                               /* Ctrl-key */
                               if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] > 0
-                                        && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 26)
+                                        && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 32)
                               {
                                    wmove(hftirc->ui->inputwin, 0, --hftirc->ui->ib.cpos);
                                    wdelch(hftirc->ui->inputwin);
@@ -991,7 +1006,7 @@ ui_get_input(void)
                          if((c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE))
                          {
                               /* Ctrl-key */
-                              if(c > 0 && c < 26)
+                              if(c > 0 && c < 32)
                                    ++hftirc->ui->ib.cpos;
 
                               if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos] != '\0')
