@@ -414,6 +414,9 @@ ui_print(WINDOW *w, char *str, int n)
                               bg = bg * 10 + (str[i + 1] - '0');
                               ++i;
                          }
+
+                         if(fg == bg)
+                              fg = 1;
                          mcol = 1;
                     }
 
