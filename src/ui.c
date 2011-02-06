@@ -42,11 +42,11 @@
 /* mIRC colours:
  * From http://www.mirc.net/newbie/colors.php:
  *
- *  0  white	 8  yellow
- *  1  black	 9  lightgreen
+ *  0  white	 8   yellow
+ *  1  black	 9   lightgreen
  *  2  blue	 10  cyan
- *  3  green	 11	lightcyan
- *  4  lightred 12	lightblue
+ *  3  green    11  lightcyan
+ *  4  lightred 12  lightblue
  *  5  brown	 13  pink
  *  6  purple	 14  grey
  *  7  orange	 15  lightg
@@ -82,6 +82,8 @@ ui_init(void)
           hftirc->ui->nicklist = hftirc->conf.nicklist;
 
           ui_buf_new("status", 0);
+
+          hftirc->ui->tcolor = hftirc->conf.tcolor;
 
           hftirc->ft = 0;
      }
@@ -132,9 +134,9 @@ ui_init(void)
      /* Init input window */
      hftirc->ui->inputwin = newwin(1, COLS, LINES - 1, 0);
      wmove(hftirc->ui->inputwin, 0, 0);
-     wrefresh(hftirc->ui->inputwin);
      hftirc->ui->ib.nhisto = 1;
      hftirc->ui->ib.histpos = 0;
+     wrefresh(hftirc->ui->inputwin);
 
      /* Init status window (with the hour / current chan) */
      hftirc->ui->statuswin = newwin(1, COLS, LINES - 2, 0);
@@ -156,13 +158,11 @@ ui_init_color(void)
      hftirc->ui->bg = ((use_default_colors() == OK) ? -1 : COLOR_BLACK);
      hftirc->ui->c = 1;
 
-     for(i = 0; i < 8; ++i)
-          for(j = 0; j < 8; ++j)
-               init_pair(++n, j, (!i ? hftirc->ui->bg : i));
+     for(i = 0; i < COLORS; ++i)
+          for(j = 0; j < COLORS; ++j)
+               init_pair(++n, i, (!j ? hftirc->ui->bg : j));
 
      hftirc->ui->c = n;
-
-     hftirc->ui->tcolor = hftirc->conf.tcolor;
 
      return;
 }
@@ -177,12 +177,8 @@ ui_color(int fg, int bg)
           bg = hftirc->ui->bg;
 
      for(i = 0; i < hftirc->ui->c + 1; ++i)
-     {
-          pair_content(i, &f, &b);
-
-          if(f == fg && b == bg)
+          if(pair_content(i, &f, &b) == OK && f == fg && b == bg)
                return COLOR_PAIR(i);
-     }
 
      return 0;
 }
@@ -1101,7 +1097,7 @@ ui_get_input(void)
           wmove(hftirc->ui->inputwin, 0, 0);
      }
 
-     wrefresh(hftirc->ui->inputwin);
+     ui_refresh_curpos();
 
      return;
 }

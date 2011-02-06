@@ -95,6 +95,7 @@ main(int argc, char **argv)
     ui_init();
     update_date();
     irc_init();
+    ui_refresh_curpos();
 
     while(hftirc->running)
     {
@@ -138,9 +139,6 @@ main(int argc, char **argv)
          /* topic win and nicklist updated only if needed with umask */
          ui_update_topicwin();
          ui_update_nicklistwin();
-
-         /* Refresh cursor position in input win */
-         ui_refresh_curpos();
     }
 
     endwin();
