@@ -129,6 +129,23 @@ color_to_id(char *name)
      return COLOR_THEME_DEF;
 }
 
+int
+hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch)
+{
+     int ret = 0;
+     cchar_t cch;
+	wchar_t wstr[2] = { wch, 0 };
+
+     wattron(w, mask);
+
+     if(setcchar(&cch, wstr, A_NORMAL, 0, NULL) == OK)
+          ret = wadd_wch(w, &cch);
+
+     wattroff(w, mask);
+
+     return ret;
+}
+
 wchar_t*
 complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
 {

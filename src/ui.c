@@ -91,6 +91,7 @@ ui_init(void)
      raw();
      noecho();
      keypad(stdscr, TRUE);
+     curs_set(FALSE);
 
      /* Check the termnial size */
      if((LINES < 15 || COLS < 35) && hftirc->running == 1)
@@ -710,15 +711,15 @@ ui_set_color_theme(int col)
 void
 ui_refresh_curpos(void)
 {
-     wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
-     wrefresh(hftirc->ui->inputwin);
+     wchar_t wc;
 
-     /* Alt-backspace handle need this */
-     if(hftirc->ui->ib.altbp)
-     {
-          hftirc->ui->ib.altbp = 0;
-          ui_get_input();
-     }
+     /* Draw cursor */
+     wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
+     hftirc_waddwch(hftirc->ui->inputwin, A_REVERSE,
+               (!(wc = *(hftirc->ui->ib.buffer + hftirc->ui->ib.pos))
+                ? ' ' : wc));
+
+     wrefresh(hftirc->ui->inputwin);
 
      return;
 }
@@ -728,7 +729,7 @@ ui_get_input(void)
 {
      int i, j, n, b = 1, t;
      wint_t c;
-     wchar_t tmpbuf[BUFSIZE], *cmp;
+     wchar_t tmpbuf[BUFSIZE], *cmp, wc;
      char buf[BUFSIZE];
 
      switch((t = get_wch(&c)))
@@ -802,10 +803,21 @@ ui_get_input(void)
                               werase(hftirc->ui->inputwin);
                               hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer);
 
+                              if(hftirc->ui->ib.pos >= COLS - 1)
+                              {
+                                   hftirc->ui->ib.split = hftirc->ui->ib.pos - (COLS - 1);
+                                   hftirc->ui->ib.spting = 1;
+                                   hftirc->ui->ib.cpos = COLS - 1;
+                              }
+
                               /* Ctrl-key are 2 char long */
                               for(i = 0; i < wcslen(hftirc->ui->ib.buffer); ++i)
                                    if(IS_CTRLK(hftirc->ui->ib.buffer[i]))
+                                   {
                                         ++hftirc->ui->ib.cpos;
+                                        if(hftirc->ui->ib.spting)
+                                             ++hftirc->ui->ib.split;
+                                   }
                          }
                          break;
 
@@ -818,10 +830,21 @@ ui_get_input(void)
                               werase(hftirc->ui->inputwin);
                               hftirc->ui->ib.cpos = hftirc->ui->ib.pos = wcslen(hftirc->ui->ib.buffer);
 
+                              if(hftirc->ui->ib.pos >= COLS - 1)
+                              {
+                                   hftirc->ui->ib.split = hftirc->ui->ib.pos - (COLS - 1);
+                                   hftirc->ui->ib.spting = 1;
+                                   hftirc->ui->ib.cpos = COLS - 1;
+                              }
+
                               /* Ctrl-key are 2 char long */
                               for(i = 0; i < wcslen(hftirc->ui->ib.buffer); ++i)
                                    if(IS_CTRLK(hftirc->ui->ib.buffer[i]))
+                                   {
                                         ++hftirc->ui->ib.cpos;
+                                        if(hftirc->ui->ib.spting)
+                                             ++hftirc->ui->ib.split;
+                                   }
                          }
                          else
                               werase(hftirc->ui->inputwin);
@@ -832,12 +855,12 @@ ui_get_input(void)
                          if(hftirc->ui->ib.pos >= 1
                            && hftirc->ui->ib.cpos >= 1)
                          {
-                               if(IS_CTRLK(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1]))
-                                    --(hftirc->ui->ib.cpos);
+                              if(IS_CTRLK(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1]))
+                                   --(hftirc->ui->ib.cpos);
 
-                               --(hftirc->ui->ib.pos);
+                              --(hftirc->ui->ib.pos);
 
-                               if(hftirc->ui->ib.spting)
+                              if(hftirc->ui->ib.spting)
                               {
                                     werase(hftirc->ui->inputwin);
                                    --(hftirc->ui->ib.split);
@@ -875,7 +898,7 @@ ui_get_input(void)
 
                     /* Alt-Backspace, Erase last word */
                     case HFTIRC_KEY_ALTBP:
-                         if(hftirc->ui->ib.pos > 0)
+                         if(hftirc->ui->ib.pos > 1)
                          {
                               for(i = hftirc->ui->ib.pos - 1;
                                         (i + 1) && hftirc->ui->ib.buffer[i - 1] != ' '; --i)
@@ -894,7 +917,7 @@ ui_get_input(void)
                                         werase(hftirc->ui->inputwin);
                                         --(hftirc->ui->ib.split);
 
-                                        if(hftirc->ui->ib.split <= 1)
+                                        if(hftirc->ui->ib.split <= 0)
                                              hftirc->ui->ib.spting = 0;
                                    }
                                    else
@@ -902,18 +925,19 @@ ui_get_input(void)
 
                                    wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
 
-                                   for(j = hftirc->ui->ib.pos;
-                                             hftirc->ui->ib.buffer[j];
-                                             hftirc->ui->ib.buffer[j] = hftirc->ui->ib.buffer[j + 1], ++j);
+                                   if(hftirc->ui->ib.pos >= 0)
+                                        for(j = hftirc->ui->ib.pos;
+                                                  hftirc->ui->ib.buffer[j];
+                                                  hftirc->ui->ib.buffer[j] = hftirc->ui->ib.buffer[j + 1], ++j);
                                    wdelch(hftirc->ui->inputwin);
                               }
-                              hftirc->ui->ib.altbp = 1;
+                              ui_get_input();
                          }
                          break;
 
                     case 127:
                     case KEY_BACKSPACE:
-                         if(hftirc->ui->ib.pos >= 1)
+                         if(hftirc->ui->ib.pos > 0)
                          {
                               /* Ctrl-key */
                               if(IS_CTRLK(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1]))
@@ -929,7 +953,7 @@ ui_get_input(void)
                                    werase(hftirc->ui->inputwin);
                                    --(hftirc->ui->ib.split);
 
-                                   if(hftirc->ui->ib.split <= 1)
+                                   if(hftirc->ui->ib.split <= 0)
                                         hftirc->ui->ib.spting = 0;
                               }
                               else
@@ -937,9 +961,10 @@ ui_get_input(void)
 
                               wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
 
-                              for(i = hftirc->ui->ib.pos;
-                                        hftirc->ui->ib.buffer[i];
-                                        hftirc->ui->ib.buffer[i] = hftirc->ui->ib.buffer[i + 1], ++i);
+                              if(hftirc->ui->ib.pos >= 0)
+                                   for(i = hftirc->ui->ib.pos;
+                                             hftirc->ui->ib.buffer[i];
+                                             hftirc->ui->ib.buffer[i] = hftirc->ui->ib.buffer[i + 1], ++i);
                               wdelch(hftirc->ui->inputwin);
                          }
                          break;
@@ -1033,7 +1058,7 @@ ui_get_input(void)
 
                               hftirc->ui->ib.buffer[hftirc->ui->ib.pos] = c;
 
-                              if(hftirc->ui->ib.cpos >= COLS - 1)
+                              if(hftirc->ui->ib.pos >= COLS - 1)
                               {
                                    ++hftirc->ui->ib.split;
                                    --hftirc->ui->ib.cpos;
@@ -1052,11 +1077,14 @@ ui_get_input(void)
 
      hftirc->ui->ib.prev = c;
 
+     werase(hftirc->ui->inputwin);
+
+     hftirc->ui->ib.cpos = (hftirc->ui->ib.cpos < 0 ? 0 : hftirc->ui->ib.cpos);
+
      mvwaddwstr(hftirc->ui->inputwin, 0, 0,
                hftirc->ui->ib.buffer + hftirc->ui->ib.split);
 
      wcstombs(buf, hftirc->ui->ib.buffer, BUFSIZE);
-
 
      /* /<num> to go on the buffer num */
      if(buf[0] == '/' &&

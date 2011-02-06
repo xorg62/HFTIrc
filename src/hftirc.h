@@ -110,7 +110,6 @@ typedef struct
           int cpos;
           int split;
           int spting;
-          unsigned int altbp;
      } ib;
 } Ui;
 
@@ -325,6 +324,7 @@ int find_bufid(unsigned id, const char *str);
 int find_sessid(IrcSession *session);
 void msg_sessbuf(int sess, char *str);
 int color_to_id(char *name);
+int hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
 wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
 
