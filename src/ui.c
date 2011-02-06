@@ -23,6 +23,7 @@
 /* Some keys */
 #define HFTIRC_KEY_ENTER  (10)
 #define HFTIRC_KEY_ALTBP  (27)
+#define HFTIRC_END_COLOR  (15)
 
 /* Colors lists */
 #define COLOR_THEME_DEFAULT  COLOR_BLUE
@@ -34,6 +35,27 @@
 #define COLOR_ACT     (ui_color(COLOR_WHITE,  hftirc->ui->tcolor) | A_UNDERLINE)
 #define COLOR_HLACT   (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD | A_UNDERLINE)
 #define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
+
+/* Irc color (^C<fg>,<bg>) */
+const int irccol[] =
+{
+     0,
+     COLOR_WHITE,
+     COLOR_BLACK,
+     COLOR_BLUE,
+     COLOR_GREEN,
+     COLOR_RED,
+     COLOR_RED,
+     COLOR_MAGENTA,
+     COLOR_YELLOW,
+     COLOR_YELLOW,
+     COLOR_GREEN,
+     COLOR_CYAN,
+     COLOR_CYAN,
+     COLOR_BLUE,
+     COLOR_MAGENTA,
+     COLOR_BLACK,
+};
 
 void
 ui_init(void)
@@ -111,17 +133,18 @@ ui_init(void)
 void
 ui_init_color(void)
 {
-     int i, cn;
+     int i, y, n = 0;
 
      start_color();
 
      hftirc->ui->bg = ((use_default_colors() == OK) ? -1 : COLOR_BLACK);
      hftirc->ui->c = 1;
 
-     for(cn = ((COLOR_PAIRS >= 256) ? 16 : 8), i = 1; i < ((COLOR_PAIRS >= 256) ? 256 : COLOR_PAIRS); ++i)
-          init_pair(i, ((i - 1) % cn), (((i - 1) < cn) ? -1 : (i - 1) / cn));
+     for(i = 0; i < 8; ++i)
+          for(y = 0; y < 8; ++y)
+               init_pair(++n, i, y);
 
-     hftirc->ui->c = i;
+     hftirc->ui->c = i * y;
 
      hftirc->ui->tcolor = hftirc->conf.tcolor;
 
@@ -296,7 +319,9 @@ ui_update_nicklistwin(void)
 void
 ui_print(WINDOW *w, char *str, int n)
 {
-     int i, mask = A_NORMAL, lastposmask = A_NORMAL;
+     int i;
+     int hmask = A_NORMAL, mask = A_NORMAL, lastposmask = A_NORMAL;
+     int fg = 0, bg  = 14, mcol = 0, lcol = 0;
      char *p, nick[128] = { 0 };
 
      if(!str || !w)
@@ -335,15 +360,58 @@ ui_print(WINDOW *w, char *str, int n)
                     mask ^= A_UNDERLINE;
                     break;
 
-               /* mIRC©®™ colors (not needed for now.) */
+
+               /* Cancel color */
+               case HFTIRC_END_COLOR:
+                    hmask &= ~lcol;
+                    mask = 0;
+                    break;
+
+               /* mIRC©®™ colors */
                case C('c'):
+                    if(lcol)
+                        hmask &= ~lcol;
+
+                    /* Set fg color first if there is no coma */
+                    if(isdigit(str[i + 1]))
+                    {
+                         fg = (str[i + 1] - '0');
+                         ++i;
+
+                         if(isdigit(str[i + 1]))
+                         {
+                              fg = fg * 10 + (str[i + 1] - '0');
+                              ++i;
+                         }
+                         mcol = 1;
+                    }
+
+                    /* bg color if coma */
+                    if(str[i + 1] == ',' && isdigit(str[i + 2]))
+                    {
+                         bg = (str[i + 2] - '0');
+                         i += 2;
+
+                         if(isdigit(str[i + 1]))
+                         {
+                              bg = bg * 10 + (str[i + 1] - '0');
+                              ++i;
+                         }
+                         mcol = 1;
+                    }
+
+                    ++fg;
+                    ++bg;
+
+                    hmask ^= (lcol = (ui_color(irccol[fg % COLORMAX], irccol[bg % COLORMAX])));
+
                     break;
 
                default:
                     /* simple waddch doesn't work with some char */
-                    wattron(w, mask | lastposmask);
+                    wattron(w, hmask | mask | lastposmask);
                     wprintw(w, "%c", str[i]);
-                    wattroff(w, mask | lastposmask);
+                    wattroff(w, hmask | mask | lastposmask);
 
                     break;
           }
@@ -778,6 +846,14 @@ ui_get_input(void)
                               for(i = hftirc->ui->ib.pos - 1;
                                         (i + 1) && hftirc->ui->ib.buffer[i - 1] != ' '; --i)
                               {
+                                   /* Ctrl-key */
+                                   if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] > 0
+                                             && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 26)
+                                   {
+                                        wmove(hftirc->ui->inputwin, 0, --hftirc->ui->ib.cpos);
+                                        wdelch(hftirc->ui->inputwin);
+                                   }
+
                                    --(hftirc->ui->ib.pos);
 
                                    if(hftirc->ui->ib.spting)
@@ -806,6 +882,14 @@ ui_get_input(void)
                     case KEY_BACKSPACE:
                          if(hftirc->ui->ib.pos >= 1)
                          {
+                              /* Ctrl-key */
+                              if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] > 0
+                                        && hftirc->ui->ib.buffer[hftirc->ui->ib.pos - 1] < 26)
+                              {
+                                   wmove(hftirc->ui->inputwin, 0, --hftirc->ui->ib.cpos);
+                                   wdelch(hftirc->ui->inputwin);
+                              }
+
                               --(hftirc->ui->ib.pos);
 
                               if(hftirc->ui->ib.spting)
@@ -904,9 +988,12 @@ ui_get_input(void)
                          break;
 
                     default:
-                         if((c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE)
-                                   && !(c > 0 && c < 26)) /* Block no binded Ctrl-{key} */
+                         if((c > 0 && wcslen(hftirc->ui->ib.buffer) < BUFSIZE))
                          {
+                              /* Ctrl-key */
+                              if(c > 0 && c < 26)
+                                   ++hftirc->ui->ib.cpos;
+
                               if(hftirc->ui->ib.buffer[hftirc->ui->ib.pos] != '\0')
                                    for(i = (int)wcslen(hftirc->ui->ib.buffer);
                                              i != hftirc->ui->ib.pos - 1;
