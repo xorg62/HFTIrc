@@ -54,7 +54,6 @@
  */
 const struct { int c, m; } irccol[] =
 {
-     { 0, 0},
      { COLOR_WHITE,   A_BOLD   },
      { COLOR_BLACK,   A_NORMAL },
      { COLOR_BLUE,    A_NORMAL },
@@ -340,7 +339,7 @@ ui_print(WINDOW *w, char *str, int n)
 {
      int i;
      int hmask = A_NORMAL, mask = A_NORMAL, lastposmask = A_NORMAL;
-     int fg = 1, bg  = 0, mcol = 0, lcol = 0;
+     int fg = 15, bg  = 1, mcol = 0, lcol = 0;
      char *p, nick[128] = { 0 };
 
      if(!str || !w)
@@ -401,7 +400,6 @@ ui_print(WINDOW *w, char *str, int n)
                               fg = fg * 10 + (str[i + 1] - '0');
                               ++i;
                          }
-                         ++fg;
                          mcol = 1;
                     }
 
@@ -416,7 +414,6 @@ ui_print(WINDOW *w, char *str, int n)
                               bg = bg * 10 + (str[i + 1] - '0');
                               ++i;
                          }
-                         ++bg;
                          mcol = 1;
                     }
 
