@@ -18,6 +18,7 @@
 #define HFTIRC_H
 
 /* Libs */
+#define _XOPEN_SOURCE_EXTENDED 1
 #if !defined (__NetBSD__)
     #include <ncurses.h>
 #else

@@ -134,7 +134,7 @@ hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch)
 {
      int ret = 0;
      cchar_t cch;
-	wchar_t wstr[2] = { wch, 0 };
+     wchar_t wstr[2] = { wch, 0 };
 
      wattron(w, mask);
 
