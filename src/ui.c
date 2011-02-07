@@ -23,6 +23,7 @@
 /* Some keys */
 #define HFTIRC_KEY_ENTER  (10)
 #define HFTIRC_KEY_ALTBP  (27)
+#define HFTIRC_KEY_DELALL (C('u'))
 #define HFTIRC_END_COLOR  (15)
 
 /* Test control-bind */
@@ -47,9 +48,9 @@
  *  2  blue	 10  cyan
  *  3  green    11  lightcyan
  *  4  lightred 12  lightblue
- *  5  brown	 13  pink
- *  6  purple	 14  grey
- *  7  orange	 15  lightg
+ *  5  brown    13  pink
+ *  6  purple   14  grey
+ *  7  orange   15  lightg
  *
  */
 const struct { int c, m; } irccol[] =
@@ -712,8 +713,7 @@ ui_refresh_curpos(void)
      /* Draw cursor */
      wmove(hftirc->ui->inputwin, 0, hftirc->ui->ib.cpos);
      hftirc_waddwch(hftirc->ui->inputwin, A_REVERSE,
-               (!(wc = *(hftirc->ui->ib.buffer + hftirc->ui->ib.pos))
-                ? ' ' : wc));
+               (!(wc = hftirc->ui->ib.buffer[hftirc->ui->ib.pos]) ? ' ' : wc));
 
      wrefresh(hftirc->ui->inputwin);
 
@@ -892,8 +892,9 @@ ui_get_input(void)
                          }
                          break;
 
-                    /* Alt-Backspace, Erase last word */
+                    /* Alt-Backspace / ^W, Erase last word */
                     case HFTIRC_KEY_ALTBP:
+                    case C('w'):
                          if(hftirc->ui->ib.pos > 1)
                          {
                               for(i = hftirc->ui->ib.pos - 1;
@@ -963,6 +964,13 @@ ui_get_input(void)
                                              hftirc->ui->ib.buffer[i] = hftirc->ui->ib.buffer[i + 1], ++i);
                               wdelch(hftirc->ui->inputwin);
                          }
+                         break;
+
+                    case HFTIRC_KEY_DELALL:
+                         werase(hftirc->ui->inputwin);
+                         hftirc->ui->ib.cpos = hftirc->ui->ib.pos = 0;
+                         hftirc->ui->ib.spting = hftirc->ui->ib.split = 0;
+                         wmemset(hftirc->ui->ib.buffer, 0, BUFSIZE);
                          break;
 
                     case KEY_DC:
