@@ -1,5 +1,7 @@
 hftirc
 *.o
+src/*.o
+src/parse/*.o
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake

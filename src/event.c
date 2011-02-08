@@ -194,8 +194,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                     for(i = 0; i < hftirc->nbuf; ++i)
                          if(hftirc->cb[i].sessid == find_sessid(session)
                                    && ISCHAN(hftirc->cb[i].name[0]))
-                              irc_send_raw(hftirc->session[hftirc->selses], "JOIN %s",
-                                        hftirc->cb[i].name);
+                              irc_send_raw(session, "JOIN %s", hftirc->cb[i].name);
                }
 
                break;
