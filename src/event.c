@@ -449,6 +449,9 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
           /* 8 -> Yellow for HL, see struct irccolor ui.c */
           strcpy(color, "8");
      }
+     /* Enable nick_color if there is no hl -> no colors conflicts */
+     else
+          strcpy(nick, nick_color(nick));
 
      if(!ns->rang)
           ui_print_buf(i, colorstr(color, "<%s> %s", nick, params[1]));

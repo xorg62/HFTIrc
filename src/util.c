@@ -147,9 +147,32 @@ colorstr(char *color, char *str, ...)
      if(!color)
           strcpy(ret, p);
      else
-          snprintf(ret, 512, "%c%s%s%c", C('c'), color, p, HFTIRC_END_COLOR);
+          snprintf(ret, 512, "%c%s%s%c", HFTIRC_COLOR, color, p, HFTIRC_END_COLOR);
 
      free(p);
+
+     return ret;
+}
+
+char*
+nick_color(char *nick)
+{
+     int i, col;
+     static char ret[NICKLEN + 6] = { 0 };
+
+     if(!nick)
+          return NULL;
+
+     if(!hftirc->conf.nickcolor)
+          return nick;
+
+     /* To find color number, we add all char of the nick string, and %=COLORMAX it */
+     for(i = 0; nick[i]; col += tolower(nick[i++]));
+
+     /* Check if color is different with black & hl color */
+     for(col %= COLORMAX; col == 1 || col == 8; ++col);
+
+     sprintf(ret, "%c%d%s%c", HFTIRC_COLOR, col, nick, HFTIRC_END_COLOR);
 
      return ret;
 }

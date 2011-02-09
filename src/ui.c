@@ -17,13 +17,7 @@
 #include "hftirc.h"
 
 /* Will be configurable */
-#define COLORMAX      16
 #define ROSTERSIZE    20
-
-/* Some keys */
-#define HFTIRC_KEY_ENTER  (10)
-#define HFTIRC_KEY_ALTBP  (27)
-#define HFTIRC_KEY_DELALL (C('u'))
 
 /* Test control-bind */
 #define IS_CTRLK(c)  (c > 0 && c < 32)
@@ -206,11 +200,8 @@ ui_update_statuswin(void)
      wprintw(hftirc->ui->statuswin, " (%d:", hftirc->selbuf);
      PRINTATTR(hftirc->ui->statuswin, COLOR_SW2,  hftirc->conf.serv[hftirc->selses].name);
 
-     /* if connected or not ( {} needed for macro ) */
      if(!hftirc->session[hftirc->selses]->connected)
-     {
           PRINTATTR(hftirc->ui->statuswin, A_BOLD, " (Disconnected)");
-     }
 
      waddch(hftirc->ui->statuswin, '/');
      PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->cb[hftirc->selbuf].name);
@@ -364,7 +355,7 @@ ui_print(WINDOW *w, char *str, int n)
                     break;
 
                /* mIRC©®™ colors */
-               case C('c'):
+               case HFTIRC_COLOR:
                     if(lcol)
                         hmask &= ~lcol;
 

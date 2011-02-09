@@ -85,16 +85,18 @@ config_parse(void)
           get_conf(hftirc->conf.path);
      }
 
-     /* Misc section */
+     /* [Misc] section */
      misc = fetch_section_first(NULL, "misc");
 
      hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolp;
      hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolp;
      hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolp;
 
+     /* [User Interface] section */
      ui = fetch_section_first(NULL, "ui");
 
-     hftirc->conf.tcolor = color_to_id(fetch_opt_first(ui, "blue", "color_theme").str);
+     hftirc->conf.tcolor    = color_to_id(fetch_opt_first(ui, "blue", "color_theme").str);
+     hftirc->conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolp;
 
      free(misc);
      free(ui);

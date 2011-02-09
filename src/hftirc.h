@@ -56,7 +56,7 @@
 #define HOSTLEN           (128)
 #define NSERV             (32)
 #define HISTOLEN          (256)
-#define HFTIRC_END_COLOR  (15)
+#define COLORMAX          (16)
 #define COLOR_THEME_DEF   (COLOR_BLUE)
 
 #define MAINWIN_LINES     (LINES - 2)
@@ -70,12 +70,26 @@
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 #define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
 #define DSINPUT(i) for(; i && i[0] == ' '; ++i)
-#define PRINTATTR(w, attr, s)  wattron(w, attr); waddstr(w, s); wattroff(w, attr);
+
+#define PRINTATTR(w, attr, s) do                      \
+                              {                       \
+                                   wattron(w, attr);  \
+                                   waddstr(w, s);     \
+                                   wattroff(w, attr); \
+                              } while(0 /*CONSTCOND*/);
+
 #define NOSERVRET(r) if(!hftirc->conf.nserv || !hftirc->session[hftirc->selses]->connected)    \
                      {                                                                         \
                           WARN("Error", "You're not connected");                               \
                           return r;                                                            \
                      }
+
+/* Key and const for ui */
+#define HFTIRC_COLOR      (C('c'))
+#define HFTIRC_END_COLOR  (15)
+#define HFTIRC_KEY_ENTER  (10)
+#define HFTIRC_KEY_ALTBP  (27)
+#define HFTIRC_KEY_DELALL (C('u'))
 
 /* Flags definition for Update need */
 #define UNoMask        (0)
@@ -183,8 +197,8 @@ typedef struct
      int nicklist;
      int lastlinepos;
      int tcolor;
+     int nickcolor;
      ServInfo serv[NSERV];
-
 } ConfStruct;
 
 typedef struct
@@ -327,6 +341,7 @@ int find_sessid(IrcSession *session);
 void msg_sessbuf(int sess, char *str);
 int color_to_id(char *name);
 char *colorstr(char *color, char *str, ...);
+char *nick_color(char *nick);
 int hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
 wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
