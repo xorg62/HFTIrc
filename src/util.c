@@ -167,12 +167,12 @@ nick_color(char *nick)
           return nick;
 
      /* To find color number, we add all char of the nick string, and %=COLORMAX it */
-     for(i = 0; nick[i]; col += tolower(nick[i++]));
+     for(i = col = 0; nick[i]; col += tolower(nick[i++]));
 
      /* Check if color is different with black & hl color */
-     for(col %= COLORMAX; col < 0 || col == 1 || col == 8; ++col);
+     for(col %= COLORMAX; col == 1 || col == 8; ++col);
 
-     sprintf(ret, "%c%d%s%c", HFTIRC_COLOR, col, nick, HFTIRC_END_COLOR);
+     sprintf(ret, "%c%d%s%c", HFTIRC_COLOR, abs(col), nick, HFTIRC_END_COLOR);
 
      return ret;
 }
