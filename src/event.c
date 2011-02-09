@@ -418,7 +418,7 @@ void
 event_channel(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
      int i, j;
-     char r, nick[NICKLEN] = { 0 };
+     char r, nick[NICKLEN] = { 0 }, color[4] = { 0 };
      NickStruct *ns;
 
      i = find_bufid(find_sessid(session), params[0]);
@@ -441,14 +441,19 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
                break;
           }
 
-     if(!ns->rang)
-          ui_print_buf(i, "<%s> %s", nick, params[1]);
-     else
-          ui_print_buf(i, "<%c%c%c%s> %s", B, r, B, nick, params[1]);
+     if(hftirc->conf.serv && strstr(params[1], session->nick))
+     {
+          if(hftirc->conf.bell)
+               putchar('\a');
 
-     if(hftirc->conf.bell && hftirc->conf.serv
-               && strstr(params[1], hftirc->session[hftirc->selses]->nick))
-          putchar('\a');
+          /* 8 -> Yellow for HL, see struct irccolor ui.c */
+          strcpy(color, "8");
+     }
+
+     if(!ns->rang)
+          ui_print_buf(i, colorstr(color, "<%s> %s", nick, params[1]));
+     else
+          ui_print_buf(i, colorstr(color, "<%c%c%c%s> %s", B, r, B, nick, params[1]));
 
      return;
 }

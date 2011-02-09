@@ -129,6 +129,31 @@ color_to_id(char *name)
      return COLOR_THEME_DEF;
 }
 
+char*
+colorstr(char *color, char *str, ...)
+{
+     va_list ap;
+     static char ret[512] = { 0 };
+     char *p;
+
+     if(!str || (strlen(color) + strlen(str) > sizeof(ret)))
+          return NULL;
+
+     va_start(ap, str);
+     vasprintf(&p, str, ap);
+
+     va_end(ap);
+
+     if(!color)
+          strcpy(ret, p);
+     else
+          snprintf(ret, 512, "%c%s%s%c", C('c'), color, p, HFTIRC_END_COLOR);
+
+     free(p);
+
+     return ret;
+}
+
 int
 hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch)
 {

@@ -617,7 +617,8 @@ input_say(const char *input)
                          hftirc->cb[hftirc->selbuf].name, input))
                WARN("Error", "Can't send message");
           else
-               ui_print_buf(hftirc->selbuf, "<%s> %s", hftirc->session[hftirc->selses]->nick, input);
+               ui_print_buf(hftirc->selbuf, "%c%s<%s>%c %s",
+                         COL("10"), hftirc->session[hftirc->selses]->nick, HFTIRC_END_COLOR, input);
      }
      else
           WARN("Error", "Usage: /say <message>");

@@ -24,7 +24,6 @@
 #define HFTIRC_KEY_ENTER  (10)
 #define HFTIRC_KEY_ALTBP  (27)
 #define HFTIRC_KEY_DELALL (C('u'))
-#define HFTIRC_END_COLOR  (15)
 
 /* Test control-bind */
 #define IS_CTRLK(c)  (c > 0 && c < 32)
@@ -33,11 +32,9 @@
 #define COLOR_THEME_DEFAULT  COLOR_BLUE
 #define COLOR_SW      (ui_color(COLOR_BLACK, hftirc->ui->tcolor))
 #define COLOR_SW2     (ui_color(COLOR_WHITE, hftirc->ui->tcolor))
-#define COLOR_HL      (ui_color(COLOR_YELLOW, hftirc->ui->bg) | A_BOLD)
-#define COLOR_WROTE   (ui_color(COLOR_CYAN, hftirc->ui->bg))
 #define COLOR_ROSTER  (ui_color(hftirc->ui->tcolor, hftirc->ui->bg))
-#define COLOR_ACT     (ui_color(COLOR_WHITE,  hftirc->ui->tcolor) | A_UNDERLINE)
-#define COLOR_HLACT   (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD | A_UNDERLINE)
+#define COLOR_ACT     (ui_color(COLOR_WHITE,  hftirc->ui->tcolor))
+#define COLOR_HLACT   (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD)
 #define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
 
 /* mIRC colours:
@@ -202,7 +199,7 @@ ui_update_statuswin(void)
      mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 3, "(");
      PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->session[hftirc->selses]->nick);
      waddch(hftirc->ui->statuswin, '(');
-     PRINTATTR(hftirc->ui->statuswin, A_UNDERLINE | COLOR_SW2, hftirc->conf.serv[hftirc->selses].mode);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->conf.serv[hftirc->selses].mode);
      waddstr(hftirc->ui->statuswin, "))");
 
      /* Info about current serv/channel */
@@ -216,7 +213,7 @@ ui_update_statuswin(void)
      }
 
      waddch(hftirc->ui->statuswin, '/');
-     PRINTATTR(hftirc->ui->statuswin, A_UNDERLINE | COLOR_SW2, hftirc->cb[hftirc->selbuf].name);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->cb[hftirc->selbuf].name);
      waddch(hftirc->ui->statuswin, ')');
 
      /* Activity */
@@ -233,7 +230,6 @@ ui_update_statuswin(void)
                     {
                          wattron(hftirc->ui->statuswin, ((c == 2) ? COLOR_HLACT : COLOR_ACT));
                          wprintw(hftirc->ui->statuswin, "%d", i);
-                         wattroff(hftirc->ui->statuswin, A_UNDERLINE);
                          wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
                          wattroff(hftirc->ui->statuswin, ((c == 2) ? COLOR_HLACT : COLOR_ACT));
                          waddch(hftirc->ui->statuswin, ' ');
@@ -338,25 +334,9 @@ ui_print(WINDOW *w, char *str, int n)
      int i;
      int hmask = A_NORMAL, mask = A_NORMAL, lastposmask = A_NORMAL;
      int fg = 15, bg  = 1, mcol = 0, lcol = 0;
-     char *p, nick[128] = { 0 };
 
      if(!str || !w)
           return;
-
-     /* Wrote lines */
-     if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
-               && (p = strchr(str, '<')) && sscanf(p, "%128s", nick)
-               && strstr(nick, hftirc->session[hftirc->selses]->nick))
-          mask |= COLOR_WROTE;
-
-     /* Highlight line */
-     if(hftirc->conf.serv && hftirc->selbuf != 0 && strlen(str)
-               && strchr(str, '<') && strchr(str, '>')
-               && strcasestr(str + strlen(hftirc->date.str) + 4,  hftirc->session[hftirc->selses]->nick))
-     {
-          mask &= ~(COLOR_WROTE);
-          mask |= COLOR_HL;
-     }
 
      /* Last position tracker with bold line */
      if(hftirc->conf.lastlinepos && hftirc->cb[hftirc->selbuf].lastposbold == n)
@@ -366,6 +346,7 @@ ui_print(WINDOW *w, char *str, int n)
      {
           switch(str[i])
           {
+               /* Stop wrote color at the end of the nick */
                /* Bold */
                case B:
                     mask ^= A_BOLD;

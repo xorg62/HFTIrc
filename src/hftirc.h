@@ -56,6 +56,7 @@
 #define HOSTLEN           (128)
 #define NSERV             (32)
 #define HISTOLEN          (256)
+#define HFTIRC_END_COLOR  (15)
 #define COLOR_THEME_DEF   (COLOR_BLUE)
 
 #define MAINWIN_LINES     (LINES - 2)
@@ -63,6 +64,7 @@
 #define DEF_CONF          ".config/hftirc/hftirc.conf"
 #define B                 C('B')
 #define U                 C('_')
+#define COL(s)            C('c'), s
 
 #define C(c) ((c) & 037)
 #define ISCHAN(c) ((c == '#' || c ==  '&'))
@@ -325,6 +327,7 @@ int find_bufid(unsigned id, const char *str);
 int find_sessid(IrcSession *session);
 void msg_sessbuf(int sess, char *str);
 int color_to_id(char *name);
+char *colorstr(char *color, char *str, ...);
 int hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
 wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
