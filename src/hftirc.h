@@ -64,7 +64,6 @@
 #define DEF_CONF          ".config/hftirc/hftirc.conf"
 #define B                 C('B')
 #define U                 C('_')
-#define COL(s)            C('c'), s
 
 #define C(c) ((c) & 037)
 #define ISCHAN(c) ((c == '#' || c ==  '&'))
