@@ -349,7 +349,7 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
           }
      }
 
-     ui_print_buf(i, colorstr("8", "  ->>>> %c%s%c (%s) has joined %c%s",
+     ui_print_buf(i, colorstr("3", "  ->>>> %c%s%c (%s) has joined %c%s",
                B, nick, B, origin + strlen(nick) + 1, B, params[0]));
 
      ns = nickstruct_set(nick);
@@ -381,7 +381,7 @@ event_part(IrcSession *session, const char *event, const char *origin, const cha
                free(ns);
           }
 
-     ui_print_buf(i, colorstr("12", "  <<<<- %s (%s) has left %c%s%c [%s]",
+     ui_print_buf(i, colorstr("5", "  <<<<- %s (%s) has left %c%s%c [%s]",
                nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : "")));
 
      return;
