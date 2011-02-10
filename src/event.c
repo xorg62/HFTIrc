@@ -349,8 +349,8 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
           }
      }
 
-     ui_print_buf(i, "  ->>>> %c%s%c (%s) has joined %c%s",
-               B, nick, B, origin + strlen(nick) + 1, B, params[0]);
+     ui_print_buf(i, colorstr("8", "  ->>>> %c%s%c (%s) has joined %c%s",
+               B, nick, B, origin + strlen(nick) + 1, B, params[0]));
 
      ns = nickstruct_set(nick);
 
@@ -381,8 +381,8 @@ event_part(IrcSession *session, const char *event, const char *origin, const cha
                free(ns);
           }
 
-     ui_print_buf(i, "  <<<<- %s (%s) has left %c%s%c [%s]",
-               nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
+     ui_print_buf(i, colorstr("12", "  <<<<- %s (%s) has left %c%s%c [%s]",
+               nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : "")));
 
      return;
 }
@@ -404,7 +404,7 @@ event_quit(IrcSession *session, const char *event, const char *origin, const cha
           {
                if(hftirc->cb[i].sessid == s && strlen(ns->nick) && !strcmp(nick, ns->nick))
                {
-                    ui_print_buf(i, "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]);
+                    ui_print_buf(i, colorstr("4", "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]));
                     nick_detach(i, ns);
                     free(ns);
                     break;
