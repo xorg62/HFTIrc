@@ -76,7 +76,7 @@ config_server(void)
 void
 config_parse(void)
 {
-     struct conf_sec *misc, *ui;
+     struct conf_sec *misc, *ui, *colors;
 
      if(get_conf(hftirc->conf.path) == -1)
      {
@@ -95,8 +95,11 @@ config_parse(void)
      /* [User Interface] section */
      ui = fetch_section_first(NULL, "ui");
 
-     hftirc->conf.tcolor    = color_to_id(fetch_opt_first(ui, "blue", "color_theme").str);
      hftirc->conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolp;
+
+
+     /* Subsection [User Interface] [Colors] */
+     colors = fetch_section_first(ui, "colors");
 
      free(misc);
      free(ui);
