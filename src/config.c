@@ -101,8 +101,11 @@ config_parse(void)
      /* Subsection [User Interface] [Colors] */
      colors = fetch_section_first(ui, "colors");
 
+     hftirc->conf.tcolor = color_to_id(fetch_opt_first(colors, "blue", "color_theme").str);
+
      free(misc);
      free(ui);
+     free(colors);
 
      /* Servers section */
      config_server();
