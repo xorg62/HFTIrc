@@ -42,7 +42,7 @@ update_date(void)
 
 /* Find buffer id with name */
 int
-find_bufid(unsigned int id, const char *str)
+find_bufid(IrcSession *s, const char *str)
 {
      int i;
 
@@ -53,7 +53,7 @@ find_bufid(unsigned int id, const char *str)
           if(hftirc->cb[i].name != NULL
             && strlen(hftirc->cb[i].name) > 1)
                if(!strcasecmp(str, hftirc->cb[i].name)
-                 && hftirc->cb[i].sessid == id)
+                 && hftirc->cb[i].session == s)
                     return i;
 
      return 0;
@@ -77,7 +77,7 @@ find_sessid(IrcSession *session)
 
 /* Send message to each buffer with session id = sess */
 void
-msg_sessbuf(int sess, char *str)
+msg_sessbuf(IrcSession *session, char *str)
 {
      int i;
 
@@ -85,7 +85,7 @@ msg_sessbuf(int sess, char *str)
           return;
 
      for(i = 1; i < hftirc->nbuf; ++i)
-          if(hftirc->cb[i].sessid == sess)
+          if(hftirc->cb[i].session == session)
                ui_print_buf(i, str);
 
      return;

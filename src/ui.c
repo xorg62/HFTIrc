@@ -73,7 +73,7 @@ ui_init(void)
           hftirc->selbuf = 0;
           hftirc->ui->nicklist = hftirc->conf.nicklist;
 
-          ui_buf_new("status", 0);
+          ui_buf_new("status", hftirc->selsession);
 
           hftirc->ui->tcolor = hftirc->conf.tcolor;
 
@@ -180,6 +180,7 @@ ui_update_statuswin(void)
 {
      int i, j, c, x, y;
 
+
      /* Erase all window content */
      werase(hftirc->ui->statuswin);
 
@@ -191,16 +192,16 @@ ui_update_statuswin(void)
 
      /* Pseudo with mode */
      mvwprintw(hftirc->ui->statuswin, 0, strlen(hftirc->date.str) + 3, "(");
-     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->session[hftirc->selses]->nick);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->selsession->nick);
      waddch(hftirc->ui->statuswin, '(');
-     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->conf.serv[hftirc->selses].mode);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->selsession->mode);
      waddstr(hftirc->ui->statuswin, "))");
 
      /* Info about current serv/channel */
      wprintw(hftirc->ui->statuswin, " (%d:", hftirc->selbuf);
-     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2,  hftirc->conf.serv[hftirc->selses].name);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2,  hftirc->selsession->name);
 
-     if(!hftirc->session[hftirc->selses]->connected)
+     if(!hftirc->selsession->connected)
           PRINTATTR(hftirc->ui->statuswin, A_BOLD, " (Disconnected)");
 
      waddch(hftirc->ui->statuswin, '/');
@@ -256,7 +257,7 @@ ui_update_topicwin(void)
      /*   Other    */
      else
           wprintw(hftirc->ui->topicwin, "%s (%s)",
-                    hftirc->cb[hftirc->selbuf].name, hftirc->conf.serv[hftirc->selses].name);
+                    hftirc->cb[hftirc->selbuf].name, hftirc->selsession->name);
 
      wrefresh(hftirc->ui->topicwin);
 
@@ -447,7 +448,7 @@ ui_print_buf(int id, char *format, ...)
 
           /* Highlight test (if hl or private message) */
           if(hftirc->conf.serv && id  && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
-                              && strcasestr(buf + strlen(hftirc->date.str) + 4, hftirc->session[hftirc->selses]->nick))
+                              && strcasestr(buf + strlen(hftirc->date.str) + 4, hftirc->selsession->nick))
                          || !ISCHAN(hftirc->cb[id].name[0])))
                /* No HL on status buffer (0) */
                hftirc->cb[id].act = (id) ? 2 : 1;
@@ -492,9 +493,11 @@ ui_buf_set(int buf)
      hftirc->cb[hftirc->selbuf].lastposbold = hftirc->cb[hftirc->selbuf].bufpos - 1;
      hftirc->prevbuf = hftirc->selbuf;
      hftirc->selbuf = buf;
-     hftirc->selses = hftirc->cb[buf].sessid;
      hftirc->cb[buf].act = 0;
      hftirc->cb[buf].umask |= (UTopicMask | UNickListMask);
+
+     if(buf != 0)
+          hftirc->selsession = hftirc->cb[buf].session;
 
      ui_draw_buf(buf);
 
@@ -502,7 +505,7 @@ ui_buf_set(int buf)
 }
 
 void
-ui_buf_new(const char *name, unsigned int id)
+ui_buf_new(const char *name, IrcSession *session)
 {
      int i, j;
      ChanBuf *cbs = NULL;
@@ -527,7 +530,7 @@ ui_buf_new(const char *name, unsigned int id)
      cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
      cbs[i].naming = cbs[i].nicklistscroll = 0;
      cbs[i].lastposbold = -1;
-     cbs[i].sessid = id;
+     cbs[i].session = session;
      cbs[i].umask |= (UTopicMask | UNickListMask);
 
      hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));

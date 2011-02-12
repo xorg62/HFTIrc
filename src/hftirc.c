@@ -81,8 +81,10 @@ main(int argc, char **argv)
          }
     }
 
+    /* Primary allocation / set */
     hftirc->ui = malloc(sizeof(Ui));
     hftirc->ft = 1;
+    hftirc->selsession = (hftirc->session[0] = irc_session());
 
     /* Signal initialisation */
     sig.sa_handler = signal_handler;

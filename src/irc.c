@@ -32,6 +32,7 @@ irc_session(void)
 int
 irc_connect(IrcSession *s,
           const char *server,
+          const char *servername,
           unsigned short port,
           const char *password,
           const char *nick,
@@ -50,6 +51,7 @@ irc_connect(IrcSession *s,
 
      s->nick   = strdup(nick);
      s->server = strdup(server);
+     s->name   = strdup(servername);
 
      if(!(hp = gethostbyname(server)))
           return 1;
@@ -87,7 +89,7 @@ irc_disconnect(IrcSession *s)
      s->connected = 0;
 
      /* Signal disconnection on each channel */
-     msg_sessbuf(find_sessid(s), "  *** Server disconnected by client");
+     msg_sessbuf(s, "  *** Server disconnected by client");
 
      return;
 }
@@ -101,7 +103,7 @@ irc_run_process(IrcSession *s, fd_set *inset)
      if(s->sock < 0 || !s->connected)
      {
           /* Signal disconnection on each channel */
-          msg_sessbuf(find_sessid(s), "  *** Server disconnected");
+          msg_sessbuf(s, "  *** Server disconnected");
 
           return 1;
      }
@@ -381,14 +383,17 @@ irc_init(void)
 {
      int i;
 
-     hftirc->selses = 0;
-
      /* Connection to conf servers */
      for(i = 0; i < hftirc->conf.nserv; ++i)
      {
-          hftirc->session[i] = irc_session();
+          if(!hftirc->session[i])
+               hftirc->session[i] = irc_session();
+
+          hftirc->selsession = hftirc->session[i];
+
           if(irc_connect(hftirc->session[i],
                          hftirc->conf.serv[i].adress,
+                         hftirc->conf.serv[i].name,
                          hftirc->conf.serv[i].port,
                          hftirc->conf.serv[i].password,
                          hftirc->conf.serv[i].nick,
@@ -403,11 +408,7 @@ irc_init(void)
 void
 irc_join(IrcSession *s, const char *chan)
 {
-     int sess;
-
-     sess = find_sessid(s);
-
-     ui_buf_new(chan, sess);
+     ui_buf_new(chan, s);
 
      ui_buf_set(hftirc->nbuf - 1);
 

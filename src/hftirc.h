@@ -78,10 +78,11 @@
                                    wattroff(w, attr); \
                               } while(0 /*CONSTCOND*/);
 
-#define NOSERVRET(r) if(!hftirc->conf.nserv || !hftirc->session[hftirc->selses]->connected)    \
-                     {                                                                         \
-                          WARN("Error", "You're not connected");                               \
-                          return r;                                                            \
+#define NOSERVRET(r) if(!hftirc->conf.nserv || !hftirc->selsession       \
+                         || !hftirc->selsession->connected)              \
+                     {                                                   \
+                          WARN("Error", "You're not connected");         \
+                          return r;                                      \
                      }
 
 /* Key and const for ui */
@@ -104,6 +105,22 @@ typedef enum { False, True } Bool;
 #include "parse/parse.h"
 
 /* Structures */
+typedef struct
+{
+     int sock;
+     short port;
+     char *server;
+     char *name;
+     char *nick;
+     char *username;
+     char *realname;
+     char *password;
+     char *mode;
+     char inbuf[BUFSIZE];
+     int motd_received, connected;
+     unsigned int inoffset;
+} IrcSession;
+
 typedef struct
 {
      /* Ncurses windows */
@@ -148,7 +165,7 @@ typedef struct
      int nicklistscroll, lastposbold;
 
      /* For irc info */
-     unsigned int sessid;
+     IrcSession *session;
      char name[HOSTLEN], *names;
      NickStruct *nickhead;
      int nnick;
@@ -201,26 +218,12 @@ typedef struct
      ServInfo serv[NSERV];
 } ConfStruct;
 
-typedef struct
-{
-     int sock;
-     short port;
-     char *server;
-     char *nick;
-     char *username;
-     char *realname;
-     char *password;
-	char	inbuf[BUFSIZE];
-     int motd_received, connected;
-	unsigned int inoffset;
-} IrcSession;
-
 /* Global struct */
 typedef struct
 {
      int ft, running;
-     int nbuf, selbuf, prevbuf, selses;
-     IrcSession *session[NSERV];
+     int nbuf, selbuf, prevbuf;
+     IrcSession *selsession, *session[NSERV];
      ConfStruct conf;
      ChanBuf *cb;
      Ui *ui;
@@ -244,7 +247,7 @@ void ui_update_nicklistwin(void);
 void ui_print(WINDOW *w, char *str, int n);
 void ui_print_buf(int id, char *format, ...);
 void ui_draw_buf(int id);
-void ui_buf_new(const char *name, unsigned int id);
+void ui_buf_new(const char *name, IrcSession *session);
 void ui_buf_close(int buf);
 void ui_buf_set(int buf);
 void ui_buf_swap(int buf);
@@ -284,6 +287,7 @@ int irc_run_process(IrcSession *s, fd_set *inset);
 void irc_disconnect(IrcSession *s);
 int irc_connect(IrcSession *s,
           const char *server,
+          const char *servername,
           unsigned short port,
           const char *password,
           const char *nick,
@@ -336,9 +340,9 @@ void input_color_theme(const char *input);
 
 /* util.c */
 void update_date(void);
-int find_bufid(unsigned id, const char *str);
+int find_bufid(IrcSession *s, const char *str);
 int find_sessid(IrcSession *session);
-void msg_sessbuf(int sess, char *str);
+void msg_sessbuf(IrcSession *session, char *str);
 int color_to_id(char *name);
 char *colorstr(char *color, char *str, ...);
 char *nick_color(char *nick);
