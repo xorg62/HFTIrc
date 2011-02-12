@@ -341,7 +341,6 @@ void input_color_theme(const char *input);
 /* util.c */
 void update_date(void);
 int find_bufid(IrcSession *s, const char *str);
-int find_sessid(IrcSession *session);
 void msg_sessbuf(IrcSession *session, char *str);
 int color_to_id(char *name);
 char *colorstr(char *color, char *str, ...);

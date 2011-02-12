@@ -74,6 +74,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                break;
 
           /* Whois */
+          case 275:
           case 301:
           case 307:
           case 311:
@@ -638,6 +639,7 @@ event_whois(IrcSession *session, unsigned int event, const char *origin, const c
      switch(event)
      {
           /* Whois operator/registered/securingconnection */
+          case 275:
           case 307:
           case 313:
           case 320:

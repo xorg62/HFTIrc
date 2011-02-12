@@ -59,22 +59,6 @@ find_bufid(IrcSession *s, const char *str)
      return 0;
 }
 
-/* Find session id by Irc Session */
-int
-find_sessid(IrcSession *session)
-{
-     int i;
-
-     if(!session)
-          return 0;
-
-     for(i = 0; i < hftirc->conf.nserv; ++i)
-          if(session == hftirc->session[i])
-               break;
-
-     return i;
-}
-
 /* Send message to each buffer with session id = sess */
 void
 msg_sessbuf(IrcSession *session, char *str)
