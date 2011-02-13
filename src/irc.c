@@ -389,8 +389,7 @@ irc_init(void)
      /* Connection to conf servers */
      for(i = 0, is = hftirc->sessionhead; i < hftirc->conf.nserv; is = is->next, ++i)
      {
-          if(!is)
-               is = irc_session();
+          is = irc_session();
 
           hftirc->selsession = is;
 
