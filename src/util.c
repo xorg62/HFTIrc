@@ -14,8 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "hftirc.h"
 #include "input.h"
+#include "ui.h"
 
 struct { char name[10]; int id; } colordef[9] =
 {
@@ -113,14 +113,15 @@ color_to_id(char *name)
      return COLOR_THEME_DEF;
 }
 
+/* Return string of str with color sequence wanted */
 char*
-colorstr(char *color, char *str, ...)
+colorstr(int color, char *str, ...)
 {
      va_list ap;
      static char ret[512] = { 0 };
      char *p;
 
-     if(!str || (strlen(color) + strlen(str) > sizeof(ret)))
+     if(!str)
           return NULL;
 
      va_start(ap, str);
@@ -131,13 +132,16 @@ colorstr(char *color, char *str, ...)
      if(!color)
           strcpy(ret, p);
      else
-          snprintf(ret, 512, "%c%s%s%c", HFTIRC_COLOR, color, p, HFTIRC_END_COLOR);
+          snprintf(ret, 512, "%c%d%s%c", HFTIRC_COLOR, color, p, HFTIRC_END_COLOR);
 
      free(p);
 
      return ret;
 }
 
+/* Generate a color for each nick and return string with
+ * nick string and color sequence
+ */
 char*
 nick_color(char *nick)
 {
@@ -150,11 +154,11 @@ nick_color(char *nick)
      if(!hftirc->conf.nickcolor)
           return nick;
 
-     /* To find color number, we add all char of the nick string, and %=COLORMAX it */
+     /* To find color number, we add all char of the nick string */
      for(i = col = 0; nick[i]; col += tolower(nick[i++]));
 
-     /* Check if color is different with black & hl color */
-     for(col %= COLORMAX; col == 1 || col == 8; ++col);
+     /* Check if color is different of black & hl color */
+     for(; col == Black || col == LightYellow; ++col);
 
      sprintf(ret, "%c%d%s%c", HFTIRC_COLOR, abs(col), nick, HFTIRC_END_COLOR);
 

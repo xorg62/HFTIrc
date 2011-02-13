@@ -15,6 +15,7 @@
  */
 
 #include "input.h"
+#include "ui.h"
 
 static int say_without_cmd = 0;
 
@@ -579,7 +580,7 @@ input_say(const char *input)
                WARN("Error", "Can't send message");
           else
                /* Write what we said on buffer, with cyan (10) color */
-               ui_print_buf(hftirc->selbuf, colorstr("10", "<%s> %s",
+               ui_print_buf(hftirc->selbuf, colorstr(Cyan, "<%s> %s",
                               hftirc->selsession->nick, input));
      }
      else

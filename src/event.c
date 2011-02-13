@@ -15,6 +15,7 @@
  */
 
 #include "hftirc.h"
+#include "ui.h"
 
 void
 dump_event(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
@@ -346,7 +347,7 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
           }
      }
 
-     ui_print_buf(i, "  %s %c%s%c (%s) has joined %c%s", colorstr("3", "->>>>"),
+     ui_print_buf(i, "  %s %c%s%c (%s) has joined %c%s", colorstr(Green, "->>>>"),
                B, nick, B, origin + strlen(nick) + 1, B, params[0]);
 
      ns = nickstruct_set(nick);
@@ -375,7 +376,7 @@ event_part(IrcSession *session, const char *event, const char *origin, const cha
           if(ns->nick && strlen(ns->nick) && !strcmp(ns->nick, nick))
                nick_detach(i, ns);
 
-     ui_print_buf(i,"  %s %s (%s) has left %c%s%c [%s]", colorstr("5", "<<<<-"),
+     ui_print_buf(i,"  %s %s (%s) has left %c%s%c [%s]", colorstr(Red, "<<<<-"),
                nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
 
      return;
@@ -396,7 +397,7 @@ event_quit(IrcSession *session, const char *event, const char *origin, const cha
           {
                if(hftirc->cb[i].session == session && strlen(ns->nick) && !strcmp(nick, ns->nick))
                {
-                    ui_print_buf(i,  "  %s %s (%s) has quit [%s]", colorstr("4", "<<<<-"),
+                    ui_print_buf(i,  "  %s %s (%s) has quit [%s]", colorstr(LightRed, "<<<<-"),
                               nick, origin + strlen(nick) + 1, params[0]);
                     nick_detach(i, ns);
                     break;
@@ -409,8 +410,8 @@ event_quit(IrcSession *session, const char *event, const char *origin, const cha
 void
 event_channel(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j;
-     char r, nick[NICKLEN] = { 0 }, color[4] = { 0 };
+     int i, j, color = 0;
+     char r, nick[NICKLEN] = { 0 };
      NickStruct *ns;
 
      i = find_bufid(session, params[0]);
@@ -439,7 +440,7 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
                putchar('\a');
 
           /* 8 -> Yellow for HL, see struct irccolor ui.c */
-          strcpy(color, "8");
+          color = LightYellow;
      }
      /* Enable nick_color if there is no hl -> no colors conflicts */
      else

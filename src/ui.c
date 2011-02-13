@@ -15,54 +15,7 @@
  */
 
 #include "hftirc.h"
-
-/* Will be configurable */
-#define ROSTERSIZE    20
-
-/* Test control-bind */
-#define IS_CTRLK(c)  (c > 0 && c < 32)
-
-/* Colors lists */
-#define COLOR_THEME_DEFAULT  COLOR_BLUE
-#define COLOR_SW      (ui_color(COLOR_BLACK, hftirc->ui->tcolor))
-#define COLOR_SW2     (ui_color(COLOR_WHITE, hftirc->ui->tcolor))
-#define COLOR_ROSTER  (ui_color(hftirc->ui->tcolor, hftirc->ui->bg))
-#define COLOR_ACT     (ui_color(COLOR_WHITE,  hftirc->ui->tcolor))
-#define COLOR_HLACT   (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD)
-#define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
-
-/* mIRC colours:
- * From http://www.mirc.net/newbie/colors.php:
- *
- *  0  white	 8   yellow
- *  1  black	 9   lightgreen
- *  2  blue	 10  cyan
- *  3  green    11  lightcyan
- *  4  lightred 12  lightblue
- *  5  brown    13  pink
- *  6  purple   14  grey
- *  7  orange   15  lightg
- *
- */
-const struct { int c, m; } irccol[] =
-{
-     { COLOR_WHITE,   A_BOLD   },
-     { COLOR_BLACK,   A_NORMAL },
-     { COLOR_BLUE,    A_NORMAL },
-     { COLOR_GREEN,   A_NORMAL },
-     { COLOR_RED,     A_BOLD   },
-     { COLOR_RED,     A_NORMAL },
-     { COLOR_MAGENTA, A_NORMAL },
-     { COLOR_YELLOW,  A_NORMAL },
-     { COLOR_YELLOW,  A_BOLD   },
-     { COLOR_GREEN,   A_BOLD   },
-     { COLOR_CYAN,    A_NORMAL },
-     { COLOR_CYAN,    A_BOLD   },
-     { COLOR_BLUE,    A_BOLD   },
-     { COLOR_MAGENTA, A_BOLD   },
-     { COLOR_BLACK,   A_BOLD   },
-     { COLOR_WHITE,   A_NORMAL },
-};
+#include "ui.h"
 
 void
 ui_init(void)
@@ -329,7 +282,10 @@ void
 ui_print(WINDOW *w, char *str, int n)
 {
      int i;
-     int hmask = A_NORMAL, mask = A_NORMAL, lastposmask = A_NORMAL;
+     unsigned int hmask = A_NORMAL;
+     unsigned int mask = A_NORMAL;
+     unsigned int lastposmask = A_NORMAL;
+     unsigned int colmask = A_NORMAL;
      int fg = 15, bg  = 1, mcol = 0, lcol = 0;
 
      if(!str || !w)
@@ -354,28 +310,46 @@ ui_print(WINDOW *w, char *str, int n)
                     mask ^= A_UNDERLINE;
                     break;
 
+               /* Reversed color */
+               case V:
+                    mask ^= A_REVERSE;
+                    break;
+
                /* Cancel masks */
                case HFTIRC_END_COLOR:
                     hmask &= ~lcol;
-                    mask = 0;
+                    mask = colmask = 0;
+                    break;
+
+               /* HFTIrc colors, for interface use */
+               case HFTIRC_COLOR:
+                    if(isdigit(str[i + 1]))
+                    {
+                         fg = (str[++i] - '0');
+
+                         if(isdigit(str[i + 1]))
+                              fg = fg * 10 + (str[++i] - '0');
+
+                         if(fg > -1 && fg < 16)
+                              colmask ^= (ui_color(hftirccol[fg].c, hftirc->ui->bg) | hftirccol[fg].m);
+
+                         fg = 0;
+                    }
                     break;
 
                /* mIRC©®™ colors */
-               case HFTIRC_COLOR:
+               case MIRC_COLOR:
                     if(lcol)
                         hmask &= ~lcol;
 
                     /* Set fg color first if there is no coma */
                     if(isdigit(str[i + 1]))
                     {
-                         fg = (str[i + 1] - '0');
-                         ++i;
+                         fg = (str[++i] - '0');
 
                          if(isdigit(str[i + 1]))
-                         {
-                              fg = fg * 10 + (str[i + 1] - '0');
-                              ++i;
-                         }
+                              fg = fg * 10 + (str[++i] - '0');
+
                          mcol = 1;
                     }
 
@@ -386,10 +360,7 @@ ui_print(WINDOW *w, char *str, int n)
                          i += 2;
 
                          if(isdigit(str[i + 1]))
-                         {
-                              bg = bg * 10 + (str[i + 1] - '0');
-                              ++i;
-                         }
+                              bg = bg * 10 + (str[++i] - '0');
 
                          if(fg == bg)
                               fg = 1;
@@ -397,16 +368,16 @@ ui_print(WINDOW *w, char *str, int n)
                     }
 
                     if(mcol)
-                            hmask ^= (lcol = (ui_color(irccol[fg % COLORMAX].c, irccol[bg % COLORMAX].c)
-                                           | irccol[fg % COLORMAX].m));
+                            hmask ^= (lcol = (ui_color(mirccol[fg % COLORMAX].c, mirccol[bg % COLORMAX].c)
+                                           | mirccol[fg % COLORMAX].m));
 
                     break;
 
                default:
                     /* simple waddch doesn't work with some char */
-                    wattron(w, hmask | mask | lastposmask);
+                    wattron(w, colmask | hmask | mask | lastposmask);
                     wprintw(w, "%c", str[i]);
-                    wattroff(w, hmask | mask | lastposmask);
+                    wattroff(w, colmask | hmask | mask | lastposmask);
 
                     break;
           }

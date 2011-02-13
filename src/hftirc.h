@@ -25,7 +25,6 @@
     #include <ncurses/ncurses.h>
 #endif
 
-#include <assert.h>
 #include <wchar.h>
 #include <wctype.h>
 #include <stdlib.h>
@@ -61,8 +60,6 @@
 #define MAINWIN_LINES     (LINES - 2)
 #define DATELEN           (strlen(hftirc->date.str))
 #define DEF_CONF          ".config/hftirc/hftirc.conf"
-#define B                 C('B')
-#define U                 C('_')
 
 #define C(c) ((c) & 037)
 #define ISCHAN(c) ((c == '#' || c ==  '&'))
@@ -97,7 +94,11 @@
      free(e);
 
 /* Key and const for ui */
-#define HFTIRC_COLOR      (C('c'))
+#define B                 (C('b'))
+#define U                 (C('_'))
+#define V                 (C('v'))
+#define MIRC_COLOR        (C('c'))
+#define HFTIRC_COLOR      (C('s'))
 #define HFTIRC_END_COLOR  (15)
 #define HFTIRC_KEY_ENTER  (10)
 #define HFTIRC_KEY_ALTBP  (27)
@@ -355,7 +356,7 @@ void update_date(void);
 int find_bufid(IrcSession *s, const char *str);
 void msg_sessbuf(IrcSession *session, char *str);
 int color_to_id(char *name);
-char *colorstr(char *color, char *str, ...);
+char *colorstr(int color, char *str, ...);
 char *nick_color(char *nick);
 int hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch);
 wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
