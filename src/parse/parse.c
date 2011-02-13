@@ -190,8 +190,8 @@ print_kw_tree(void)
      s = TAILQ_FIRST(&stack);
 
      TAILQ_FOREACH(k, &keywords, entry)
-          ui_print_buf(0, "%s ", get_kw_name(k->type));
-     ui_print_buf(0, "\n");
+          fprintf(stderr, "%s ", get_kw_name(k->type));
+     fprintf(stderr, "\n");
 }
 
 static char *
@@ -237,7 +237,7 @@ get_conf(const char *name)
      if ((fd = open(name, O_RDONLY)) == -1 ||
                stat(name, &st) == -1)
      {
-          ui_print_buf(0, "%s", name);
+          fprintf(stderr, "%s\n", name);
           return (-1);
      }
 
@@ -250,7 +250,7 @@ get_conf(const char *name)
 
      munmap(buf, st.st_size);
      close(fd);
-     ui_print_buf(0, "%s read", name);
+     fprintf(stderr, "%s read\n", name);
 
      file.name = name;
 
@@ -266,7 +266,7 @@ get_conf(const char *name)
                     TAILQ_INSERT_TAIL(&config, s, entry);
                     break;
                default:
-                    syntax("out of any section");
+                    syntax("out of any section\n");
                     break;
           }
      }
@@ -289,7 +289,7 @@ get_section(void)
      pop_keyword();
 
      if (!curk || curk->type != WORD)
-          syntax("missing section name");
+          syntax("missing section name\n");
      pop_keyword();
 
      while (!TAILQ_EMPTY(&keywords) && curk->type != SEC_END) {
@@ -306,17 +306,17 @@ get_section(void)
                case SEC_END:
                     break;
                default:
-                    syntax("syntax error");
+                    syntax("syntax error\n");
                     break;
           }
      }
      pop_keyword();
 
      if (curk && curk->type != WORD)
-          syntax("missing end-section name");
+          syntax("missing end-section name\n");
 
      if (!curk || strcmp(curw->name, s->name))
-          syntax("non-closed section '%s'", s->name);
+          syntax("non-closed section '%s'\n", s->name);
 
      pop_stack();
      pop_keyword();
@@ -338,12 +338,12 @@ get_option(void)
      pop_keyword();
 
      if (!curk || curk->type != EQUAL)
-          syntax("missing '=' here");
+          syntax("missing '=' here\n");
 
      pop_keyword();
 
      if (!curk)
-          syntax("syntax error");
+          syntax("syntax error\n");
 
      switch (curk->type) {
           case WORD:
@@ -363,7 +363,7 @@ get_option(void)
                o->val[j] = NULL;
                break;
           default:
-               syntax("syntax error");
+               syntax("syntax error\n");
                break;
      }
      pop_keyword();
@@ -378,7 +378,7 @@ pop_keyword(void)
      {
           TAILQ_REMOVE(&keywords, curk, entry);
 #ifdef DEBUG
-          ui_print_buf(0, "%s", get_kw_name(curk->type));
+          fprintf(stderr, "%s\n", get_kw_name(curk->type));
 #endif
           free(curk);
 
@@ -393,7 +393,7 @@ pop_stack(void)
      {
           TAILQ_REMOVE(&stack, curw, entry);
 #ifdef DEBUG
-          ui_print_buf(0, "%s", curw->name);
+          fprintf(stderr, "%s\n", curw->name);
 #endif
           free(curw);
 
@@ -407,10 +407,10 @@ syntax(const char *fmt, ...)
      va_list args;
 
      if (curw)
-          ui_print_buf(0, "%s: %s:%d, near '%s', ",
+          fprintf(stderr, "%s: %s:%d, near '%s', ",
                     __progname, file.name, curw->line, curw->name);
      else
-          ui_print_buf(0, "%s: %s: ", __progname, file.name);
+          fprintf(stderr, "%s: %s: ", __progname, file.name);
      va_start(args, fmt);
      vfprintf(stderr, fmt, args);
      va_end(args);
@@ -432,7 +432,7 @@ print_unused(struct conf_sec *sec)
 
      SLIST_FOREACH(o, &sec->optlist, entry)
           if (o->used == False)
-               ui_print_buf(0, "%s:%d, unused param %s",
+               fprintf(stderr, "%s:%d, unused param %s\n",
                          file.name, o->line, o->name);
 
      TAILQ_FOREACH(s, &sec->sub, entry)
