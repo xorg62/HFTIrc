@@ -363,7 +363,9 @@ input_serv(const char *input)
                if(!strcasecmp(is->name, input))
                     hftirc->selsession = is;
      }
-     /* TODO: loop switch */
+     else
+          hftirc->selsession
+               = (!hftirc->selsession->next ? hftirc->sessionhead : hftirc->selsession->next);
 
      refresh();
 
