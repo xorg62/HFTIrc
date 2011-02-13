@@ -25,14 +25,14 @@ config_server(void)
      int i, j, n = 0;
      struct conf_sec **serv;
      struct opt_type *opt;
-     ServInfo defsi = { "Hft", "irc.hft-community", "", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
+     ServInfo defsi = { "Hft", "irc.freenode.net", "", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
 
-     serv = fetch_section(fetch_section_first(NULL, "servers"), "server");
-
-     if(!(hftirc->conf.nserv = fetch_section_count(serv)))
+     if(!(serv = fetch_section(fetch_section_first(NULL, "servers"), "server"))
+               || !(hftirc->conf.nserv = fetch_section_count(serv)))
      {
           hftirc->conf.serv = malloc(sizeof(ServInfo));
           hftirc->conf.serv[0] = defsi;
+          hftirc->conf.nserv = 1;
 
           return;
      }

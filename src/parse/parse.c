@@ -492,7 +492,7 @@ fetch_section(struct conf_sec *s, char *name)
      if (!s) {
           ret = calloc(2, sizeof(struct conf_sec *));
           TAILQ_FOREACH(sec, &config, entry)
-               if (!strcmp(sec->name, name)) {
+               if (sec->name && name && !strcmp(sec->name, name)) {
                     ret[0] = sec;
                     ret[1] = NULL;
                     break;
@@ -501,7 +501,7 @@ fetch_section(struct conf_sec *s, char *name)
      else {
           ret = calloc(s->nsub+1, sizeof(struct conf_sec *));
           TAILQ_FOREACH(sec, &s->sub, entry) {
-               if (!strcmp(sec->name, name) && i < s->nsub)
+               if (sec->name && name && !strcmp(sec->name, name) && i < s->nsub)
                     ret[i++] = sec;
           }
           ret[i] = NULL;
