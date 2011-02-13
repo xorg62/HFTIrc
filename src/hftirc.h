@@ -46,26 +46,26 @@
 #include "config.h"
 
 /* Macro */
-#define HFTIRC_VERSION    "(devel version)"
-#define BUFSIZE           (2048)
-#define MAXBUF            (64)
-#define BUFLINES          (512)
-#define NICKLEN           (24)
-#define CHANLEN           (24)
-#define HOSTLEN           (128)
-#define HISTOLEN          (256)
-#define COLORMAX          (16)
-#define COLOR_THEME_DEF   (COLOR_BLUE)
+#define HFTIRC_VERSION   "(devel version)"
+#define BUFSIZE          (2048)
+#define MAXBUF           (64)
+#define BUFLINES         (512)
+#define NICKLEN          (24)
+#define CHANLEN          (24)
+#define HOSTLEN          (128)
+#define HISTOLEN         (256)
+#define COLORMAX         (16)
+#define COLOR_THEME_DEF  (COLOR_BLUE)
 
-#define MAINWIN_LINES     (LINES - 2)
-#define DATELEN           (strlen(hftirc->date.str))
-#define DEF_CONF          ".config/hftirc/hftirc.conf"
+#define MAINWIN_LINES  (LINES - 2)
+#define DATELEN        (strlen(hftirc->date.str))
+#define DEF_CONF        ".config/hftirc/hftirc.conf"
 
-#define C(c) ((c) & 037)
-#define ISCHAN(c) ((c == '#' || c ==  '&'))
-#define LEN(x) (sizeof(x) / sizeof(x[0]))
-#define WARN(t,s) ui_print_buf(0, "%s: %s", t, s)
-#define DSINPUT(i) for(; i && i[0] == ' '; ++i)
+#define C(c)         ((c) & 037)
+#define ISCHAN(c)    ((c == '#' || c ==  '&'))
+#define LEN(x)       (sizeof(x) / sizeof(x[0]))
+#define WARN(t, s)   ui_print_buf(0, "%s: %s", t, s)
+#define DSINPUT(i)   for(; i && i[0] == ' '; ++i)
 
 #define PRINTATTR(w, attr, s) do                      \
                               {                       \
@@ -74,11 +74,11 @@
                                    wattroff(w, attr); \
                               } while(0 /*CONSTCOND*/);
 
-#define NOSERVRET(r) if(!hftirc->conf.nserv || !hftirc->selsession       \
-                         || !hftirc->selsession->connected)              \
-                     {                                                   \
-                          WARN("Error", "You're not connected");         \
-                          return r;                                      \
+#define NOSERVRET(r) if(!hftirc->conf.nserv || !hftirc->selsession \
+                         || !hftirc->selsession->connected)        \
+                     {                                             \
+                          WARN("Error", "You're not connected");   \
+                          return r;                                \
                      }
 
 /* List macros */
