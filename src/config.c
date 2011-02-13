@@ -19,7 +19,42 @@
 
 #define SSTRCPY(dest, src) if(src) strcpy((dest), (src))
 
-void
+static void
+config_misc(void)
+{
+     struct conf_sec *misc;
+
+     misc = fetch_section_first(NULL, "misc");
+
+     hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolp;
+     hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolp;
+     hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolp;
+
+     free(misc);
+
+     return;
+}
+
+static void
+config_ui(void)
+{
+     struct conf_sec *ui, *colors;
+
+     ui = fetch_section_first(NULL, "ui");
+
+     hftirc->conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolp;
+
+     /* Colors section */
+     colors = fetch_section_first(ui, "colors");
+     hftirc->conf.tcolor = color_to_id(fetch_opt_first(colors, "blue", "color_theme").str);
+
+     free(ui);
+     free(colors);
+
+     return;
+}
+
+static void
 config_server(void)
 {
      int i, j, n = 0;
@@ -73,8 +108,6 @@ config_server(void)
 void
 config_parse(void)
 {
-     struct conf_sec *misc, *ui, *colors;
-
      if(get_conf(hftirc->conf.path) == -1)
      {
           ui_print_buf(0, "parsing configuration file (%s) failed.", hftirc->conf.path);
@@ -82,29 +115,8 @@ config_parse(void)
           get_conf(hftirc->conf.path);
      }
 
-     /* [Misc] section */
-     misc = fetch_section_first(NULL, "misc");
-
-     hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolp;
-     hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolp;
-     hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolp;
-
-     /* [User Interface] section */
-     ui = fetch_section_first(NULL, "ui");
-
-     hftirc->conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolp;
-
-
-     /* Subsection [User Interface] [Colors] */
-     colors = fetch_section_first(ui, "colors");
-
-     hftirc->conf.tcolor = color_to_id(fetch_opt_first(colors, "blue", "color_theme").str);
-
-     free(misc);
-     free(ui);
-     free(colors);
-
-     /* Servers section */
+     config_misc();
+     config_ui();
      config_server();
 
      return;

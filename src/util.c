@@ -158,7 +158,7 @@ nick_color(char *nick)
      for(i = col = 0; nick[i]; col += tolower(nick[i++]));
 
      /* Check if color is different of black & hl color */
-     for(; col == Black || col == LightYellow; ++col);
+     for(col %= LastCol; col == Black || col == LightYellow; ++col);
 
      sprintf(ret, "%c%d%s%c", HFTIRC_COLOR, abs(col), nick, HFTIRC_END_COLOR);
 
