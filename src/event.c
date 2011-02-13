@@ -310,7 +310,7 @@ event_connect(IrcSession *session, const char *event, const char *origin, const 
 
      /* Find session by name for autojoin */
      for(i = 0; i < hftirc->conf.nserv; ++i)
-          if(!strcmp(session->name, hftirc->conf.serv[i].name))
+          if(session->name && !strcmp(session->name, hftirc->conf.serv[i].name))
           {
                for(j = 0; j < hftirc->conf.serv[i].nautojoin; ++j)
                     input_join(hftirc->conf.serv[i].autojoin[j]);
