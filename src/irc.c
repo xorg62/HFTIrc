@@ -26,6 +26,8 @@ irc_session(void)
      s->sock = -1;
      s->connected = 0;
 
+     HFTLIST_ATTACH(hftirc->sessionhead, s);
+
      return s;
 }
 
@@ -382,16 +384,17 @@ void
 irc_init(void)
 {
      int i;
+     IrcSession *is;
 
      /* Connection to conf servers */
-     for(i = 0; i < hftirc->conf.nserv; ++i)
+     for(is = hftirc->sessionhead; is && i < hftirc->conf.nserv; is = is->next, ++i)
      {
-          if(!hftirc->session[i])
-               hftirc->session[i] = irc_session();
+          if(!is)
+               is = irc_session();
 
-          hftirc->selsession = hftirc->session[i];
+          hftirc->selsession = is;
 
-          if(irc_connect(hftirc->session[i],
+          if(irc_connect(is,
                          hftirc->conf.serv[i].adress,
                          hftirc->conf.serv[i].name,
                          hftirc->conf.serv[i].port,

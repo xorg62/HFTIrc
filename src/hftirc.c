@@ -47,9 +47,10 @@ int
 main(int argc, char **argv)
 {
     struct sigaction sig;
-    int i, maxfd = 0;
+    int i, n, maxfd = 0;
     fd_set iset;
     static struct timeval tv;
+    IrcSession *is;
 
     hftirc = malloc(sizeof(HFTIrc));
 
@@ -84,7 +85,7 @@ main(int argc, char **argv)
     /* Primary allocation / set */
     hftirc->ui = malloc(sizeof(Ui));
     hftirc->ft = 1;
-    hftirc->selsession = (hftirc->session[0] = irc_session());
+    hftirc->selsession = (hftirc->sessionhead = irc_session());
 
     /* Signal initialisation */
     sig.sa_handler = signal_handler;
@@ -113,23 +114,23 @@ main(int argc, char **argv)
 
          maxfd = STDIN_FILENO;
 
-         for(i = 0; i < hftirc->conf.nserv; ++i)
-              if(hftirc->session[i]->sock > 0 && hftirc->session[i]->connected)
+         for(n = 0, is = hftirc->sessionhead; is; is = is->next, ++n)
+              if(is->sock > 0 && is->connected)
               {
-                   if(maxfd < hftirc->session[i]->sock)
-                        maxfd = hftirc->session[i]->sock;
+                   if(maxfd < is->sock)
+                        maxfd = is->sock;
 
-                   FD_SET(hftirc->session[i]->sock, &iset);
+                   FD_SET(is->sock, &iset);
               }
 
-         if(select(maxfd + hftirc->conf.nserv + 1, &iset, NULL, NULL, &tv) > 0)
+         if(select(maxfd + n + 1, &iset, NULL, NULL, &tv) > 0)
          {
               if(FD_ISSET(STDIN_FILENO, &iset))
                    ui_get_input();
               else
-                   for(i = 0; i < hftirc->conf.nserv; ++i)
-                        if(irc_run_process(hftirc->session[i], &iset))
-                              hftirc->session[i]->connected = 0;
+                  for(is = hftirc->sessionhead; is; is = is->next)
+                       if(irc_run_process(is, &iset))
+                            is->connected = 0;
          }
 
          /* Updating date */
@@ -145,8 +146,13 @@ main(int argc, char **argv)
 
     endwin();
 
+    free(hftirc->conf.serv);
     free(hftirc->cb);
     free(hftirc->ui);
+
+    for(is = hftirc->sessionhead; is; is = is->next)
+         free(is);
+
     free(hftirc);
 
     return 0;

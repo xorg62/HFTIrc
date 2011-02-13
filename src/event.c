@@ -308,11 +308,15 @@ event_connect(IrcSession *session, const char *event, const char *origin, const 
 
      hftirc->selsession = session;
 
-     /* Find session by name */
-     for(i = 0; strcmp(session->name, hftirc->conf.serv[i].name); ++i);
+     /* Find session by name for autojoin */
+     for(i = 0; i < hftirc->conf.nserv; ++i)
+          if(!strcmp(session->name, hftirc->conf.serv[i].name))
+          {
+               for(j = 0; j < hftirc->conf.serv[i].nautojoin; ++j)
+                    input_join(hftirc->conf.serv[i].autojoin[j]);
 
-     for(j = 0; j < hftirc->conf.serv[i].nautojoin; ++j)
-          input_join(hftirc->conf.serv[i].autojoin[j]);
+               break;
+          }
 
      return;
 }
@@ -342,8 +346,8 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
           }
      }
 
-     ui_print_buf(i, colorstr("3", "  ->>>> %c%s%c (%s) has joined %c%s",
-               B, nick, B, origin + strlen(nick) + 1, B, params[0]));
+     ui_print_buf(i, "  %s %c%s%c (%s) has joined %c%s", colorstr("3", "->>>>"),
+               B, nick, B, origin + strlen(nick) + 1, B, params[0]);
 
      ns = nickstruct_set(nick);
 
@@ -369,13 +373,10 @@ event_part(IrcSession *session, const char *event, const char *origin, const cha
 
      for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
           if(ns->nick && strlen(ns->nick) && !strcmp(ns->nick, nick))
-          {
                nick_detach(i, ns);
-               free(ns);
-          }
 
-     ui_print_buf(i, colorstr("5", "  <<<<- %s (%s) has left %c%s%c [%s]",
-               nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : "")));
+     ui_print_buf(i,"  %s %s (%s) has left %c%s%c [%s]", colorstr("5", "<<<<-"),
+               nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
 
      return;
 }
@@ -395,9 +396,9 @@ event_quit(IrcSession *session, const char *event, const char *origin, const cha
           {
                if(hftirc->cb[i].session == session && strlen(ns->nick) && !strcmp(nick, ns->nick))
                {
-                    ui_print_buf(i, colorstr("4", "  <<<<- %s (%s) has quit [%s]", nick, origin + strlen(nick) + 1, params[0]));
+                    ui_print_buf(i,  "  %s %s (%s) has quit [%s]", colorstr("4", "<<<<-"),
+                              nick, origin + strlen(nick) + 1, params[0]);
                     nick_detach(i, ns);
-                    free(ns);
                     break;
                }
           }
@@ -566,10 +567,7 @@ event_names(IrcSession *session, const char *event, const char *origin, const ch
           {
                /* Free the entire tail queue. */
                for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next)
-               {
                     nick_detach(s, ns);
-                    free(ns);
-               }
           }
 
           p = strtok((char *)params[3], " ");

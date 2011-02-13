@@ -31,16 +31,13 @@ config_server(void)
 
      if(!(hftirc->conf.nserv = fetch_section_count(serv)))
      {
+          hftirc->conf.serv = malloc(sizeof(ServInfo));
           hftirc->conf.serv[0] = defsi;
 
           return;
      }
 
-     if(hftirc->conf.nserv > NSERV)
-     {
-          ui_print_buf(0, "HFTIrc configuratin: Too much servs (limit: %d)", NSERV);
-          hftirc->conf.nserv = NSERV;
-     }
+     hftirc->conf.serv = malloc(sizeof(ServInfo) * hftirc->conf.nserv);
 
      for(i = 0; i < hftirc->conf.nserv; ++i)
      {

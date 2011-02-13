@@ -82,12 +82,12 @@ input_nick(const char *input)
 void
 input_quit(const char *input)
 {
-     int i;
+     IrcSession *is;
 
      DSINPUT(input);
 
-     for(i = 0; i < hftirc->conf.nserv; ++i)
-          irc_send_raw(hftirc->session[i], "QUIT :%s", input);
+     for(is = hftirc->sessionhead; is; is = is->next)
+          irc_send_raw(is, "QUIT :%s", input);
 
      hftirc->running = -1;
 
@@ -350,7 +350,7 @@ input_umode(const char *input)
 void
 input_serv(const char *input)
 {
-     int i;
+     IrcSession *is;
 
      DSINPUT(input);
 
@@ -359,9 +359,9 @@ input_serv(const char *input)
 
      if(strlen(input) > 0)
      {
-          for(i = 0; i < hftirc->conf.nserv; ++i)
-               if(!strcasecmp(hftirc->session[i]->name, input))
-                    hftirc->selsession = hftirc->session[i];
+          for(is = hftirc->sessionhead; is; is = is->next)
+               if(!strcasecmp(is->name, input))
+                    hftirc->selsession = is;
      }
      /* TODO: loop switch */
 
@@ -383,60 +383,27 @@ input_redraw(const char *input)
 void
 input_connect(const char *input)
 {
-     int i = -1, a = 0;
+     IrcSession *is;
      ServInfo defsi = { " ", " ", " ", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
 
      DSINPUT(input);
 
      if(strlen(input) > 0)
      {
-          if(hftirc->conf.nserv > NSERV)
-          {
-               WARN("Error", "Too much connected servers");
-
-               return;
-          }
-
-          /* Check if serv is already used (but disconnected) in hftirc */
-          for(i = 0; i < hftirc->conf.nserv; ++i)
-               if(!strcmp(input, hftirc->conf.serv[i].adress)
-                         || !strcasecmp(input, hftirc->conf.serv[i].name))
+          /* Check if serv is already used in hftirc */
+          for(is = hftirc->sessionhead; is; is = is->next)
+               if(!strcmp(input, is->server))
                {
-                    if(hftirc->session[i]->connected)
-                    {
-                         WARN("Warning", "Already connected on this server");
-                         return;
-                    }
-                    else
-                    {
-                         ++a;
-                         break;
-                    }
+                    WARN("Warning", "Already connected on this server");
+                    return;
                }
 
-          if(!a)
-          {
-               ++hftirc->conf.nserv;
-               i = (hftirc->conf.nserv - 1);
+          is = irc_session();
 
-               hftirc->conf.serv[i] = defsi;
-               strcpy(hftirc->conf.serv[i].name, input);
-               strcpy(hftirc->conf.serv[i].adress, input);
-          }
+          if(irc_connect(is, input, input, defsi.port, defsi.password, defsi.nick, defsi.username, defsi.realname))
+               ui_print_buf(0, "Error: Can't connect to %s", input);
 
-          hftirc->session[i] = irc_session();
-
-          if(irc_connect(hftirc->session[i],
-                         hftirc->conf.serv[i].adress,
-                         hftirc->conf.serv[i].adress,
-                         hftirc->conf.serv[i].port,
-                         hftirc->conf.serv[i].password,
-                         hftirc->conf.serv[i].nick,
-                         hftirc->conf.serv[i].username,
-                         hftirc->conf.serv[i].realname))
-               ui_print_buf(0, "Error: Can't connect to %s", hftirc->conf.serv[i].adress);
-
-          hftirc->selsession = hftirc->session[i];
+          hftirc->selsession = is;
      }
      else
           WARN("Error", "Usage: /connect <adress>  or  /server <adress>");
@@ -447,24 +414,24 @@ input_connect(const char *input)
 void
 input_disconnect(const char *input)
 {
-     int i;
+     IrcSession *is;
 
      DSINPUT(input);
      NOSERVRET();
 
+     /* Session specified in input ? */
      if(strlen(input) > 0)
      {
-          for(i = 0; i < hftirc->conf.nserv; ++i)
-               if(!strcasecmp(hftirc->session[i]->name, input))
+          for(is = hftirc->sessionhead; is; is = is->next)
+               if(!strcasecmp(is->name, input))
                     break;
-
-          irc_disconnect(hftirc->session[i]);
      }
+     else
+          is = hftirc->selsession;
 
-     irc_disconnect(hftirc->selsession);
+     irc_disconnect(is);
 
-     ui_print_buf(0, "[%s] *** %c%s%c is now Disconnected",
-               hftirc->selsession->name, B, hftirc->selsession->name, B);
+     ui_print_buf(0, "[%s] *** %c%s%c is now Disconnected", is->name, B, is->name, B);
 
      return;
 }
@@ -472,21 +439,21 @@ input_disconnect(const char *input)
 void
 input_away(const char *input)
 {
-     int i;
+     IrcSession *is;
 
      DSINPUT(input);
      NOSERVRET();
 
      if(strlen(input) > 0)
      {
-          for(i = 0; i < hftirc->conf.nserv; ++i)
-               if(irc_send_raw(hftirc->session[i], "AWAY :%s", input))
+          for(is = hftirc->sessionhead; is; is = is->next)
+               if(irc_send_raw(is, "AWAY :%s", input))
                     WARN("Error", "Can't send AWAY");
 
      }
      else
-          for(i = 0; i < hftirc->conf.nserv; ++i)
-               if(irc_send_raw(hftirc->session[i],  "AWAY :"))
+          for(is = hftirc->sessionhead; is; is = is->next)
+               if(irc_send_raw(is,  "AWAY :"))
                     WARN("Error", "Can't send AWAY");
 
      return;

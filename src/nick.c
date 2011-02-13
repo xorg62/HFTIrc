@@ -70,11 +70,7 @@ nick_sort_abc(int buf)
 void
 nick_attach(int buf, NickStruct *nick)
 {
-     if(hftirc->cb[buf].nickhead)
-          hftirc->cb[buf].nickhead->prev = nick;
-
-     nick->next = hftirc->cb[buf].nickhead;
-     hftirc->cb[buf].nickhead = nick;
+     HFTLIST_ATTACH(hftirc->cb[buf].nickhead, nick);
 
      hftirc->cb[buf].umask |= (UNickSortMask | UNickListMask);
 
@@ -84,16 +80,9 @@ nick_attach(int buf, NickStruct *nick)
 void
 nick_detach(int buf, NickStruct *nick)
 {
-     NickStruct **ns;
-
-     for(ns = &hftirc->cb[buf].nickhead
-               ; *ns && *ns != nick
-               ; ns = &(*ns)->next);
-
-     *ns = nick->next;
+     HFTLIST_DETACH(hftirc->cb[buf].nickhead, NickStruct, nick);
 
      hftirc->cb[buf].umask |= (UNickSortMask | UNickListMask);
-
 
      return;
 }

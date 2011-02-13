@@ -67,6 +67,8 @@ const struct { int c, m; } irccol[] =
 void
 ui_init(void)
 {
+     IrcSession *is;
+
      /* Init buffers (only first time) */
      if(hftirc->ft)
      {
@@ -93,7 +95,10 @@ ui_init(void)
           endwin();
           fprintf(stderr, "HFTIrc error: Terminal too small (%dx%d)\n"
                     "Minimal size : 15x35\n", LINES, COLS);
-          free(hftirc->session);
+
+          for(is = hftirc->sessionhead; is; is = is->next)
+               free(is);
+
           free(hftirc->ui);
           free(hftirc);
 

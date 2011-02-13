@@ -54,7 +54,6 @@
 #define NICKLEN           (24)
 #define CHANLEN           (24)
 #define HOSTLEN           (128)
-#define NSERV             (32)
 #define HISTOLEN          (256)
 #define COLORMAX          (16)
 #define COLOR_THEME_DEF   (COLOR_BLUE)
@@ -85,6 +84,18 @@
                           return r;                                      \
                      }
 
+/* List macros */
+#define HFTLIST_ATTACH(head, e) \
+     if(head)                   \
+          head->prev = e;       \
+     e->next = head;            \
+     head = e;
+#define HFTLIST_DETACH(head, type, e)                     \
+     type **ee;                                           \
+     for(ee = &head; *ee && *ee != e; ee = &(*ee)->next); \
+     *ee = e->next;                                       \
+     free(e);
+
 /* Key and const for ui */
 #define HFTIRC_COLOR      (C('c'))
 #define HFTIRC_END_COLOR  (15)
@@ -105,7 +116,8 @@ typedef enum { False, True } Bool;
 #include "parse/parse.h"
 
 /* Structures */
-typedef struct
+typedef struct IrcSession IrcSession;
+struct IrcSession
 {
      int sock;
      short port;
@@ -119,7 +131,8 @@ typedef struct
      char inbuf[BUFSIZE];
      int motd_received, connected;
      unsigned int inoffset;
-} IrcSession;
+     IrcSession *next, *prev;
+};
 
 typedef struct
 {
@@ -146,14 +159,13 @@ typedef struct
      } ib;
 } Ui;
 
-/* Nick chained list */
+/* Nick linked list */
 typedef struct NickStruct NickStruct;
 struct NickStruct
 {
      char nick[NICKLEN];
      char rang;
-     NickStruct *prev;
-     NickStruct *next;
+     NickStruct *next, *prev;
 };
 
 /* Channel buffer */
@@ -215,7 +227,7 @@ typedef struct
      int lastlinepos;
      int tcolor;
      int nickcolor;
-     ServInfo serv[NSERV];
+     ServInfo *serv;
 } ConfStruct;
 
 /* Global struct */
@@ -223,7 +235,7 @@ typedef struct
 {
      int ft, running;
      int nbuf, selbuf, prevbuf;
-     IrcSession *selsession, *session[NSERV];
+     IrcSession *selsession, *sessionhead;
      ConfStruct conf;
      ChanBuf *cb;
      Ui *ui;
