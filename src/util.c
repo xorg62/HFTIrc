@@ -40,37 +40,51 @@ update_date(void)
      return;
 }
 
-/* Find buffer id with name */
-int
-find_bufid(IrcSession *s, const char *str)
+/* Find buffer pointer with name */
+ChanBuf*
+find_buf(IrcSession *s, const char *str)
 {
-     int i;
+     ChanBuf *cb;
 
      if(!str)
-          return 0;
+          return hftirc->statuscb;
 
-     for(i = 0; i < hftirc->nbuf; ++i)
-          if(hftirc->cb[i].name != NULL
-            && strlen(hftirc->cb[i].name) > 1)
-               if(!strcasecmp(str, hftirc->cb[i].name)
-                 && hftirc->cb[i].session == s)
-                    return i;
+     for(cb = hftirc->cbhead; cb; cb = cb->next)
+          if(cb->name && strlen(cb->name) > 1)
+               if(!strcasecmp(str, cb->name) && cb->session == s)
+                    return cb;
 
-     return 0;
+     return hftirc->statuscb;
+}
+
+/* Find buffer pointer with id */
+ChanBuf*
+find_buf_wid(int id)
+{
+     ChanBuf *cb;
+
+     if(id < 0 || id > hftirc->nbuf - 1)
+          return NULL;
+
+     for(cb = hftirc->cbhead; cb; cb = cb->next)
+          if(cb->id == id)
+               return cb;
+
+     return NULL;
 }
 
 /* Send message to each buffer with session id = sess */
 void
 msg_sessbuf(IrcSession *session, char *str)
 {
-     int i;
+     ChanBuf *cb;
 
      if(!str)
           return;
 
-     for(i = 1; i < hftirc->nbuf; ++i)
-          if(hftirc->cb[i].session == session)
-               ui_print_buf(i, str);
+     for(cb = hftirc->cbhead->next; cb; cb = cb->next)
+          if(cb->session == session)
+               ui_print_buf(cb, str);
 
      return;
 }
@@ -183,7 +197,7 @@ hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch)
 }
 
 wchar_t*
-complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
+complete_nick(ChanBuf *cb, unsigned int hits, wchar_t *start, int *beg)
 {
      NickStruct *ns;
      wchar_t wbuf[BUFSIZE] = { 0 };
@@ -202,7 +216,7 @@ complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
 
      *beg = i;
 
-     for(ns = hftirc->cb[buf].nickhead; ns; ns = ns->next)
+     for(ns = cb->nickhead; ns; ns = ns->next)
      {
           swprintf(wbuf, BUFSIZE, L"%s", ns->nick);
           if(!hft_wcsncasecmp(wbuf, start, wcslen(start)))
@@ -214,7 +228,7 @@ complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg)
 }
 
 wchar_t*
-complete_input(int buf, unsigned int hits, wchar_t *start)
+complete_input(ChanBuf *cb, unsigned int hits, wchar_t *start)
 {
      wchar_t wbuf[BUFSIZE] = { 0 };
      int i, c = 0;

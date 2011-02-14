@@ -37,24 +37,24 @@ nick_swap(NickStruct *x, NickStruct *y)
 
 /* Sort alphabetically nick list */
 void
-nick_sort_abc(int buf)
+nick_sort_abc(ChanBuf *cb)
 {
      int swap = 1;
      NickStruct *ns;
 
-     if(!buf || !(hftirc->cb[buf].umask & UNickSortMask))
+     if(!cb || !(cb->umask & UNickSortMask))
           return;
 
      /* Count nicks for nnick */
-     for(hftirc->cb[buf].nnick = 0, ns = hftirc->cb[buf].nickhead;
+     for(cb->nnick = 0, ns = cb->nickhead;
                ns;
-               ns = ns->next, ++hftirc->cb[buf].nnick);
+               ns = ns->next, ++cb->nnick);
 
      /* Alphabetical bubble sort */
      while(swap)
      {
           swap = 0;
-          for(ns = hftirc->cb[buf].nickhead; ns && ns->next; ns = ns->next)
+          for(ns = cb->nickhead; ns && ns->next; ns = ns->next)
                if(strcasecmp(ns->nick, ns->next->nick) > 0)
                {
                     swap = 1;
@@ -62,27 +62,33 @@ nick_sort_abc(int buf)
                }
      }
 
-    hftirc->cb[buf].umask &= ~UNickSortMask;
+    cb->umask &= ~UNickSortMask;
 
     return;
 }
 
 void
-nick_attach(int buf, NickStruct *nick)
+nick_attach(ChanBuf *cb, NickStruct *nick)
 {
-     HFTLIST_ATTACH(hftirc->cb[buf].nickhead, nick);
+     if(!cb)
+          return;
 
-     hftirc->cb[buf].umask |= (UNickSortMask | UNickListMask);
+     HFTLIST_ATTACH(cb->nickhead, nick);
+
+     cb->umask |= (UNickSortMask | UNickListMask);
 
      return;
 }
 
 void
-nick_detach(int buf, NickStruct *nick)
+nick_detach(ChanBuf *cb, NickStruct *nick)
 {
-     HFTLIST_DETACH(hftirc->cb[buf].nickhead, NickStruct, nick);
+     if(!cb)
+          return;
 
-     hftirc->cb[buf].umask |= (UNickSortMask | UNickListMask);
+     HFTLIST_DETACH(cb->nickhead, NickStruct, nick);
+
+     cb->umask |= (UNickSortMask | UNickListMask);
 
      return;
 }

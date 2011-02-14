@@ -31,7 +31,7 @@ dump_event(IrcSession *session, const char *event, const char *origin, const cha
           strcat(buf, params[i]);
      }
 
-     ui_print_buf(0, "[%s] *** (%s): %s", session->name, event, buf);
+     ui_print_buf(hftirc->statuscb, "[%s] *** (%s): %s", session->name, event, buf);
 
      return;
 }
@@ -42,6 +42,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
      char buf[BUFSIZE] = { 0 };
      char se[8] = { 0 };
      int i;
+     ChanBuf *cb;
 
      sprintf(se, "%d", event);
 
@@ -71,7 +72,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                     strcat(buf, params[i]);
                }
 
-               ui_print_buf(0, "[%s] *** %s", session->name, buf + 1);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %s", session->name, buf + 1);
                break;
 
           /* Whois */
@@ -94,18 +95,18 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
           /* Away */
           case 305:
           case 306:
-               ui_print_buf(0, "[%s] *** %s", session->name, params[1]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %s", session->name, params[1]);
                break;
 
           /* List */
           case 321:
-               ui_print_buf(0, "[%s] *** %s : %s", session->name, params[1], params[2]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %s : %s", session->name, params[1], params[2]);
                break;
           case 322:
-               ui_print_buf(0, "[%s] *** %s   %s : %s", session->name, params[1], params[2], params[3]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %s   %s : %s", session->name, params[1], params[2], params[3]);
                break;
           case 323:
-               ui_print_buf(0, "[%s] *** %s", session->name, params[1]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %s", session->name, params[1]);
                break;
 
           /* Topic / Channel */
@@ -114,7 +115,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                event_topic(session, se, origin, params, count);
                break;
           case 328:
-               ui_print_buf(find_bufid(session, params[1]),
+               ui_print_buf(find_buf(session, params[1]),
                          "  *** Home page of %c%s%c: %s", B, params[1], B, params[2]);
                break;
 
@@ -126,13 +127,13 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
 
           /* Identify */
           case 396:
-               ui_print_buf(0, "[%s] *** %c%s%c(%s) %s", session->name, B, params[0], B, params[1], params[2]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %c%s%c(%s) %s", session->name, B, params[0], B, params[1], params[2]);
                break;
 
           /* Errors */
           case 401:
           case 403:
-               ui_print_buf(find_bufid(session, params[1]), "[%s] *** %s", session->name, params[2]);
+               ui_print_buf(find_buf(session, params[1]), "[%s] *** %s", session->name, params[2]);
                break;
           case 263:
           case 402:
@@ -141,15 +142,15 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
           case 421:
           case 437:
           case 461:
-               ui_print_buf(0, "[%s] *** %s", session->name, params[2]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %s", session->name, params[2]);
                break;
           case 432:
           case 442:
           case 473:
-               ui_print_buf(0, "[%s] *** %c%s%c: %s", session->name, B, params[1], B, params[2]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %c%s%c: %s", session->name, B, params[1], B, params[2]);
                break;
           case 433:
-               ui_print_buf(0, "[%s] *** Nickname is already in use", session->name);
+               ui_print_buf(hftirc->statuscb, "[%s] *** Nickname is already in use", session->name);
 
                if(!strcmp(session->nick, params[1]))
                {
@@ -159,41 +160,38 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
 
                break;
           case 451:
-               ui_print_buf(0, "[%s] *** You have not registered", session->name);
+               ui_print_buf(hftirc->statuscb, "[%s] *** You have not registered", session->name);
                break;
           case 482:
-                ui_print_buf(hftirc->selbuf, "  *** <%s> You're not channel operator", params[1]);
+               ui_print_buf(hftirc->selcb, "  *** <%s> You're not channel operator", params[1]);
                break;
 
           /* Redirection */
           case 470:
-               ui_print_buf(0, "[%s] *** Channel %c%s%c linked on %c%s",
+               ui_print_buf(hftirc->statuscb, "[%s] *** Channel %c%s%c linked on %c%s",
                          session->name, B, params[1], B, B, params[2]);
 
-               if((i = find_bufid(session, params[1])))
-                    strcpy(hftirc->cb[i].name, params[2]);
+               if((cb = find_buf(session, params[1])))
+                    strcpy(cb->name, params[2]);
 
                break;
 
           case 479:
-               ui_print_buf(0, "[%s] *** %c%s%c: %s", session->name, B, params[1], B, params[2]);
+               ui_print_buf(hftirc->statuscb, "[%s] *** %c%s%c: %s", session->name, B, params[1], B, params[2]);
 
-               if((i = find_bufid(session, params[1])))
-                    ui_buf_close(i);
+               if((cb = find_buf(session, params[1])))
+                    ui_buf_close(cb);
 
-               ui_buf_set(0);
+               ui_buf_set(hftirc->statuscb->id);
                break;
 
           /* End of MOTD, already managed by connect handle if motd is not received */
           case 376:
                /* Re-join every channel opened previously in the same session */
                if(session->motd_received)
-               {
-                    for(i = 0; i < hftirc->nbuf; ++i)
-                         if(hftirc->cb[i].session == session
-                                   && ISCHAN(hftirc->cb[i].name[0]))
-                              irc_send_raw(session, "JOIN %s", hftirc->cb[i].name);
-               }
+                    for(cb = hftirc->cbhead; cb; cb = cb->next)
+                         if(cb->session == session && ISCHAN(cb->name[0]))
+                              irc_send_raw(session, "JOIN %s", cb->name);
 
                break;
 
@@ -211,28 +209,29 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
      int i;
      char nick[NICKLEN] = { 0 };
      NickStruct *ns;
+     ChanBuf *cb;
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     for(i = 0; i < hftirc->nbuf; ++i)
-          for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
-               if(hftirc->cb[i].session == session && ns->nick && !strcmp(nick, ns->nick))
+     for(cb = hftirc->cbhead; cb; cb = cb->next)
+          for(ns = cb->nickhead; ns; ns = ns->next)
+               if(cb->session == session && ns->nick && !strcmp(nick, ns->nick))
                {
-                    hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
+                    cb->umask |= (UNickSortMask | UNickListMask);
 
                     if(!strcmp(nick, session->nick))
                          strcpy(session->nick, params[0]);
 
-                    ui_print_buf(i, "  *** %s is now %c%s", nick, B, params[0]);
+                    ui_print_buf(cb, "  *** %s is now %c%s", nick, B, params[0]);
                     strcpy(ns->nick, params[0]);
                }
 
-     for(i = 0; i < hftirc->nbuf; ++i)
-          if(!strcmp(nick, hftirc->cb[i].name) && session == hftirc->cb[i].session)
+     for(cb = hftirc->cbhead; cb; cb = cb->next)
+          if(!strcmp(nick, cb->name) && session == cb->session)
           {
-               strcpy(hftirc->cb[i].name, params[0]);
-               hftirc->cb[i].umask |= (UNickSortMask | UNickListMask);
+               strcpy(cb->name, params[0]);
+               cb->umask |= (UNickSortMask | UNickListMask);
           }
 
      return;
@@ -241,11 +240,12 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
 void
 event_mode(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, b;
+     int i;
      char nick[NICKLEN] = { 0 };
      char nicks[BUFSIZE] = { 0 };
      char r[2] = { params[1][0], params[1][1] };
      NickStruct *ns;
+     ChanBuf *cb;
 
      if(strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
@@ -255,7 +255,7 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
      /* User mode */
      if(count == 1)
      {
-          ui_print_buf(0, "[%s] *** User mode of %c%s%c : [%s]", session->name, B, nick, B, params[0]);
+          ui_print_buf(hftirc->statuscb, "[%s] *** User mode of %c%s%c : [%s]", session->name, B, nick, B, params[0]);
 
           session->mode = strdup(params[0]);
 
@@ -268,9 +268,9 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
           strcat(nicks, params[i]);
      }
 
-     b = find_bufid(session, params[0]);
+     cb = find_buf(session, params[0]);
 
-     for(ns = hftirc->cb[b].nickhead; ns; ns = ns->next)
+     for(ns = cb->nickhead; ns; ns = ns->next)
           if(!strcasecmp(nicks + 1, ns->nick))
           {
                switch(r[1])
@@ -291,10 +291,10 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
                break;
           }
 
-     ui_print_buf(b, "  *** Mode %c%s%c [%s %s] set by %c%s",
+     ui_print_buf(cb, "  *** Mode %c%s%c [%s %s] set by %c%s",
           B, params[0], B, params[1], nicks + 1, B, nick);
 
-     hftirc->cb[b].umask |= UNickListMask;
+     cb->umask |= UNickListMask;
 
      return;
 }
@@ -325,11 +325,13 @@ event_connect(IrcSession *session, const char *event, const char *origin, const 
 void
 event_join(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int j, i = 0;
+     int j;
      char nick[NICKLEN] = { 0 };
      NickStruct *ns;
+     ChanBuf *cb;
 
-     i = find_bufid(session, params[0]);
+     if(!(cb = find_buf(session, params[0])))
+          cb = hftirc->statuscb;
 
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
@@ -337,22 +339,22 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
      if(!strcmp(nick, session->nick))
      {
           /* Check if the channel isn't already present on buffers */
-          if(i != 0)
-               ui_buf_set(i);
+          if(cb != hftirc->statuscb)
+               ui_buf_set(cb->id);
           /* Else, create a buffer */
           else
           {
                irc_join(session, params[0]);
-               i = hftirc->nbuf - 1;
+               cb = hftirc->selcb;
           }
      }
 
-     ui_print_buf(i, "  %s %c%s%c (%s) has joined %c%s", colorstr(Green, "->>>>"),
+     ui_print_buf(cb, "  %s %c%s%c (%s) has joined %c%s", colorstr(Green, "->>>>"),
                B, nick, B, origin + strlen(nick) + 1, B, params[0]);
 
      ns = nickstruct_set(nick);
 
-     nick_attach(i, ns);
+     nick_attach(cb, ns);
 
      return;
 }
@@ -361,22 +363,23 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
 void
 event_part(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j;
+     int j;
      char nick[NICKLEN] = { 0 };
      NickStruct *ns;
+     ChanBuf *cb;
 
      irc_send_raw(session, "MODE %s +i", session->nick);
 
-     i = find_bufid(session, params[0]);
+     cb = find_buf(session, params[0]);
 
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
-     for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
+     for(ns = cb->nickhead; ns; ns = ns->next)
           if(ns->nick && strlen(ns->nick) && !strcmp(ns->nick, nick))
-               nick_detach(i, ns);
+               nick_detach(cb, ns);
 
-     ui_print_buf(i,"  %s %s (%s) has left %c%s%c [%s]", colorstr(Red, "<<<<-"),
+     ui_print_buf(cb,"  %s %s (%s) has left %c%s%c [%s]", colorstr(Red, "<<<<-"),
                nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
 
      return;
@@ -388,18 +391,19 @@ event_quit(IrcSession *session, const char *event, const char *origin, const cha
      int i;
      char nick[NICKLEN] = { 0 };
      NickStruct *ns;
+     ChanBuf *cb;
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     for(i = 0; i < hftirc->nbuf; ++i)
-          for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
+     for(cb = hftirc->cbhead; cb; cb = cb->next)
+          for(ns = cb->nickhead; ns; ns = ns->next)
           {
-               if(hftirc->cb[i].session == session && strlen(ns->nick) && !strcmp(nick, ns->nick))
+               if(cb->session == session && strlen(ns->nick) && !strcmp(nick, ns->nick))
                {
-                    ui_print_buf(i,  "  %s %s (%s) has quit [%s]", colorstr(LightRed, "<<<<-"),
+                    ui_print_buf(cb, "  %s %s (%s) has quit [%s]", colorstr(LightRed, "<<<<-"),
                               nick, origin + strlen(nick) + 1, params[0]);
-                    nick_detach(i, ns);
+                    nick_detach(cb, ns);
                     break;
                }
           }
@@ -410,24 +414,22 @@ event_quit(IrcSession *session, const char *event, const char *origin, const cha
 void
 event_channel(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j, color = 0;
+     int j, color = 0;
      char r, nick[NICKLEN] = { 0 };
      NickStruct *ns;
+     ChanBuf *cb;
 
-     i = find_bufid(session, params[0]);
+     cb = find_buf(session, params[0]);
 
      /* If the message is not from an old buffer, init a new one. */
-     if(i > hftirc->nbuf)
-     {
-          ui_buf_new(params[0], session);
-          i = hftirc->nbuf - 1;
-     }
+     if(!cb)
+          cb = hftirc->statuscb;
 
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
      /* Find nick in linked list of chan to find rang */
-     for(ns = hftirc->cb[i].nickhead; ns; ns = ns->next)
+     for(ns = cb->nickhead; ns; ns = ns->next)
           if(!strcasecmp(nick, ns->nick))
           {
                r = ns->rang;
@@ -447,9 +449,9 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
           strcpy(nick, nick_color(nick));
 
      if(!ns->rang)
-          ui_print_buf(i, colorstr(color, "<%s> %s", nick, params[1]));
+          ui_print_buf(cb, colorstr(color, "<%s> %s", nick, params[1]));
      else
-          ui_print_buf(i, colorstr(color, "<%c%c%c%s> %s", B, r, B, nick, params[1]));
+          ui_print_buf(cb, colorstr(color, "<%c%c%c%s> %s", B, r, B, nick, params[1]));
 
      return;
 }
@@ -457,23 +459,23 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
 void
 event_privmsg(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j;
+     int j;
      char nick[NICKLEN] = { 0 };
      NickStruct *ns;
+     ChanBuf *cb;
 
      if(origin && strchr(origin, '!'))
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
      /* If the message is not from an old buffer, init a new one. */
-     if(!(i = find_bufid(session, nick)))
+     if((cb = find_buf(session, nick)) != hftirc->statuscb)
      {
-          ui_buf_new(nick, session);
-          i = hftirc->nbuf - 1;
+          cb = ui_buf_new(nick, session);
           ns = nickstruct_set(nick);
-          nick_attach(i, ns);
+          nick_attach(cb, ns);
      }
 
-     ui_print_buf(i, "<%s> %s", nick, params[1]);
+     ui_print_buf(cb, "<%s> %s", nick, params[1]);
 
      if(hftirc->conf.bell)
           putchar('\a');
@@ -490,7 +492,7 @@ event_notice(IrcSession *session, const char *event, const char *origin, const c
      if(origin && strchr(origin, '!'))
           for(nick[0] = ' ', j = 0; origin[j] != '!'; nick[j + 1] = origin[j], ++j);
 
-     ui_print_buf(0, "[%s] ***%s (%s)- %s", session->name, nick,
+     ui_print_buf(hftirc->statuscb, "[%s] ***%s (%s)- %s", session->name, nick,
                ((origin + strlen(nick)) ? origin + strlen(nick) : nick), params[1]);
 
      return;
@@ -499,10 +501,11 @@ event_notice(IrcSession *session, const char *event, const char *origin, const c
 void
 event_topic(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int i, j;
+     int j;
      char nick[NICKLEN] = { 0 };
+     ChanBuf *cb;
 
-     i = find_bufid(session, params[((event[0] == '3') ? 1 : 0)]);
+     cb = find_buf(session, params[((event[0] == '3') ? 1 : 0)]);
 
      if(!strcmp(event, "333"))
      {
@@ -511,23 +514,23 @@ event_topic(IrcSession *session, const char *event, const char *origin, const ch
           else
                strcpy(nick, params[2]);
 
-          ui_print_buf(i, "  *** Set by %c%s%c (%s)", B, nick, B, params[3]);
+          ui_print_buf(cb, "  *** Set by %c%s%c (%s)", B, nick, B, params[3]);
      }
      else if(!strcmp(event, "332"))
      {
-          ui_print_buf(i, "  *** Topic of %c%s%c: %s", B, params[1], B, params[2]);
-          strcpy(hftirc->cb[i].topic, params[2]);
-          hftirc->cb[i].umask |= UTopicMask;
+          ui_print_buf(cb, "  *** Topic of %c%s%c: %s", B, params[1], B, params[2]);
+          strcpy(cb->topic, params[2]);
+          cb->umask |= UTopicMask;
      }
      else
      {
           if(origin && strchr(origin, '!'))
                for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
-          ui_print_buf(i, "  *** New topic of %c%s%c set by %c%s%c: %s", B, params[0], B, B, nick, B, params[1]);
+          ui_print_buf(cb, "  *** New topic of %c%s%c set by %c%s%c: %s", B, params[0], B, B, nick, B, params[1]);
 
-          strcpy(hftirc->cb[i].topic, params[1]);
-          hftirc->cb[i].umask |= UTopicMask;
+          strcpy(cb->topic, params[1]);
+          cb->umask |= UTopicMask;
      }
 
      return;
@@ -536,39 +539,39 @@ event_topic(IrcSession *session, const char *event, const char *origin, const ch
 void
 event_names(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     int s;
      unsigned int cn = 0;
      char *p, *str = " ";
      NickStruct *ns;
+     ChanBuf *cb;
 
-     s = find_bufid(session, params[1]);
+     cb = find_buf(session, params[1]);
 
      if(!strcmp(event, "366"))
      {
-          nick_sort_abc(s);
+          nick_sort_abc(cb);
 
-          for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next, ++cn)
+          for(ns = cb->nickhead; ns; ns = ns->next, ++cn)
                asprintf(&str, "%s %c%c%c%s", str, B, (ns->rang) ? ns->rang : ' ', B, ns->nick);
 
-          ui_print_buf(s, "  *** Users of %c%s%c: %c%d%c nick(s)", B, params[1], B, B, cn, B);
-          ui_print_buf(s, "%c[%c", B, B);
-          ui_print_buf(s, " %s",  str);
-          ui_print_buf(s, "%c]%c", B, B);
+          ui_print_buf(cb, "  *** Users of %c%s%c: %c%d%c nick(s)", B, params[1], B, B, cn, B);
+          ui_print_buf(cb, "%c[%c", B, B);
+          ui_print_buf(cb, " %s",  str);
+          ui_print_buf(cb, "%c]%c", B, B);
 
-          hftirc->cb[s].naming = 0;
+          cb->naming = 0;
 
           free(str);
      }
      else
      {
-          s = find_bufid(session, params[2]);
+          cb = find_buf(session, params[2]);
 
           /* Empty the list */
-          if(!hftirc->cb[s].naming)
+          if(!cb->naming)
           {
                /* Free the entire tail queue. */
-               for(ns = hftirc->cb[s].nickhead; ns; ns = ns->next)
-                    nick_detach(s, ns);
+               for(ns = cb->nickhead; ns; ns = ns->next)
+                    nick_detach(cb, ns);
           }
 
           p = strtok((char *)params[3], " ");
@@ -576,13 +579,11 @@ event_names(IrcSession *session, const char *event, const char *origin, const ch
           while(p)
           {
                ns = nickstruct_set(p);
-
-               nick_attach(s, ns);
-
+               nick_attach(cb, ns);
                p = strtok(NULL, " ");
           }
 
-          ++hftirc->cb[s].naming;
+          ++cb->naming;
 
           ui_update_nicklistwin();
      }
@@ -595,14 +596,15 @@ event_action(IrcSession *session, const char *event, const char *origin, const c
 {
      int i;
      char nick[NICKLEN] = { 0 };
+     ChanBuf *cb;
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     if(!(i = find_bufid(session, params[0])))
-          i = find_bufid(session, nick);
+     if(!(cb = find_buf(session, params[0])))
+          cb = find_buf(session, nick);
 
-     ui_print_buf(i, " %c* %s%c %s", B, nick, B, params[1]);
+     ui_print_buf(cb, " %c* %s%c %s", B, nick, B, params[1]);
 
      if(hftirc->conf.bell && hftirc->conf.serv && strstr(params[1], session->nick))
           putchar('\a');
@@ -615,13 +617,14 @@ event_kick(IrcSession *session, const char *event, const char *origin, const cha
 {
      int i;
      char ornick[NICKLEN] = { 0 };
+     ChanBuf *cb;
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; ornick[i] = origin[i], ++i);
 
-     i = find_bufid(session, params[0]);
+     cb = find_buf(session, params[0]);
 
-     ui_print_buf(i, "  *** %c%s%c kicked by %s from %c%s%c [%s]",
+     ui_print_buf(cb, "  *** %c%s%c kicked by %s from %c%s%c [%s]",
                B, params[1], B, ornick, B, params[0], B, params[2]);
 
      return;
@@ -630,10 +633,10 @@ event_kick(IrcSession *session, const char *event, const char *origin, const cha
 void
 event_whois(IrcSession *session, unsigned int event, const char *origin, const char **params, unsigned int count)
 {
-     int b = 0;
      char *n = session->name;
+     ChanBuf *cb;
 
-     b = find_bufid(session, params[1]);
+     cb = find_buf(session, params[1]);
 
      switch(event)
      {
@@ -643,44 +646,44 @@ event_whois(IrcSession *session, unsigned int event, const char *origin, const c
           case 313:
           case 320:
           case 671:
-               ui_print_buf(b, "[%s] ***           %s: %s", n, params[1], params[2]);
+               ui_print_buf(cb, "[%s] ***           %s: %s", n, params[1], params[2]);
                break;
 
           /* Whois user */
           case 311:
-               ui_print_buf(b, "[%s] *** %c%s%c (%s@%s)", n,  B, params[1], B, params[2], params[3]);
-               ui_print_buf(b, "[%s] *** IRCNAME:  %s", n, params[5]);
+               ui_print_buf(cb, "[%s] *** %c%s%c (%s@%s)", n,  B, params[1], B, params[2], params[3]);
+               ui_print_buf(cb, "[%s] *** IRCNAME:  %s", n, params[5]);
                break;
 
           /* Whois server */
           case 312:
-               ui_print_buf(b, "[%s] *** SERVER:   %s (%s)", n, params[2], params[3]);
+               ui_print_buf(cb, "[%s] *** SERVER:   %s (%s)", n, params[2], params[3]);
                break;
 
           /* Whois away */
           case 301:
                /* When whois */
-               ui_print_buf(b, "[%s] *** AWAY:     %s", n,  params[2]);
+               ui_print_buf(cb, "[%s] *** AWAY:     %s", n,  params[2]);
                break;
 
           /* Whois idle */
           case 317:
-               ui_print_buf(b, "[%s] *** IDLE:     seconds idle: %s signon time: %s", n, params[2], params[3]);
+               ui_print_buf(cb, "[%s] *** IDLE:     seconds idle: %s signon time: %s", n, params[2], params[3]);
                break;
 
           /* End of whois */
           case 318:
-               ui_print_buf(b, "[%s] *** %s", n, params[2]);
+               ui_print_buf(cb, "[%s] *** %s", n, params[2]);
                break;
 
           /* Whois channel */
           case 319:
-               ui_print_buf(b, "[%s] *** CHANNELS: %s", n, params[2]);
+               ui_print_buf(cb, "[%s] *** CHANNELS: %s", n, params[2]);
                break;
 
           /* Whois account */
           case 330:
-               ui_print_buf(b, "[%s] ***           %s: %s %s", n, params[1], params[3], params[2]);
+               ui_print_buf(cb, "[%s] ***           %s: %s %s", n, params[1], params[3], params[2]);
                break;
      }
 
@@ -696,7 +699,7 @@ event_invite(IrcSession *session, const char *event, const char *origin, const c
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     ui_print_buf(0, "[%s] *** You've been invited by %c%s%c to %c%s", session->name, B, nick, B, B, params[1]);
+     ui_print_buf(hftirc->statuscb, "[%s] *** You've been invited by %c%s%c to %c%s", session->name, B, nick, B, B, params[1]);
 
      return;
 }
@@ -708,13 +711,14 @@ event_ctcp(IrcSession *session, const char *event, const char *origin, const cha
      char nick[NICKLEN] = { 0 };
      char reply[256] = { 0 };
      struct utsname un;
+     ChanBuf *cb;
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     i = find_bufid(session, nick);
+     cb = find_buf(session, nick);
 
-     ui_print_buf(i, "[%s] *** %c%s%c (%s) CTCP request: %c%s%c",
+     ui_print_buf(cb, "[%s] *** %c%s%c (%s) CTCP request: %c%s%c",
                session->name, B, nick, B, origin + strlen(nick) + 1, B, params[0], B);
 
      if(!strcasecmp(params[0], "VERSION"))

@@ -25,10 +25,10 @@ ui_init(void)
      /* Init buffers (only first time) */
      if(hftirc->ft)
      {
-          hftirc->selbuf = 0;
           hftirc->ui->nicklist = hftirc->conf.nicklist;
-
-          ui_buf_new("status", hftirc->selsession);
+          hftirc->nbuf = 0;
+          hftirc->statuscb = ui_buf_new("status", hftirc->selsession);
+          hftirc->selcb = hftirc->statuscb;
 
           hftirc->ui->tcolor = hftirc->conf.tcolor;
 
@@ -136,8 +136,11 @@ ui_color(int fg, int bg)
 void
 ui_update_statuswin(void)
 {
-     int i, j, c, x, y;
+     int j, c, x, y;
+     ChanBuf *cb;
 
+     if(!hftirc->selcb)
+          return;
 
      /* Erase all window content */
      werase(hftirc->ui->statuswin);
@@ -156,14 +159,14 @@ ui_update_statuswin(void)
      waddstr(hftirc->ui->statuswin, "))");
 
      /* Info about current serv/channel */
-     wprintw(hftirc->ui->statuswin, " (%d:", hftirc->selbuf);
+     wprintw(hftirc->ui->statuswin, " (%d:", hftirc->selcb->id);
      PRINTATTR(hftirc->ui->statuswin, COLOR_SW2,  hftirc->selsession->name);
 
      if(!hftirc->selsession->connected)
           PRINTATTR(hftirc->ui->statuswin, A_BOLD, " (Disconnected)");
 
      waddch(hftirc->ui->statuswin, '/');
-     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->cb[hftirc->selbuf].name);
+     PRINTATTR(hftirc->ui->statuswin, COLOR_SW2, hftirc->selcb->name);
      waddch(hftirc->ui->statuswin, ')');
 
      /* Activity */
@@ -174,13 +177,12 @@ ui_update_statuswin(void)
       */
      for(j = 0; j < 2; ++j)
           for ( c = 2; c > 0; --c )
-               for(i = 0; i < hftirc->nbuf; ++i)
-                    if(ISCHAN(hftirc->cb[i].name[0]) == j
-                              && hftirc->cb[i].act == c)
+               for(cb = hftirc->cbhead; cb; cb = cb->next)
+                    if(ISCHAN(cb->name[0]) == j && cb->act == c && cb != hftirc->statuscb)
                     {
                          wattron(hftirc->ui->statuswin, ((c == 2) ? COLOR_HLACT : COLOR_ACT));
-                         wprintw(hftirc->ui->statuswin, "%d", i);
-                         wprintw(hftirc->ui->statuswin, ":%s", hftirc->cb[i].name);
+                         wprintw(hftirc->ui->statuswin, "%d", cb->id);
+                         wprintw(hftirc->ui->statuswin, ":%s", cb->name);
                          wattroff(hftirc->ui->statuswin, ((c == 2) ? COLOR_HLACT : COLOR_ACT));
                          waddch(hftirc->ui->statuswin, ' ');
                     }
@@ -199,7 +201,7 @@ void
 ui_update_topicwin(void)
 {
      /* Check if this is needed */
-     if(!(hftirc->cb[hftirc->selbuf].umask & UTopicMask))
+     if(!hftirc->selcb || !(hftirc->selcb->umask & UTopicMask))
           return;
 
      /* Erase all window content */
@@ -210,16 +212,16 @@ ui_update_topicwin(void)
 
      /* Write topic */
      /*   Channel   */
-     if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
-          waddstr(hftirc->ui->topicwin, hftirc->cb[hftirc->selbuf].topic);
+     if(ISCHAN(hftirc->selcb->name[0]))
+          waddstr(hftirc->ui->topicwin, hftirc->selcb->topic);
      /*   Other    */
      else
           wprintw(hftirc->ui->topicwin, "%s (%s)",
-                    hftirc->cb[hftirc->selbuf].name, hftirc->selsession->name);
+                    hftirc->selcb->name, hftirc->selsession->name);
 
      wrefresh(hftirc->ui->topicwin);
 
-     hftirc->cb[hftirc->selbuf].umask &= ~UTopicMask;
+     hftirc->selcb->umask &= ~UTopicMask;
 
      return;
 }
@@ -231,10 +233,13 @@ ui_update_nicklistwin(void)
      char ord[4] = { '@', '%', '+', '\0' };
      NickStruct *ns;
 
-     nick_sort_abc(hftirc->selbuf);
+     if(!hftirc->selcb)
+          return;
+
+     nick_sort_abc(hftirc->selcb);
 
      if(!hftirc->ui->nicklist
-               || !(hftirc->cb[hftirc->selbuf].umask & UNickListMask))
+               || !(hftirc->selcb->umask & UNickListMask))
           return;
 
      werase(hftirc->ui->nicklistwin);
@@ -248,13 +253,13 @@ ui_update_nicklistwin(void)
       */
      for(i = c = p = 0; i < LEN(ord); ++i)
      {
-          for(ns = hftirc->cb[hftirc->selbuf].nickhead;
-                    ns && c < ((LINES - 3) + hftirc->cb[hftirc->selbuf].nicklistscroll); /* </// Scroll limit */
+          for(ns = hftirc->selcb->nickhead;
+                    ns && c < ((LINES - 3) + hftirc->selcb->nicklistscroll); /* </// Scroll limit */
                     ns = ns->next)
           {
                if(ns->rang == ord[i])
                {
-                    if(p >= hftirc->cb[hftirc->selbuf].nicklistscroll)
+                    if(p >= hftirc->selcb->nicklistscroll)
                          wprintw(hftirc->ui->nicklistwin, " %c%s\n", (ns->rang ? ns->rang : ' '), ns->nick);
 
                     ++c;
@@ -273,7 +278,7 @@ ui_update_nicklistwin(void)
 
      wrefresh(hftirc->ui->nicklistwin);
 
-     hftirc->cb[hftirc->selbuf].umask &= ~UNickListMask;
+     hftirc->selcb->umask &= ~UNickListMask;
 
      return;
 }
@@ -292,7 +297,7 @@ ui_print(WINDOW *w, char *str, int n)
           return;
 
      /* Last position tracker with bold line */
-     if(hftirc->conf.lastlinepos && hftirc->cb[hftirc->selbuf].lastposbold == n)
+     if(hftirc->conf.lastlinepos && hftirc->selcb->lastposbold == n)
           lastposmask |= COLOR_LASTPOS;
 
      for(i = 0; i < strlen(str); ++i)
@@ -387,12 +392,12 @@ ui_print(WINDOW *w, char *str, int n)
 }
 
 void
-ui_print_buf(int id, char *format, ...)
+ui_print_buf(ChanBuf *cb, char *format, ...)
 {
      va_list ap;
      char *buf, *p;
 
-     if(id < 0 || id > hftirc->nbuf - 1)
+     if(!cb)
           return;
 
      va_start(ap, format);
@@ -403,11 +408,11 @@ ui_print_buf(int id, char *format, ...)
 
      sprintf(buf, "%s %s\n", hftirc->date.str, p);
 
-     hftirc->cb[id].buffer[hftirc->cb[id].bufpos] = strdup(buf);
+     cb->buffer[cb->bufpos] = strdup(buf);
 
-     hftirc->cb[id].bufpos = (hftirc->cb[id].bufpos < BUFLINES - 1) ? hftirc->cb[id].bufpos + 1 : 0;
+     cb->bufpos = (cb->bufpos < BUFLINES - 1) ? cb->bufpos + 1 : 0;
 
-     if(id == hftirc->selbuf && !hftirc->cb[id].scrollpos)
+     if(cb == hftirc->selcb && !cb->scrollpos && buf)
      {
           ui_print(hftirc->ui->mainwin, buf, 0);
           wrefresh(hftirc->ui->mainwin);
@@ -417,17 +422,17 @@ ui_print_buf(int id, char *format, ...)
       *   1: Normal acitivity on the buffer (talking, info..)
       *   2: Highlight activity on the buffer
       */
-     if(id != hftirc->selbuf)
+     if(cb != hftirc->selcb)
      {
-          if(hftirc->cb[id].act != 2)
-               hftirc->cb[id].act = 1;
+          if(cb->act != 2)
+               cb->act = 1;
 
           /* Highlight test (if hl or private message) */
-          if(hftirc->conf.serv && id  && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
+          if(hftirc->conf.serv && cb && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
                               && strcasestr(buf + strlen(hftirc->date.str) + 4, hftirc->selsession->nick))
-                         || !ISCHAN(hftirc->cb[id].name[0])))
+                         || !ISCHAN(cb->name[0])))
                /* No HL on status buffer (0) */
-               hftirc->cb[id].act = (id) ? 2 : 1;
+               cb->act = (cb != hftirc->statuscb) ? 2 : 1;
      }
 
      free(buf);
@@ -437,22 +442,20 @@ ui_print_buf(int id, char *format, ...)
 }
 
 void
-ui_draw_buf(int id)
+ui_draw_buf(ChanBuf *cb)
 {
      int i = 0;
 
-     if(id < 0 || id > hftirc->nbuf - 1)
+     if(!cb)
           return;
 
-     i = (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos) - MAINWIN_LINES;
-
-     for(; i < (hftirc->cb[id].bufpos + hftirc->cb[id].scrollpos); ++i)
+     for(i = (cb->bufpos + cb->scrollpos) - MAINWIN_LINES; i < (cb->bufpos + cb->scrollpos); ++i)
           if(i < BUFLINES)
           {
-               if(i < 0 && hftirc->cb[id].buffer[BUFLINES + i])
-                    ui_print(hftirc->ui->mainwin, hftirc->cb[id].buffer[BUFLINES + i], BUFLINES + i);
+               if(i < 0 && cb->buffer[BUFLINES + i])
+                    ui_print(hftirc->ui->mainwin, cb->buffer[BUFLINES + i], BUFLINES + i);
                else
-                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? hftirc->cb[id].buffer[i] : "\n"), i);
+                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? cb->buffer[i] : "\n"), i);
           }
 
      wrefresh(hftirc->ui->mainwin);
@@ -460,124 +463,120 @@ ui_draw_buf(int id)
      return;
 }
 
+/* Argument is not a ChanBuf pointer but and id
+ * for an easier use with user interface.
+ */
 void
 ui_buf_set(int buf)
 {
-     if(buf < 0 || buf > hftirc->nbuf - 1)
+     ChanBuf *c, *cb;
+
+     if(!(cb = find_buf_wid(buf)))
           return;
 
-     hftirc->cb[hftirc->selbuf].lastposbold = hftirc->cb[hftirc->selbuf].bufpos - 1;
-     hftirc->prevbuf = hftirc->selbuf;
-     hftirc->selbuf = buf;
-     hftirc->cb[buf].act = 0;
-     hftirc->cb[buf].umask |= (UTopicMask | UNickListMask);
+     if(hftirc->selcb)
+     {
+          hftirc->selcb->lastposbold = hftirc->selcb->bufpos - 1;
 
-     if(buf != 0)
-          hftirc->selsession = hftirc->cb[buf].session;
+          /* Find selcb real pointer */
+          for(c = hftirc->cbhead; c && c != hftirc->selcb; c = c->next);
+          hftirc->prevcb = c;
+     }
+     else
+          hftirc->prevcb = hftirc->statuscb;
 
-     ui_draw_buf(buf);
+     /* Set selected cb */
+     hftirc->selcb = cb;
+
+     cb->act = 0;
+     cb->umask |= (UTopicMask | UNickListMask);
+
+     if(cb != hftirc->statuscb)
+          hftirc->selsession = cb->session;
+
+     ui_draw_buf(cb);
 
      return;
 }
 
-void
+ChanBuf*
 ui_buf_new(const char *name, IrcSession *session)
 {
-     int i, j;
-     ChanBuf *cbs = NULL;
+     ChanBuf *cb;
 
      if(!strlen(name))
           name = strdup("???");
 
-     ++hftirc->nbuf;
-     i = hftirc->nbuf - 1;
+     cb = calloc(1, sizeof(ChanBuf));
 
-     cbs = calloc(hftirc->nbuf, sizeof(ChanBuf));
+     HFTLIST_ATTACH(hftirc->cbhead, cb);
 
-     for(j = 0; j < i; cbs[j] = hftirc->cb[j], ++j);
+     cb->id = hftirc->nbuf++;
 
-     free(hftirc->cb);
+     strcpy(cb->name, name);
+     cb->bufpos = cb->scrollpos = cb->act = 0;
+     cb->naming = cb->nicklistscroll = 0;
+     cb->lastposbold = -1;
+     cb->session = session;
+     cb->umask |= (UTopicMask | UNickListMask);
+     cb->nickhead = NULL;
 
-     memset(cbs[i].topic, 0, sizeof(cbs[i].topic));
-     strcpy(cbs[i].name, name);
+     if(ISCHAN(name[0]))
+          ui_buf_set(cb->id);
 
-     for(j = 0; j < BUFLINES; cbs[i].buffer[j++] = NULL);
-
-     cbs[i].bufpos = cbs[i].scrollpos = cbs[i].act = 0;
-     cbs[i].naming = cbs[i].nicklistscroll = 0;
-     cbs[i].lastposbold = -1;
-     cbs[i].session = session;
-     cbs[i].umask |= (UTopicMask | UNickListMask);
-
-     hftirc->cb = calloc(hftirc->nbuf + 1, sizeof(ChanBuf));
-
-     for(i = 0; i < hftirc->nbuf; hftirc->cb[i] = cbs[i], ++i);
-
-     free(cbs);
-
-     ui_buf_set(i);
-
-     return;
+     return cb;
 }
 
 void
-ui_buf_close(int buf)
+ui_buf_close(ChanBuf *cb)
 {
-     int i, n;
-     ChanBuf *cbs = NULL;
+     NickStruct *ns;
+     ChanBuf *c;
+     int n;
 
-     if(buf <= 0 || buf > hftirc->nbuf - 1)
+     if(!cb || cb == hftirc->statuscb || cb->id > hftirc->nbuf - 1)
           return;
 
      --hftirc->nbuf;
 
-     cbs = calloc(hftirc->nbuf, sizeof(ChanBuf));
+     /* Free nick of chan */
+     for(ns = cb->nickhead; ns; ns = ns->next)
+          nick_detach(cb, ns);
 
-     for(i = n = 0; i < hftirc->nbuf + 1; ++i)
-          if(i != buf)
-               cbs[n++] = hftirc->cb[i];
+     HFTLIST_DETACH(hftirc->cbhead, ChanBuf, cb);
 
-     free(hftirc->cb);
+     /* Re-set id */
+     for(n = hftirc->nbuf, c = hftirc->cbhead; c; c->id = --n, c = c->next);
 
-     hftirc->cb = calloc(hftirc->nbuf, sizeof(ChanBuf));
-
-     for(i = 0; i < hftirc->nbuf; hftirc->cb[i] = cbs[i], ++i);
-
-     free(cbs);
-
-     ui_buf_set(hftirc->prevbuf);
+     ui_buf_set(hftirc->prevcb->id);
 
      return;
 }
 
 void
-ui_scroll_up(int buf)
+ui_scroll_up(ChanBuf *cb)
 {
-     if(buf < 0 || buf > hftirc->nbuf - 1
-               || hftirc->cb[buf].bufpos + hftirc->cb[buf].scrollpos - 1 < 0)
+     if(!cb || cb->bufpos + cb->scrollpos - 1 < 0)
           return;
 
-     hftirc->cb[buf].scrollpos -= 2;
+     cb->scrollpos -= 2;
 
-     if(buf == hftirc->selbuf)
-          ui_draw_buf(buf);
+     if(cb == hftirc->selcb)
+          ui_draw_buf(cb);
 
      return;
 }
 
 void
-ui_scroll_down(int buf)
+ui_scroll_down(ChanBuf *cb)
 {
-     if(buf < 0
-               || buf > hftirc->nbuf - 1
-               || hftirc->cb[buf].scrollpos >= 0
-               || hftirc->cb[buf].scrollpos > BUFLINES)
+     if(!cb || cb->scrollpos >= 0 || cb->scrollpos > BUFLINES)
           return;
 
-     hftirc->cb[buf].scrollpos += 2;
+     cb->scrollpos += 2;
 
-     if(buf == hftirc->selbuf)
-          ui_draw_buf(buf);
+     if(cb == hftirc->selcb)
+          ui_draw_buf(cb);
 
      return;
 }
@@ -592,7 +591,7 @@ ui_nicklist_toggle(void)
           hftirc->ui->nicklistwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
           wrefresh(hftirc->ui->nicklistwin);
           hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - ROSTERSIZE, 1, 0);
-          hftirc->cb[hftirc->selbuf].umask |= UNickListMask;
+          hftirc->selcb->umask |= UNickListMask;
           ui_update_nicklistwin();
      }
      else
@@ -603,7 +602,7 @@ ui_nicklist_toggle(void)
 
      scrollok(hftirc->ui->mainwin, TRUE);
 
-     ui_draw_buf(hftirc->selbuf);
+     ui_draw_buf(hftirc->selcb);
 
      return;
 }
@@ -611,13 +610,13 @@ ui_nicklist_toggle(void)
 void
 ui_nicklist_scroll(int v)
 {
-     if(hftirc->cb[hftirc->selbuf].nicklistscroll + v < 0
-               || hftirc->cb[hftirc->selbuf].nicklistscroll + v > hftirc->cb[hftirc->selbuf].nnick + 2)
+     if(hftirc->selcb->nicklistscroll + v < 0
+               || hftirc->selcb->nicklistscroll + v > hftirc->selcb->nnick + 2)
           return;
 
-     hftirc->cb[hftirc->selbuf].nicklistscroll += v;
+     hftirc->selcb->nicklistscroll += v;
 
-     hftirc->cb[hftirc->selbuf].umask |= UNickListMask;
+     hftirc->selcb->umask |= UNickListMask;
      ui_update_nicklistwin();
 
      return;
@@ -626,20 +625,17 @@ ui_nicklist_scroll(int v)
 void
 ui_buf_swap(int n)
 {
-    ChanBuf old_buffer;
+  /*  ChanBuf old_buffer;
 
-    if(!n || !hftirc->selbuf || hftirc->selbuf == 0
-          ||  n <= 0 || n > hftirc->nbuf -1
-          || n == hftirc->selbuf)
-    {
-        return;
-    }
+    if(!n || !hftirc->selcb || !strcmp(hftirc->selcb->name, "status")
+                   ||  n <= 0 || n > hftirc->nbuf -1 || n == hftirc->selcb->id)
+              return;
 
     old_buffer = hftirc->cb[ n ];
     hftirc->cb[ n ] = hftirc->cb[ hftirc->selbuf ];
     hftirc->cb[ hftirc->selbuf ] = old_buffer;
 
-    ui_buf_set(n);
+    ui_buf_set(n);*/
 
     return;
 }
@@ -651,7 +647,7 @@ ui_set_color_theme(int col)
           return;
 
      hftirc->ui->tcolor = col;
-     hftirc->cb[hftirc->selbuf].umask |= (UTopicMask | UNickListMask);
+     hftirc->selcb->umask |= (UTopicMask | UNickListMask);
 
      return;
 }
@@ -687,12 +683,12 @@ ui_get_input(void)
                {
                     case KEY_F(1):
                     case C('p'):
-                         ui_buf_set(hftirc->selbuf - 1);
+                         ui_buf_set(hftirc->selcb->id - 1);
                          break;
 
                     case KEY_F(2):
                     case C('n'):
-                         ui_buf_set(hftirc->selbuf + 1);
+                         ui_buf_set(hftirc->selcb->id + 1);
                          break;
 
                     case KEY_F(3):
@@ -708,11 +704,11 @@ ui_get_input(void)
                          break;
 
                     case KEY_PPAGE:
-                         ui_scroll_up(hftirc->selbuf);
+                         ui_scroll_up(hftirc->selcb);
                          break;
 
                     case KEY_NPAGE:
-                         ui_scroll_down(hftirc->selbuf);
+                         ui_scroll_down(hftirc->selcb);
                          break;
 
                     case HFTIRC_KEY_ENTER:
@@ -975,9 +971,9 @@ ui_get_input(void)
                          {
                               cmp = (hftirc->ui->ib.buffer[0] == '/' && !wcschr(tmpbuf, ' '))
                                    /* Input /cmd completion */
-                                   ? complete_input(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf)
+                                   ? complete_input(hftirc->selcb, hftirc->ui->ib.hits, tmpbuf)
                                    /* Nick completion */
-                                   : complete_nick(hftirc->selbuf, hftirc->ui->ib.hits, tmpbuf, &b);
+                                   : complete_nick(hftirc->selcb, hftirc->ui->ib.hits, tmpbuf, &b);
 
                               if(cmp)
                               {

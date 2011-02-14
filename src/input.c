@@ -51,7 +51,7 @@ input_join(const char *input)
      DSINPUT(input);
      NOSERVRET();
 
-     if(!input && !ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
+     if(!input && !ISCHAN(hftirc->selcb->name[0]))
      {
                WARN("Error", "Usage: /join #<channel>");
                return;
@@ -59,7 +59,7 @@ input_join(const char *input)
 
      /* Last arg -> password (TODO) */
      if(irc_send_raw(hftirc->selsession, "JOIN %s",
-                    ((strlen(input)) ? input : hftirc->cb[hftirc->selbuf].name)))
+                    ((strlen(input)) ? input : hftirc->selcb->name)))
           WARN("Error", "Can't use JOIN command");
 
      return;
@@ -100,9 +100,9 @@ input_names(const char *input)
 {
      NOSERVRET();
 
-     if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
+     if(ISCHAN(hftirc->selcb->name[0]))
           if(irc_send_raw(hftirc->selsession, "NAMES %s",
-                         hftirc->cb[hftirc->selbuf].name))
+                         hftirc->selcb->name))
                WARN("Error", "Can't get names list");
 
      return;
@@ -129,13 +129,13 @@ input_topic(const char *input)
 
      if(strlen(input) > 0)
      {
-          if(irc_send_raw(hftirc->selsession, "TOPIC %s :%s", hftirc->cb[hftirc->selbuf].name, input))
+          if(irc_send_raw(hftirc->selsession, "TOPIC %s :%s", hftirc->selcb->name, input))
                WARN("Error", "Can't change topic");
      }
      else
-          ui_print_buf(hftirc->selbuf, "  *** Topic of %s: %s",
-                    hftirc->cb[hftirc->selbuf].name,
-                    hftirc->cb[hftirc->selbuf].topic);
+          ui_print_buf(hftirc->selcb, "  *** Topic of %s: %s",
+                    hftirc->selcb->name,
+                    hftirc->selcb->topic);
 
      return;
 }
@@ -148,10 +148,10 @@ input_part(const char *input)
 
      /* irc_cmd_part can't send a part message... */
      if(irc_send_raw(hftirc->selsession, "PART %s :%s",
-                    hftirc->cb[hftirc->selbuf].name, input))
+                    hftirc->selcb->name, input))
           WARN("Error", "Can't use PART command");
      else
-          ui_buf_close(hftirc->selbuf);
+          ui_buf_close(hftirc->selcb);
 
      return;
 }
@@ -163,10 +163,10 @@ input_me(const char *input)
      NOSERVRET();
 
      if(irc_send_raw(hftirc->selsession, "PRIVMSG %s :\x01" "ACTION %s\x01",
-                    hftirc->cb[hftirc->selbuf].name, input))
+                    hftirc->selcb->name, input))
           WARN("Error", "Can't send action message");
      else
-          ui_print_buf(hftirc->selbuf, " %c* %s%c %s", B, hftirc->selsession->nick, B, input);
+          ui_print_buf(hftirc->selcb, " %c* %s%c %s", B, hftirc->selsession->nick, B, input);
 
      return;
 }
@@ -177,6 +177,7 @@ input_msg(const char *input)
      int i, b = 0;
      char nick[NICKLEN] = { 0 };
      char msg[BUFSIZE] = { 0 };
+     ChanBuf *cb;
 
      DSINPUT(input);
      NOSERVRET();
@@ -204,8 +205,8 @@ input_msg(const char *input)
      {
           if(irc_send_raw(hftirc->selsession, "PRIVMSG %s :%s", nick, msg))
                WARN("Error", "Can't send MSG");
-          else if((i = find_bufid(hftirc->selsession, nick)))
-                ui_print_buf(i, "<%s> %s", hftirc->selsession->nick, msg);
+          else if((cb = find_buf(hftirc->selsession, nick)))
+                ui_print_buf(cb, "<%s> %s", hftirc->selsession->nick, msg);
      }
 
      return;
@@ -241,10 +242,10 @@ input_kick(const char *input)
 
      if(strlen(reason) > 0)
 		irc_send_raw(hftirc->selsession, "KICK %s %s :%s",
-                    hftirc->cb[hftirc->selbuf].name, nick, reason);
+                    hftirc->selcb->name, nick, reason);
 	else
           irc_send_raw(hftirc->selsession, "KICK %s %s",
-                     hftirc->cb[hftirc->selbuf].name, nick);
+                     hftirc->selcb->name, nick);
 
      return;
 }
@@ -263,10 +264,10 @@ input_whois(const char *input)
      /* No input -> whois current private nick */
      else
      {
-          if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
+          if(ISCHAN(hftirc->selcb->name[0]))
                WARN("Error", "Usage: /whois <nick>");
           else if(irc_send_raw(hftirc->selsession, "WHOIS %s %s",
-                         hftirc->cb[hftirc->selbuf].name, hftirc->cb[hftirc->selbuf].name))
+                         hftirc->selcb->name, hftirc->selcb->name))
                WARN("Error", "Can't use WHOIS");
      }
 
@@ -276,7 +277,7 @@ input_whois(const char *input)
 void
 input_query(const char *input)
 {
-     int i;
+     ChanBuf *cb;
      NickStruct *ns;
 
      DSINPUT(input);
@@ -284,19 +285,18 @@ input_query(const char *input)
 
      if(strlen(input) > 0)
      {
-          for(i = 0; i < hftirc->nbuf; ++i)
-               if(!strcmp(hftirc->cb[i].name, input)
-                         && hftirc->cb[i].session == hftirc->selsession)
+          for(cb = hftirc->cbhead; cb; cb = cb->next)
+               if(!strcmp(cb->name, input) && cb->session == hftirc->selsession)
                {
-                    ui_buf_set(i);
+                    ui_buf_set(cb->id);
                     return;
                }
 
           ui_buf_new(input, hftirc->selsession);
           ns = nickstruct_set((char *)input);
-          nick_attach(hftirc->nbuf - 1,  ns);
-          ui_buf_set(hftirc->nbuf - 1);
-          ui_print_buf(hftirc->nbuf - 1, "  *** Query with %s", input);
+          nick_attach(hftirc->selcb,  ns);
+          ui_buf_set(hftirc->selcb->id);
+          ui_print_buf(hftirc->selcb, "  *** Query with %s", input);
      }
      else
           WARN("Error", "Usage: /query <nick>");
@@ -307,10 +307,10 @@ input_query(const char *input)
 void
 input_close(const char *input)
 {
-     if(hftirc->selbuf == 0)
+     if(!strcmp(hftirc->selcb->name, "status"))
           return;
 
-     if(ISCHAN(hftirc->cb[hftirc->selbuf].name[0]))
+     if(ISCHAN(hftirc->selcb->name[0]))
                input_part(NULL);
 
      return;
@@ -341,8 +341,7 @@ input_umode(const char *input)
 
      if(!strlen(input))
           WARN("Error", "Usage: /umode <mode>");
-     else if(irc_send_raw(hftirc->selsession, "MODE %s %s",
-                    hftirc->selsession->nick, input))
+     else if(irc_send_raw(hftirc->selsession, "MODE %s %s", hftirc->selsession->nick, input))
           WARN("Error", "Can't set user mode");
 
      return;
@@ -355,7 +354,7 @@ input_serv(const char *input)
 
      DSINPUT(input);
 
-     if(hftirc->selbuf != 0)
+     if(hftirc->selcb != hftirc->statuscb)
           return;
 
      if(strlen(input) > 0)
@@ -378,7 +377,7 @@ input_redraw(const char *input)
 {
      endwin();
      ui_init();
-     ui_buf_set(hftirc->selbuf);
+     ui_buf_set(hftirc->selcb->id);
 
      return;
 }
@@ -404,7 +403,7 @@ input_connect(const char *input)
           is = irc_session();
 
           if(irc_connect(is, input, input, defsi.port, defsi.password, defsi.nick, defsi.username, defsi.realname))
-               ui_print_buf(0, "Error: Can't connect to %s", input);
+               ui_print_buf(hftirc->statuscb, "Error: Can't connect to %s", input);
 
           hftirc->selsession = is;
      }
@@ -522,12 +521,12 @@ void
 input_buffer_list(const char *input)
 {
      int i;
+     ChanBuf *cb;
 
-     ui_print_buf(0, "[Hftirc] %cBuffers list%c:", B, B);
+     ui_print_buf(hftirc->statuscb, "[Hftirc] %cBuffers list%c:", B, B);
 
-     for(i = 0; i < hftirc->nbuf; ++i)
-          ui_print_buf(0, "[Hftirc] - %d: %s (%s)",
-                    i, hftirc->cb[i].name, hftirc->selsession->name);
+     for(cb = hftirc->cbhead; cb; cb = cb->next)
+          ui_print_buf(hftirc->statuscb, "[Hftirc] - %d: %s", cb->id, cb->name);
 
      return;
 }
@@ -538,7 +537,7 @@ input_buffer_prev(const char *input)
      DSINPUT(input);
      NOSERVRET();
 
-     ui_buf_set(hftirc->prevbuf);
+     ui_buf_set(hftirc->prevcb->id);
 
      return;
 }
@@ -576,11 +575,11 @@ input_say(const char *input)
      if(strlen(input) > 0)
      {
           if(irc_send_raw(hftirc->selsession, "PRIVMSG %s :%s",
-                         hftirc->cb[hftirc->selbuf].name, input))
+                         hftirc->selcb->name, input))
                WARN("Error", "Can't send message");
           else
                /* Write what we said on buffer, with cyan (10) color */
-               ui_print_buf(hftirc->selbuf, colorstr(Cyan, "<%s> %s",
+               ui_print_buf(hftirc->selcb, colorstr(Cyan, "<%s> %s",
                               hftirc->selsession->nick, input));
      }
      else

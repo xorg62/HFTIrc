@@ -64,7 +64,7 @@
 #define C(c)         ((c) & 037)
 #define ISCHAN(c)    ((c == '#' || c ==  '&'))
 #define LEN(x)       (sizeof(x) / sizeof(x[0]))
-#define WARN(t, s)   ui_print_buf(0, "%s: %s", t, s)
+#define WARN(t, s)   ui_print_buf(hftirc->statuscb, "%s: %s", t, s)
 #define DSINPUT(i)   for(; i && i[0] == ' '; ++i)
 
 #define PRINTATTR(w, attr, s) do                      \
@@ -81,6 +81,24 @@
                           return r;                                \
                      }
 
+/* List macros
+#define HFTLIST_ATTACH(head, e) do \
+{                                  \
+     e->next = head;               \
+     head = e;                     \
+} while(0);
+
+#define HFTLIST_DETACH(head, type, e) do \
+{\
+     type *ee;\
+     if(e == head)\
+          head = head->next;\
+     for(ee = head; ee != e; ee = ee->next);\
+          ee = ee->next;\
+     }\
+     free(e);\
+} while(0 );
+*/
 /* List macros */
 #define HFTLIST_ATTACH(head, e) \
      if(head)                   \
@@ -91,7 +109,8 @@
      type **ee;                                           \
      for(ee = &head; *ee && *ee != e; ee = &(*ee)->next); \
      *ee = e->next;                                       \
-     free(e);
+     free(e);                                             \
+     e = NULL;
 
 /* Key and const for ui */
 #define B                 (C('b'))
@@ -132,6 +151,7 @@ struct IrcSession
      char inbuf[BUFSIZE];
      int motd_received, connected;
      unsigned int inoffset;
+
      IrcSession *next, *prev;
 };
 
@@ -166,13 +186,16 @@ struct NickStruct
 {
      char nick[NICKLEN];
      char rang;
+
      NickStruct *next, *prev;
 };
 
 /* Channel buffer */
-typedef struct
+typedef struct ChanBuf ChanBuf;
+struct ChanBuf
 {
      /* For ui use */
+     int id;
      char *buffer[BUFLINES];
      int bufpos, scrollpos, naming;
      int nicklistscroll, lastposbold;
@@ -185,7 +208,9 @@ typedef struct
      char topic[BUFSIZE];
      int act;
      unsigned int umask;
-} ChanBuf;
+
+     ChanBuf *next, *prev;
+};
 
 /* Date struct */
 typedef struct
@@ -234,11 +259,10 @@ typedef struct
 /* Global struct */
 typedef struct
 {
-     int ft, running;
-     int nbuf, selbuf, prevbuf;
-     IrcSession *selsession, *sessionhead;
+     int ft, nbuf, running;
      ConfStruct conf;
-     ChanBuf *cb;
+     IrcSession *selsession, *sessionhead;
+     ChanBuf *prevcb, *statuscb, *selcb, *cbhead;
      Ui *ui;
      DateStruct date;
 } HFTIrc;
@@ -258,14 +282,14 @@ void ui_update_topicwin(void);
 void ui_update_infowin(void);
 void ui_update_nicklistwin(void);
 void ui_print(WINDOW *w, char *str, int n);
-void ui_print_buf(int id, char *format, ...);
-void ui_draw_buf(int id);
-void ui_buf_new(const char *name, IrcSession *session);
-void ui_buf_close(int buf);
+void ui_print_buf(ChanBuf *cb, char *format, ...);
+void ui_draw_buf(ChanBuf *cb);
+ChanBuf *ui_buf_new(const char *name, IrcSession *session);
+void ui_buf_close(ChanBuf *cb);
 void ui_buf_set(int buf);
 void ui_buf_swap(int buf);
-void ui_scroll_up(int buf);
-void ui_scroll_down(int buf);
+void ui_scroll_up(ChanBuf *cb);
+void ui_scroll_down(ChanBuf *cb);
 void ui_nicklist_toggle(void);
 void ui_nicklist_scroll(int v);
 void ui_refresh_curpos(void);
@@ -353,20 +377,21 @@ void input_color_theme(const char *input);
 
 /* util.c */
 void update_date(void);
-int find_bufid(IrcSession *s, const char *str);
+ChanBuf *find_buf(IrcSession *s, const char *str);
+ChanBuf *find_buf_wid(int id);
 void msg_sessbuf(IrcSession *session, char *str);
 int color_to_id(char *name);
 char *colorstr(int color, char *str, ...);
 char *nick_color(char *nick);
 int hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch);
-wchar_t *complete_nick(int buf, unsigned int hits, wchar_t *start, int *beg);
-wchar_t *complete_input(int buf, unsigned int hits, wchar_t *start);
+wchar_t *complete_nick(ChanBuf *cb, unsigned int hits, wchar_t *start, int *beg);
+wchar_t *complete_input(ChanBuf *cb, unsigned int hits, wchar_t *start);
 
 /* nick.c  */
-void nick_attach(int buf, NickStruct *nick);
-void nick_detach(int buf, NickStruct *nick);
+void nick_attach(ChanBuf *cb, NickStruct *nick);
+void nick_detach(ChanBuf *cb, NickStruct *nick);
 NickStruct* nickstruct_set(char *nick);
-void nick_sort_abc(int buf);
+void nick_sort_abc(ChanBuf *cb);
 
 /* main.c */
 void signal_handler(int signal);

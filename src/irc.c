@@ -412,8 +412,6 @@ irc_join(IrcSession *s, const char *chan)
 {
      ui_buf_new(chan, s);
 
-     ui_buf_set(hftirc->nbuf - 1);
-
      return;
 }
 

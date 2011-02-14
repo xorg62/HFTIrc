@@ -33,9 +33,9 @@ signal_handler(int signal)
                getmaxyx(stdscr, u[0], u[1]);
                ui_init();
                ui_get_input();
-               ui_print_buf(0, "[HFTIrc] *** Terminal resized: (%dx%d -> %dx%d)",
+               ui_print_buf(hftirc->statuscb, "[HFTIrc] *** Terminal resized: (%dx%d -> %dx%d)",
                          b[0], b[1], LINES, COLS);
-               ui_buf_set(hftirc->selbuf);
+               ui_buf_set(hftirc->selcb->id);
 	
               break;
      }
@@ -51,6 +51,7 @@ main(int argc, char **argv)
     fd_set iset;
     static struct timeval tv;
     IrcSession *is;
+    ChanBuf *cb;
 
     hftirc = malloc(sizeof(HFTIrc));
 
@@ -146,11 +147,13 @@ main(int argc, char **argv)
     endwin();
 
     free(hftirc->conf.serv);
-    free(hftirc->cb);
     free(hftirc->ui);
 
     for(is = hftirc->sessionhead; is; is = is->next)
          free(is);
+
+    for(cb = hftirc->cbhead; cb; cb = cb->next)
+         free(cb);
 
     free(hftirc);
 
