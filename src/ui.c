@@ -480,7 +480,7 @@ ui_buf_set(int buf)
 
           /* Find selcb real pointer */
           for(c = hftirc->cbhead; c && c != hftirc->selcb; c = c->next);
-          hftirc->prevcb = c;
+          hftirc->prevcb = (hftirc->prevcb == hftirc->selcb ? hftirc->statuscb : c);
      }
      else
           hftirc->prevcb = hftirc->statuscb;
@@ -547,6 +547,9 @@ ui_buf_close(ChanBuf *cb)
 
      /* Re-set id */
      for(n = hftirc->nbuf, c = hftirc->cbhead; c; c->id = --n, c = c->next);
+
+     if(!hftirc->prevcb)
+          hftirc->prevcb = hftirc->statuscb;
 
      ui_buf_set(hftirc->prevcb->id);
 

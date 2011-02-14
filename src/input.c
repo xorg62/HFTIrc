@@ -307,11 +307,13 @@ input_query(const char *input)
 void
 input_close(const char *input)
 {
-     if(!strcmp(hftirc->selcb->name, "status"))
+     if(hftirc->selcb != hftirc->statuscb)
           return;
 
      if(ISCHAN(hftirc->selcb->name[0]))
-               input_part(NULL);
+          input_part(NULL);
+     else
+          ui_buf_close(hftirc->selcb);
 
      return;
 }
