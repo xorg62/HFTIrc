@@ -559,7 +559,7 @@ ui_scroll_up(ChanBuf *cb)
      if(!cb || cb->bufpos + cb->scrollpos - 1 < 0)
           return;
 
-     cb->scrollpos -= 2;
+     cb->scrollpos -= 4;
 
      if(cb == hftirc->selcb)
           ui_draw_buf(cb);
@@ -573,7 +573,7 @@ ui_scroll_down(ChanBuf *cb)
      if(!cb || cb->scrollpos >= 0 || cb->scrollpos > BUFLINES)
           return;
 
-     cb->scrollpos += 2;
+     cb->scrollpos += 4;
 
      if(cb == hftirc->selcb)
           ui_draw_buf(cb);

@@ -520,7 +520,6 @@ input_buffer(const char *input)
 void
 input_buffer_list(const char *input)
 {
-     int i;
      ChanBuf *cb;
 
      ui_print_buf(hftirc->statuscb, "[Hftirc] %cBuffers list%c:", B, B);

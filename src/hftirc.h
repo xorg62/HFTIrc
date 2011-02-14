@@ -81,24 +81,6 @@
                           return r;                                \
                      }
 
-/* List macros
-#define HFTLIST_ATTACH(head, e) do \
-{                                  \
-     e->next = head;               \
-     head = e;                     \
-} while(0);
-
-#define HFTLIST_DETACH(head, type, e) do \
-{\
-     type *ee;\
-     if(e == head)\
-          head = head->next;\
-     for(ee = head; ee != e; ee = ee->next);\
-          ee = ee->next;\
-     }\
-     free(e);\
-} while(0 );
-*/
 /* List macros */
 #define HFTLIST_ATTACH(head, e) \
      if(head)                   \
