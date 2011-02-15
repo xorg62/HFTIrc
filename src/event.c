@@ -468,7 +468,7 @@ event_privmsg(IrcSession *session, const char *event, const char *origin, const 
           for(j = 0; origin[j] != '!'; nick[j] = origin[j], ++j);
 
      /* If the message is not from an old buffer, init a new one. */
-     if((cb = find_buf(session, nick)) != hftirc->statuscb)
+     if((cb = find_buf(session, nick)) == hftirc->statuscb)
      {
           cb = ui_buf_new(nick, session);
           ns = nickstruct_set(nick);
