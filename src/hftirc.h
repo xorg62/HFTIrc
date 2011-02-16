@@ -67,32 +67,47 @@
 #define WARN(t, s)   ui_print_buf(hftirc->statuscb, "%s: %s", t, s)
 #define DSINPUT(i)   for(; i && i[0] == ' '; ++i)
 
-#define PRINTATTR(w, attr, s) do                      \
-                              {                       \
-                                   wattron(w, attr);  \
-                                   waddstr(w, s);     \
-                                   wattroff(w, attr); \
-                              } while(0 /*CONSTCOND*/);
+#define PRINTATTR(w, attr, s) { \
+     wattron(w, attr);          \
+     waddstr(w, s);             \
+     wattroff(w, attr);         \
+}
 
-#define NOSERVRET(r) if(!hftirc->conf.nserv || !hftirc->selsession \
-                         || !hftirc->selsession->connected)        \
-                     {                                             \
-                          WARN("Error", "You're not connected");   \
-                          return r;                                \
-                     }
+#define NOSERVRET(r) do {                         \
+if(!hftirc->conf.nserv || !hftirc->selsession     \
+          || !hftirc->selsession->connected)      \
+     {                                            \
+          WARN("Error", "You're not connected");  \
+          return r;                               \
+     }                                            \
+} while(0 /*CONSTCOND*/);
 
 /* List macros */
-#define HFTLIST_ATTACH(head, e) \
-     if(head)                   \
-          head->prev = e;       \
-     e->next = head;            \
-     head = e;
-#define HFTLIST_DETACH(head, type, e)                     \
-     type **ee;                                           \
-     for(ee = &head; *ee && *ee != e; ee = &(*ee)->next); \
-     *ee = e->next;                                       \
-     free(e);                                             \
-     e = NULL;
+#define HFTLIST_ATTACH(head, e) do { \
+     if(head)                        \
+          head->prev = e;            \
+     e->next = head;                 \
+     head = e;                       \
+} while(0 /*CONSTCOND*/);
+#define HFTLIST_ATTACH_END(head, type, e) do {                \
+     type *last;                                              \
+     for(last = head; last && last->next; last = last->next); \
+     if(last) {                                               \
+          last->next = e;                                     \
+          cb->prev = last;                                    \
+     } else                                                   \
+          head = e;                                           \
+     e->next = NULL;                                          \
+} while(0 /*CONSTCOND*/);
+#define HFTLIST_DETACH(head, type, e) do { \
+     if(head == e)                         \
+         head = e->next;                   \
+     else if(e->prev)                      \
+         e->prev->next = e->next;          \
+     if(e->next)                           \
+         e->next->prev = e->prev;          \
+     e->next = e->prev = NULL;             \
+} while(0 /*CONSTCOND*/);
 
 /* Key and const for ui */
 #define B                 (C('b'))

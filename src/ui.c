@@ -509,7 +509,7 @@ ui_buf_new(const char *name, IrcSession *session)
 
      cb = calloc(1, sizeof(ChanBuf));
 
-     HFTLIST_ATTACH(hftirc->cbhead, cb);
+     HFTLIST_ATTACH_END(hftirc->cbhead, ChanBuf, cb);
 
      cb->id = hftirc->nbuf++;
 
@@ -546,7 +546,7 @@ ui_buf_close(ChanBuf *cb)
      HFTLIST_DETACH(hftirc->cbhead, ChanBuf, cb);
 
      /* Re-set id */
-     for(n = hftirc->nbuf, c = hftirc->cbhead; c; c->id = --n, c = c->next);
+     for(n = 0, c = hftirc->cbhead; c; c->id = n++, c = c->next);
 
      if(!hftirc->prevcb)
           hftirc->prevcb = hftirc->statuscb;

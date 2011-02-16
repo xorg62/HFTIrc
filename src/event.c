@@ -171,7 +171,7 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                ui_print_buf(hftirc->statuscb, "[%s] *** Channel %c%s%c linked on %c%s",
                          session->name, B, params[1], B, B, params[2]);
 
-               if((cb = find_buf(session, params[1])))
+               if((cb = find_buf(session, params[1])) != hftirc->statuscb)
                     strcpy(cb->name, params[2]);
 
                break;
