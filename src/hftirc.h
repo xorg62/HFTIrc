@@ -107,6 +107,7 @@ if(!hftirc->conf.nserv || !hftirc->selsession     \
      if(e->next)                           \
          e->next->prev = e->prev;          \
      e->next = e->prev = NULL;             \
+     free(e);                              \
 } while(0 /*CONSTCOND*/);
 
 /* Key and const for ui */
