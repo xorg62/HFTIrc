@@ -292,11 +292,11 @@ input_query(const char *input)
                     return;
                }
 
-          ui_buf_new(input, hftirc->selsession);
+          cb = ui_buf_new(input, hftirc->selsession);
           ns = nickstruct_set((char *)input);
-          nick_attach(hftirc->selcb,  ns);
-          ui_buf_set(hftirc->selcb->id);
-          ui_print_buf(hftirc->selcb, "  *** Query with %s", input);
+          nick_attach(cb, ns);
+          ui_buf_set(cb->id);
+          ui_print_buf(cb, "  *** Query with %s", input);
      }
      else
           WARN("Error", "Usage: /query <nick>");
