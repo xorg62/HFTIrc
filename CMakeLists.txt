@@ -39,7 +39,7 @@ set(hftirc_src
 add_executable(hftirc ${hftirc_src})
 
 # FLAGS
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -ansi -D_GNU_SOURCE -O0 -fno-inline -ggdb3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -ansi -D_GNU_SOURCE")# -O0 -fno-inline -ggdb3")
 
 # Linker FLAGS
 set(DEFAULT_LDFLAGS "")

@@ -449,9 +449,9 @@ event_channel(IrcSession *session, const char *event, const char *origin, const 
           strcpy(nick, nick_color(nick));
 
      if(!ns->rang)
-          ui_print_buf(cb, colorstr(color, "<%s> %s", nick, params[1]));
+          ui_print_buf(cb, "%s", colorstr(color, "<%s> %s", nick, params[1]));
      else
-          ui_print_buf(cb, colorstr(color, "<%c%c%c%s> %s", B, r, B, nick, params[1]));
+          ui_print_buf(cb, "%s", colorstr(color, "<%c%c%c%s> %s", B, r, B, nick, params[1]));
 
      return;
 }
@@ -539,8 +539,8 @@ event_topic(IrcSession *session, const char *event, const char *origin, const ch
 void
 event_names(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count)
 {
-     unsigned int cn = 0;
-     char *p, *str = " ";
+     int i = 0;
+     char *p, str[BUFSIZE] = { 0 };
      NickStruct *ns;
      ChanBuf *cb;
 
@@ -550,17 +550,23 @@ event_names(IrcSession *session, const char *event, const char *origin, const ch
      {
           nick_sort_abc(cb);
 
-          for(ns = cb->nickhead; ns; ns = ns->next, ++cn)
-               asprintf(&str, "%s %c%c%c%s", str, B, (ns->rang) ? ns->rang : ' ', B, ns->nick);
-
-          ui_print_buf(cb, "  *** Users of %c%s%c: %c%d%c nick(s)", B, params[1], B, B, cn, B);
+          ui_print_buf(cb, "  *** Users of %c%s%c: %c%d%c nick(s)", B, params[1], B, B, cb->nnick, B);
           ui_print_buf(cb, "%c[%c", B, B);
-          ui_print_buf(cb, " %s",  str);
+
+          for(ns = cb->nickhead; ns;)
+          {
+               /* 10 nick per line at names */
+               for(i = 0; ns && i < 10; ns = ns->next, ++i)
+                     sprintf(str, "%s %c%c%c%s",
+                               (strlen(str) ? str : " "), B, (ns->rang) ? ns->rang : ' ', B, ns->nick);
+
+               ui_print_buf(cb, "%s", str);
+               memset(str, 0, sizeof(str));
+          }
+
           ui_print_buf(cb, "%c]%c", B, B);
 
           cb->naming = 0;
-
-          free(str);
      }
      else
      {

@@ -98,7 +98,7 @@ nickstruct_set(char *nick)
 {
      NickStruct *ret;
 
-     ret = malloc(sizeof(NickStruct));
+     ret = calloc(1, sizeof(NickStruct));
 
      memset(ret->nick, 0, NICKLEN);
      ret->rang = '\0';

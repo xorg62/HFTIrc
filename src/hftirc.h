@@ -47,9 +47,10 @@
 
 /* Macro */
 #define HFTIRC_VERSION   "(devel version)"
-#define BUFSIZE          (2048)
-#define MAXBUF           (64)
-#define BUFLINES         (512)
+#define BUFSIZE          (0x7FF)
+#define MAXBUF           (0x3F)
+#define BUFLINES         (0x1FF)
+#define BUFFERSIZE       (0xFFF)
 #define NICKLEN          (24)
 #define CHANLEN          (24)
 #define HOSTLEN          (128)
@@ -72,6 +73,12 @@
      waddstr(w, s);             \
      wattroff(w, attr);         \
 }
+
+#define FREEPTR(p) do {          \
+     void **ptr = (void**)(p);   \
+     free(*ptr);                 \
+     *ptr = NULL;                \
+} while(0 /*CONSTCOND*/);
 
 #define NOSERVRET(r) do {                         \
 if(!hftirc->conf.nserv || !hftirc->selsession     \
@@ -99,15 +106,11 @@ if(!hftirc->conf.nserv || !hftirc->selsession     \
           head = e;                                           \
      e->next = NULL;                                          \
 } while(0 /*CONSTCOND*/);
-#define HFTLIST_DETACH(head, type, e) do { \
-     if(head == e)                         \
-         head = e->next;                   \
-     else if(e->prev)                      \
-         e->prev->next = e->next;          \
-     if(e->next)                           \
-         e->next->prev = e->prev;          \
-     e->next = e->prev = NULL;             \
-     free(e);                              \
+#define HFTLIST_DETACH(head, type, e) do {                \
+     type **ee;                                           \
+     for(ee = &head; *ee && *ee != e; ee = &(*ee)->next); \
+     *ee = e->next;                                       \
+     FREEPTR(&e);                                         \
 } while(0 /*CONSTCOND*/);
 
 /* Key and const for ui */
@@ -194,7 +197,7 @@ struct ChanBuf
 {
      /* For ui use */
      int id;
-     char *buffer[BUFLINES];
+     char *buffer;
      int bufpos, scrollpos, naming;
      int nicklistscroll, lastposbold;
 

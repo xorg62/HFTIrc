@@ -300,7 +300,7 @@ ui_print(WINDOW *w, char *str, int n)
      if(hftirc->conf.lastlinepos && hftirc->selcb->lastposbold == n)
           lastposmask |= COLOR_LASTPOS;
 
-     for(i = 0; i < strlen(str); ++i)
+     for(i = 0; i < (strlen(str) < BUFFERSIZE ? strlen(str) : BUFFERSIZE); ++i)
      {
           switch(str[i])
           {
@@ -394,25 +394,31 @@ ui_print(WINDOW *w, char *str, int n)
 void
 ui_print_buf(ChanBuf *cb, char *format, ...)
 {
+     int i;
      va_list ap;
-     char *buf, *p;
+     char *p, *buf;
 
-     if(!cb)
+     if(!cb || !(p = calloc(BUFFERSIZE, sizeof(char))))
           return;
 
+     /* Get format */
      va_start(ap, format);
-     vasprintf(&p, format, ap);
-
-     buf = malloc(sizeof(char) * strlen(p) + strlen(hftirc->date.str) + 3);
+     vsnprintf(p, BUFFERSIZE, format, ap);
      va_end(ap);
 
-     sprintf(buf, "%s %s\n", hftirc->date.str, p);
+     /* Clean ...[part]... we need in buffer */
+     for(i = 0; i < BUFFERSIZE; ++i)
+          cb->buffer[(cb->bufpos * BUFFERSIZE) + i] = '\0';
 
-     cb->buffer[cb->bufpos] = strdup(buf);
+     /* Set buffer line */
+     snprintf(&cb->buffer[cb->bufpos * BUFFERSIZE], BUFFERSIZE, "%s %s\n", hftirc->date.str, p);
+     buf = &cb->buffer[cb->bufpos * BUFFERSIZE];
 
+     /* New buffer position */
      cb->bufpos = (cb->bufpos < BUFLINES - 1) ? cb->bufpos + 1 : 0;
 
-     if(cb == hftirc->selcb && !cb->scrollpos && buf)
+     /* Print on buffer if cb = selected buf */
+     if(cb == hftirc->selcb && !cb->scrollpos)
      {
           ui_print(hftirc->ui->mainwin, buf, 0);
           wrefresh(hftirc->ui->mainwin);
@@ -429,14 +435,13 @@ ui_print_buf(ChanBuf *cb, char *format, ...)
 
           /* Highlight test (if hl or private message) */
           if(hftirc->conf.serv && cb && ((((strchr(buf, '<') && strchr(buf, '>')) || strchr(buf, '*'))
-                              && strcasestr(buf + strlen(hftirc->date.str) + 4, hftirc->selsession->nick))
-                         || !ISCHAN(cb->name[0])))
+           && strcasestr(buf + strlen(hftirc->date.str) + 4, hftirc->selsession->nick)) || !ISCHAN(cb->name[0])))
                /* No HL on status buffer (0) */
                cb->act = (cb != hftirc->statuscb) ? 2 : 1;
      }
 
-     free(buf);
-     free(p);
+     buf = NULL;
+     FREEPTR(&p);
 
      return;
 }
@@ -452,10 +457,10 @@ ui_draw_buf(ChanBuf *cb)
      for(i = (cb->bufpos + cb->scrollpos) - MAINWIN_LINES; i < (cb->bufpos + cb->scrollpos); ++i)
           if(i < BUFLINES)
           {
-               if(i < 0 && cb->buffer[BUFLINES + i])
-                    ui_print(hftirc->ui->mainwin, cb->buffer[BUFLINES + i], BUFLINES + i);
+               if(i < 0 && cb->buffer[(BUFLINES + i) * BUFFERSIZE])
+                    ui_print(hftirc->ui->mainwin, &cb->buffer[(BUFLINES + i) * BUFFERSIZE], BUFLINES + i);
                else
-                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? cb->buffer[i] : "\n"), i);
+                    ui_print(hftirc->ui->mainwin, ((i >= 0) ? &cb->buffer[i * BUFFERSIZE] : "\n"), i);
           }
 
      wrefresh(hftirc->ui->mainwin);
@@ -507,11 +512,13 @@ ui_buf_new(const char *name, IrcSession *session)
      if(!strlen(name))
           name = strdup("???");
 
-     cb = calloc(1, sizeof(ChanBuf));
+     cb = (ChanBuf*)calloc(1, sizeof(ChanBuf));
 
      HFTLIST_ATTACH_END(hftirc->cbhead, ChanBuf, cb);
 
      cb->id = hftirc->nbuf++;
+
+     cb->buffer = (char*)calloc(BUFLINES * BUFFERSIZE, sizeof(char));
 
      strcpy(cb->name, name);
      cb->bufpos = cb->scrollpos = cb->act = 0;
@@ -543,6 +550,9 @@ ui_buf_close(ChanBuf *cb)
      for(ns = cb->nickhead; ns; ns = ns->next)
           nick_detach(cb, ns);
 
+     FREEPTR(&cb->nickhead);
+     FREEPTR(&cb->buffer);
+
      HFTLIST_DETACH(hftirc->cbhead, ChanBuf, cb);
 
      /* Re-set id */
@@ -562,7 +572,7 @@ ui_scroll_up(ChanBuf *cb)
      if(!cb || cb->bufpos + cb->scrollpos - 1 < 0)
           return;
 
-     cb->scrollpos -= 4;
+     cb->scrollpos -= (MAINWIN_LINES / 2);
 
      if(cb == hftirc->selcb)
           ui_draw_buf(cb);
@@ -576,7 +586,7 @@ ui_scroll_down(ChanBuf *cb)
      if(!cb || cb->scrollpos >= 0 || cb->scrollpos > BUFLINES)
           return;
 
-     cb->scrollpos += 4;
+     cb->scrollpos += (MAINWIN_LINES / 2);
 
      if(cb == hftirc->selcb)
           ui_draw_buf(cb);
@@ -699,11 +709,11 @@ ui_get_input(void)
                          break;
 
                     case KEY_F(11):
-                         ui_nicklist_scroll(-3);
+                         ui_nicklist_scroll(-(MAINWIN_LINES / 2));
                          break;
 
                     case KEY_F(12):
-                         ui_nicklist_scroll(+3);
+                         ui_nicklist_scroll(+(MAINWIN_LINES / 2));
                          break;
 
                     case KEY_PPAGE:

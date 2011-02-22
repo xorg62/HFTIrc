@@ -146,16 +146,16 @@ main(int argc, char **argv)
 
     endwin();
 
-    free(hftirc->conf.serv);
-    free(hftirc->ui);
+    FREEPTR(hftirc->conf.serv);
+    FREEPTR(hftirc->ui);
 
     for(is = hftirc->sessionhead; is; is = is->next)
-         free(is);
+         FREEPTR(is);
 
     for(cb = hftirc->cbhead; cb; cb = cb->next)
-         free(cb);
+         FREEPTR(cb);
 
-    free(hftirc);
+    FREEPTR(hftirc);
 
     return 0;
 }

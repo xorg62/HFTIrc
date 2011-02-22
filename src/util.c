@@ -135,20 +135,19 @@ colorstr(int color, char *str, ...)
      static char ret[512] = { 0 };
      char *p;
 
-     if(!str)
+     if(!str || !(p = calloc(BUFFERSIZE, sizeof(char))))
           return NULL;
 
      va_start(ap, str);
-     vasprintf(&p, str, ap);
-
+     vsnprintf(p, BUFFERSIZE, str, ap);
      va_end(ap);
 
      if(!color)
           strcpy(ret, p);
      else
-          snprintf(ret, 512, "%c%d%s%c", HFTIRC_COLOR, color, p, HFTIRC_END_COLOR);
+          snprintf(ret, sizeof(ret), "%c%d%s%c", HFTIRC_COLOR, color, p, HFTIRC_END_COLOR);
 
-     free(p);
+     FREEPTR(&p);
 
      return ret;
 }
