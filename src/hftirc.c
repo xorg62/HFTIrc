@@ -153,7 +153,7 @@ main(int argc, char **argv)
          free(is);
 
     for(cb = hftirc->cbhead; cb; cb = cb->next)
-         free(cb);
+         ui_buf_close(cb);
 
     free(hftirc);
 
