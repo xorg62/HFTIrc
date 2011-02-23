@@ -607,7 +607,7 @@ event_action(IrcSession *session, const char *event, const char *origin, const c
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; nick[i] = origin[i], ++i);
 
-     if(!(cb = find_buf(session, params[0])))
+     if((cb = find_buf(session, params[0])) == hftirc->statuscb)
           cb = find_buf(session, nick);
 
      ui_print_buf(cb, " %c* %s%c %s", B, nick, B, params[1]);
