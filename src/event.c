@@ -138,6 +138,8 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
           case 263:
           case 402:
           case 404:
+               ui_print_buf(find_buf(session, params[1]), "[%s] *** %s", session->name, params[2]);
+               break;
           case 412:
           case 421:
           case 437:
@@ -624,11 +626,27 @@ event_kick(IrcSession *session, const char *event, const char *origin, const cha
      int i;
      char ornick[NICKLEN] = { 0 };
      ChanBuf *cb;
+     NickStruct *ns;
 
      if(origin && strchr(origin, '!'))
           for(i = 0; origin[i] != '!'; ornick[i] = origin[i], ++i);
 
      cb = find_buf(session, params[0]);
+
+     /* You was kicked, crap. Free all nick of the channel */
+     if(!strcmp(params[1], session->nick))
+     {
+          for(ns = cb->nickhead; ns; ns = ns->next)
+               nick_detach(cb, ns);
+     }
+     /* Remove nick from nicklist */
+     else
+          for(ns = cb->nickhead; ns; ns = ns->next)
+               if(!strcmp(params[1], ns->nick))
+               {
+                    nick_detach(cb, ns);
+                    break;
+               }
 
      ui_print_buf(cb, "  *** %c%s%c kicked by %s from %c%s%c [%s]",
                B, params[1], B, ornick, B, params[0], B, params[2]);
