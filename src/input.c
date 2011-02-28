@@ -235,7 +235,7 @@ input_kick(const char *input)
      }
      else
      {
-          WARN("Error", "Usage: /kick <nick> <reason(optional)>");
+          WARN("Error", "Usage: /kick <nick> <reason>");
 
           return;
      }
@@ -463,6 +463,7 @@ input_away(const char *input)
      return;
 }
 
+/* /ctcp nick version */
 void
 input_ctcp(const char *input)
 {
@@ -475,6 +476,8 @@ input_ctcp(const char *input)
 
      if(strlen(input) > 0)
      {
+          /* parse second arg in input */
+          /* input may be = "nick version" */
           for(i = 0; input[i] != ' ' && input[i]; nick[i] = input[i], ++i);
 
           if(input[i] == ' ')
@@ -641,6 +644,62 @@ input_color_theme(const char *input)
           ui_set_color_theme(color_to_id((char*)input));
      else
           WARN("Error", "Usage: /color_theme <colorname>");
+
+     return;
+}
+
+void
+input_invite(const char *input)
+{
+     DSINPUT(input);
+
+     /* invite command take 1 argument: the nick. */
+     /* the concerned channel is the selected one */
+     if(strlen(input) > 0 && ISCHAN(hftirc->selcb->name[0]))
+     {
+          if(irc_send_raw(hftirc->selsession, "INVITE %s %s", input, hftirc->selcb->name))
+               WARN("Error", "Can't use invite command");
+     }
+     else /* command is not used correctly (no input or not a channel) */
+          WARN("Error", "Usage: /invite <nickname>  selected buffer must be a channel");
+
+     return;
+}
+
+void
+input_mode(const char *input)
+{
+     int i;
+     char mode[NICKLEN] = { 0 };
+     char nick[NICKLEN] = { 0 };
+
+     DSINPUT(input);
+     NOSERVRET();
+
+     if(strlen(input) > 0 && ISCHAN(hftirc->selcb->name[0]))
+     {
+          for(i = 0; input[i] != ' ' && input[i]; mode[i] = input[i], ++i);
+
+          if(input[i] == ' ')
+          {
+               input += strlen(mode);
+               DSINPUT(input);
+               for(i = 0; input[i]; nick[i] = input[i], ++i);
+          }
+     }
+     else
+     {
+          WARN("Error", "Usage: /mode <mode> <nick>");
+
+          return;
+     }
+
+     if(strlen(nick) > 0)
+          irc_send_raw(hftirc->selsession, "MODE %s %s :%s",
+                    hftirc->selcb->name, mode, nick);
+     else
+          irc_send_raw(hftirc->selsession, "MODE %s %s",
+                    hftirc->selcb->name, mode);
 
      return;
 }

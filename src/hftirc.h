@@ -375,6 +375,8 @@ void input_reconnect(const char *input);
 void input_nicklist_scroll(const char *input);
 void input_nicklist_toggle(const char *input);
 void input_color_theme(const char *input);
+void input_invite(const char *input);
+void input_mode(const char *input);
 
 /* util.c */
 void update_date(void);

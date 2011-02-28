@@ -130,6 +130,10 @@ event_numeric(IrcSession *session, unsigned int event, const char *origin, const
                ui_print_buf(hftirc->statuscb, "[%s] *** %c%s%c(%s) %s", session->name, B, params[0], B, params[1], params[2]);
                break;
 
+          /* Invite */
+          case 341:
+               ui_print_buf(hftirc->statuscb, "[%s] *** %s invited %s to %c%s", session->name, params[0], params[1], B, params[2]);
+               break;
           /* Errors */
           case 401:
           case 403:
