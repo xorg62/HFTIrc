@@ -10,9 +10,9 @@ REQUIREMENT :
   - cmake
   - ncurses
   - libncurses5
-  - libncurses5-dev
+  - libncurses5-dev (debian based distro)
   - libncursesw5
-  - libncuresw5-dev
+  - libncuresw5-dev (debian based distro)
 
 OS :
   - GNU/Linux : Supported.
