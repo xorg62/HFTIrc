@@ -703,3 +703,28 @@ input_mode(const char *input)
 
      return;
 }
+
+void 
+input_clear(const char *input)
+{
+     if(!hftirc->selcb->scrollpos)
+     {
+          ui_screen_clear();
+     }
+
+     return;
+}
+
+void 
+input_scrollclear(const char *input)
+{
+     if(!hftirc->selcb->scrollpos)
+     {
+          ui_screen_clear();
+     }
+
+     hftirc->selcb->bufpos = 0;
+
+     return;
+}
+

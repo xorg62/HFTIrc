@@ -1069,3 +1069,19 @@ ui_get_input(void)
 
      return;
 }
+
+void
+ui_screen_clear()
+{
+     char *buf;
+     int i;
+     
+     buf = "\n";
+
+     for(i = 0; i < BUFFERSIZE; ++i)
+          ui_print(hftirc->ui->mainwin, buf, 0);
+
+     wrefresh(hftirc->ui->mainwin);
+
+     return;
+}

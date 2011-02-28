@@ -296,6 +296,7 @@ void ui_nicklist_scroll(int v);
 void ui_refresh_curpos(void);
 void ui_set_color_theme(int col);
 void ui_get_input(void);
+void ui_screen_clear();
 
 /* event.c */
 void dump_event(IrcSession *session, const char *event, const char *origin, const char **params, unsigned int count);
@@ -377,6 +378,8 @@ void input_nicklist_toggle(const char *input);
 void input_color_theme(const char *input);
 void input_invite(const char *input);
 void input_mode(const char *input);
+void input_clear(const char *input);
+void input_scrollclear(const char *input);
 
 /* util.c */
 void update_date(void);
