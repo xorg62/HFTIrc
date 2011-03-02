@@ -1,4 +1,6 @@
 HFTIrc TODO
 
-- implementation of 'vocxo' plugins.
-
+- implementation of 'vocxo' plugin.
+  - /vocxo_connect server:port
+  - ~/.config/hftirc/vocxo.conf
+    - Audio (OSS and ALSA)
