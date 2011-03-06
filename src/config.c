@@ -36,6 +36,39 @@ config_misc(void)
 }
 
 static void
+config_ignore(void)
+{
+     struct conf_sec *ignore;
+
+     hftirc->conf.ignore = 0;
+
+     if((ignore = fetch_section_first(NULL, "ignore")))
+     {
+          if(fetch_opt_first(ignore, "false", "join").boolp)
+               hftirc->conf.ignore |= IgnoreJoin;
+
+          if(fetch_opt_first(ignore, "false", "quit").boolp)
+               hftirc->conf.ignore |= IgnoreQuit;
+
+          if(fetch_opt_first(ignore, "false", "mode").boolp)
+               hftirc->conf.ignore |= IgnoreMode;
+ 
+          if(fetch_opt_first(ignore, "false", "ctcp").boolp)
+               hftirc->conf.ignore |= IgnoreCtcp;
+ 
+          if(fetch_opt_first(ignore, "false", "notice").boolp)
+               hftirc->conf.ignore |= IgnoreNotice;
+ 
+          if(fetch_opt_first(ignore, "false", "part").boolp)
+               hftirc->conf.ignore |= IgnorePart;
+     }
+
+     free(ignore);
+
+     return;
+}
+
+static void
 config_ui(void)
 {
      struct conf_sec *ui, *colors;
@@ -117,6 +150,7 @@ config_parse(void)
 
      config_misc();
      config_ui();
+     config_ignore();
      config_server();
 
      return;
