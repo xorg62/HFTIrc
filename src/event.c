@@ -229,7 +229,9 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
                     if(!strcmp(nick, session->nick))
                          strcpy(session->nick, params[0]);
 
-                    ui_print_buf(cb, "  *** %s is now %c%s", nick, B, params[0]);
+                    if(!(hftirc->conf.ignore & IgnoreNick))
+                         ui_print_buf(cb, "  *** %s is now %c%s", nick, B, params[0]);
+                    
                     strcpy(ns->nick, params[0]);
                }
 
