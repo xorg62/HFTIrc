@@ -137,6 +137,7 @@ if(!hftirc->conf.nserv || !hftirc->selsession     \
 #define IgnoreMode   (1 << 4)
 #define IgnoreCtcp   (1 << 5)
 #define IgnorePart   (1 << 6)
+#define IgnoreNick   (1 << 7)
 
 /* Typedef */
 typedef enum { False, True } Bool;
