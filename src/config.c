@@ -62,7 +62,7 @@ config_ignore(void)
           if(fetch_opt_first(ignore, "false", "part").boolp)
                hftirc->conf.ignore |= IgnorePart;
 
-          if(fetch_opt_first(ignore, "false", "nick").boolp)
+          if(fetch_opt_first(ignore, "false", "nick_change").boolp)
                hftirc->conf.ignore |= IgnoreNick;
      }
 
