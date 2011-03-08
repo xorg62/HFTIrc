@@ -52,16 +52,16 @@ config_ignore(void)
 
           if(fetch_opt_first(ignore, "false", "mode").boolp)
                hftirc->conf.ignore |= IgnoreMode;
- 
+
           if(fetch_opt_first(ignore, "false", "ctcp").boolp)
                hftirc->conf.ignore |= IgnoreCtcp;
- 
+
           if(fetch_opt_first(ignore, "false", "notice").boolp)
                hftirc->conf.ignore |= IgnoreNotice;
- 
+
           if(fetch_opt_first(ignore, "false", "part").boolp)
                hftirc->conf.ignore |= IgnorePart;
- 
+
           if(fetch_opt_first(ignore, "false", "nick").boolp)
                hftirc->conf.ignore |= IgnoreNick;
      }
