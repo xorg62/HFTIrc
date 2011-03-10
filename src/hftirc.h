@@ -130,6 +130,15 @@ if(!hftirc->conf.nserv || !hftirc->selsession     \
 #define UNickSortMask  (1 << 2) /* Need nick list sort   */
 #define UNickListMask  (1 << 3) /* Need nicklist update  */
 
+/* IngoreFlag */
+#define IgnoreJoin   (1 << 1)
+#define IgnoreQuit   (1 << 2)
+#define IgnoreNotice (1 << 3)
+#define IgnoreMode   (1 << 4)
+#define IgnoreCtcp   (1 << 5)
+#define IgnorePart   (1 << 6)
+#define IgnoreNick   (1 << 7)
+
 /* Typedef */
 typedef enum { False, True } Bool;
 
@@ -254,6 +263,7 @@ typedef struct
      int lastlinepos;
      int tcolor;
      int nickcolor;
+     uint ignore;
      ServInfo *serv;
 } ConfStruct;
 

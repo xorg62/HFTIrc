@@ -229,7 +229,9 @@ event_nick(IrcSession *session, const char *event, const char *origin, const cha
                     if(!strcmp(nick, session->nick))
                          strcpy(session->nick, params[0]);
 
-                    ui_print_buf(cb, "  *** %s is now %c%s", nick, B, params[0]);
+                    if(!(hftirc->conf.ignore & IgnoreNick))
+                         ui_print_buf(cb, "  *** %s is now %c%s", nick, B, params[0]);
+                    
                     strcpy(ns->nick, params[0]);
                }
 
@@ -261,7 +263,9 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
      /* User mode */
      if(count == 1)
      {
-          ui_print_buf(hftirc->statuscb, "[%s] *** User mode of %c%s%c : [%s]", session->name, B, nick, B, params[0]);
+          if(!(hftirc->conf.ignore & IgnoreMode))
+               ui_print_buf(hftirc->statuscb, "[%s] *** User mode of %c%s%c : [%s]",
+                         session->name, B, nick, B, params[0]);
 
           session->mode = strdup(params[0]);
 
@@ -297,8 +301,9 @@ event_mode(IrcSession *session, const char *event, const char *origin, const cha
                break;
           }
 
-     ui_print_buf(cb, "  *** Mode %c%s%c [%s %s] set by %c%s",
-          B, params[0], B, params[1], nicks + 1, B, nick);
+     if(!(hftirc->conf.ignore & IgnoreMode))
+          ui_print_buf(cb, "  *** Mode %c%s%c [%s %s] set by %c%s",
+                    B, params[0], B, params[1], nicks + 1, B, nick);
 
      cb->umask |= UNickListMask;
 
@@ -355,8 +360,9 @@ event_join(IrcSession *session, const char *event, const char *origin, const cha
           }
      }
 
-     ui_print_buf(cb, "  %s %c%s%c (%s) has joined %c%s", colorstr(Green, "->>>>"),
-               B, nick, B, origin + strlen(nick) + 1, B, params[0]);
+     if(!(hftirc->conf.ignore & IgnoreJoin))
+          ui_print_buf(cb, "  %s %c%s%c (%s) has joined %c%s", colorstr(Green, "->>>>"),
+                    B, nick, B, origin + strlen(nick) + 1, B, params[0]);
 
      ns = nickstruct_set(nick);
 
@@ -385,8 +391,9 @@ event_part(IrcSession *session, const char *event, const char *origin, const cha
           if(ns->nick && strlen(ns->nick) && !strcmp(ns->nick, nick))
                nick_detach(cb, ns);
 
-     ui_print_buf(cb,"  %s %s (%s) has left %c%s%c [%s]", colorstr(Red, "<<<<-"),
-               nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
+     if(!(hftirc->conf.ignore & IgnorePart))
+          ui_print_buf(cb,"  %s %s (%s) has left %c%s%c [%s]", colorstr(Red, "<<<<-"),
+                    nick, origin + strlen(nick) + 1, B, params[0], B, (params[1] ? params[1] : ""));
 
      return;
 }
@@ -407,8 +414,9 @@ event_quit(IrcSession *session, const char *event, const char *origin, const cha
           {
                if(cb->session == session && strlen(ns->nick) && !strcmp(nick, ns->nick))
                {
-                    ui_print_buf(cb, "  %s %s (%s) has quit [%s]", colorstr(LightRed, "<<<<-"),
-                              nick, origin + strlen(nick) + 1, params[0]);
+                    if(!(hftirc->conf.ignore & IgnoreQuit))
+                         ui_print_buf(cb, "  %s %s (%s) has quit [%s]", colorstr(LightRed, "<<<<-"),
+                                   nick, origin + strlen(nick) + 1, params[0]);
                     nick_detach(cb, ns);
                     break;
                }
@@ -498,8 +506,9 @@ event_notice(IrcSession *session, const char *event, const char *origin, const c
      if(origin && strchr(origin, '!'))
           for(nick[0] = ' ', j = 0; origin[j] != '!'; nick[j + 1] = origin[j], ++j);
 
-     ui_print_buf(hftirc->statuscb, "[%s] ***%s (%s)- %s", session->name, nick,
-               ((origin + strlen(nick)) ? origin + strlen(nick) : nick), params[1]);
+     if(!(hftirc->conf.ignore & IgnoreNotice))
+          ui_print_buf(hftirc->statuscb, "[%s] ***%s (%s)- %s", session->name, nick,
+                    ((origin + strlen(nick)) ? origin + strlen(nick) : nick), params[1]);
 
      return;
 }
@@ -746,8 +755,9 @@ event_ctcp(IrcSession *session, const char *event, const char *origin, const cha
 
      cb = find_buf(session, nick);
 
-     ui_print_buf(cb, "[%s] *** %c%s%c (%s) CTCP request: %c%s%c",
-               session->name, B, nick, B, origin + strlen(nick) + 1, B, params[0], B);
+     if(!(hftirc->conf.ignore & IgnoreCtcp))
+          ui_print_buf(cb, "[%s] *** %c%s%c (%s) CTCP request: %c%s%c",
+                    session->name, B, nick, B, origin + strlen(nick) + 1, B, params[0], B);
 
      if(!strcasecmp(params[0], "VERSION"))
      {
