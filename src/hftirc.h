@@ -257,6 +257,7 @@ typedef struct
 typedef struct
 {
      char path[512];
+     char datef[64];
      int nserv;
      int bell;
      int nicklist;

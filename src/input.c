@@ -451,13 +451,13 @@ input_away(const char *input)
      if(strlen(input) > 0)
      {
           for(is = hftirc->sessionhead; is; is = is->next)
-               if(irc_send_raw(is, "AWAY :%s", input))
+               if(is->connected || irc_send_raw(is, "AWAY :%s", input))
                     WARN("Error", "Can't send AWAY");
 
      }
      else
           for(is = hftirc->sessionhead; is; is = is->next)
-               if(irc_send_raw(is,  "AWAY :"))
+               if(is->connected || irc_send_raw(is,  "AWAY :"))
                     WARN("Error", "Can't send AWAY");
 
      return;
@@ -704,7 +704,7 @@ input_mode(const char *input)
      return;
 }
 
-void 
+void
 input_clear(const char *input)
 {
      if(!hftirc->selcb->scrollpos)
@@ -715,7 +715,7 @@ input_clear(const char *input)
      return;
 }
 
-void 
+void
 input_scrollclear(const char *input)
 {
      if(!hftirc->selcb->scrollpos)
