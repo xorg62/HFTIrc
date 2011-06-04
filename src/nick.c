@@ -17,7 +17,6 @@
 
 #include "hftirc.h"
 #include "input.h"
-#include "ui.h"
 
 static void nick_swap(NickStruct *x, NickStruct *y);
 
@@ -41,23 +40,15 @@ void
 nick_sort_abc(ChanBuf *cb)
 {
      int swap = 1;
-     int oldnml;
      NickStruct *ns;
 
      if(!cb || !(cb->umask & UNickSortMask))
           return;
 
-     oldnml = cb->nickmaxlen;
-
-     /* Count nicks for nnick / max nick lenght for nicklist size */
-     for(cb->nickmaxlen = 1, cb->nnick = 0, ns = cb->nickhead; ns; ns = ns->next)
-     {
-          ++cb->nnick;
-          cb->nickmaxlen = (strlen(ns->nick) > cb->nickmaxlen) ? strlen(ns->nick) : cb->nickmaxlen;
-     }
-
-     if((cb->nickmaxlen += 3) != oldnml)
-          cb->umask |= UNickListMask;
+     /* Count nicks for nnick */
+     for(cb->nnick = 0, ns = cb->nickhead;
+               ns;
+               ns = ns->next, ++cb->nnick);
 
      /* Alphabetical bubble sort */
      while(swap)

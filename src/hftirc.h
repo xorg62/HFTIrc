@@ -214,7 +214,7 @@ struct ChanBuf
      IrcSession *session;
      char name[HOSTLEN], *names;
      NickStruct *nickhead;
-     int nnick, nickmaxlen;
+     int nnick;
      char topic[BUFSIZE];
      int act;
      unsigned int umask;

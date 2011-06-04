@@ -19,17 +19,20 @@
 
 #include "hftirc.h"
 
+/* Will be configurable */
+#define ROSTERSIZE    20
+
 /* Test control-bind */
 #define IS_CTRLK(c)  (c > 0 && c < 32)
 
 /* Colors lists */
 #define COLOR_THEME_DEFAULT  COLOR_BLUE
-#define COLOR_SW       (ui_color(COLOR_BLACK, hftirc->ui->tcolor))
-#define COLOR_SW2      (ui_color(COLOR_WHITE, hftirc->ui->tcolor))
-#define COLOR_NICKLIST (ui_color(hftirc->ui->tcolor, hftirc->ui->bg))
-#define COLOR_ACT      (ui_color(COLOR_WHITE,  hftirc->ui->tcolor))
-#define COLOR_HLACT    (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD)
-#define COLOR_LASTPOS  (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
+#define COLOR_SW      (ui_color(COLOR_BLACK, hftirc->ui->tcolor))
+#define COLOR_SW2     (ui_color(COLOR_WHITE, hftirc->ui->tcolor))
+#define COLOR_ROSTER  (ui_color(hftirc->ui->tcolor, hftirc->ui->bg))
+#define COLOR_ACT     (ui_color(COLOR_WHITE,  hftirc->ui->tcolor))
+#define COLOR_HLACT   (ui_color(COLOR_RED, hftirc->ui->tcolor) | A_BOLD)
+#define COLOR_LASTPOS (ui_color(COLOR_BLUE, hftirc->ui->bg | A_BOLD ))
 
 /* HFTIrc colors:
  * Based on ANSI colors list

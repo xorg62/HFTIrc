@@ -17,8 +17,6 @@
 #include "hftirc.h"
 #include "ui.h"
 
-static void ui_nicklist_resize(void);
-
 void
 ui_init(void)
 {
@@ -70,8 +68,7 @@ ui_init(void)
           ui_init_color();
 
      /* Init main window and the borders */
-     hftirc->ui->mainwin = newwin(MAINWIN_LINES,
-               COLS - (hftirc->ui->nicklist ? hftirc->selcb->nickmaxlen : 0), 1, 0);
+     hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - (hftirc->ui->nicklist ? ROSTERSIZE : 0), 1, 0);
      scrollok(hftirc->ui->mainwin, TRUE);
      wrefresh(hftirc->ui->mainwin);
 
@@ -81,7 +78,7 @@ ui_init(void)
      wrefresh(hftirc->ui->statuswin);
 
      /* Init nicklist window */
-     hftirc->ui->nicklistwin = newwin(LINES - 3,  hftirc->selcb->nickmaxlen, 1, COLS - hftirc->selcb->nickmaxlen);
+     hftirc->ui->nicklistwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
      wrefresh(hftirc->ui->nicklistwin);
 
      /* Init input window */
@@ -245,7 +242,6 @@ ui_update_nicklistwin(void)
                || !(hftirc->selcb->umask & UNickListMask))
           return;
 
-     ui_nicklist_resize();
      werase(hftirc->ui->nicklistwin);
 
      /* Travel in nick linked list */
@@ -273,12 +269,12 @@ ui_update_nicklistwin(void)
      }
 
      /* Draw | separation bar */
-     wattron(hftirc->ui->nicklistwin, COLOR_NICKLIST);
+     wattron(hftirc->ui->nicklistwin, COLOR_ROSTER);
 
      for(i = 0; i < LINES - 3; ++i)
           mvwaddch(hftirc->ui->nicklistwin, i, 0, ACS_VLINE);
 
-     wattroff(hftirc->ui->nicklistwin, COLOR_NICKLIST);
+     wattroff(hftirc->ui->nicklistwin, COLOR_ROSTER);
 
      wrefresh(hftirc->ui->nicklistwin);
 
@@ -503,7 +499,6 @@ ui_buf_set(int buf)
      if(cb != hftirc->statuscb)
           hftirc->selsession = cb->session;
 
-     ui_update_nicklistwin();
      ui_draw_buf(cb);
 
      return;
@@ -528,7 +523,6 @@ ui_buf_new(const char *name, IrcSession *session)
      strcpy(cb->name, name);
      cb->bufpos = cb->scrollpos = cb->act = 0;
      cb->naming = cb->nicklistscroll = 0;
-     cb->nickmaxlen = 1;
      cb->lastposbold = -1;
      cb->session = session;
      cb->umask |= (UTopicMask | UNickListMask);
@@ -600,41 +594,28 @@ ui_scroll_down(ChanBuf *cb)
      return;
 }
 
-static void
-ui_nicklist_resize(void)
-{
-     if(!hftirc->ui->nicklist || !(hftirc->selcb->umask & UNickListMask))
-          return;
-
-     /* Delete to make new with new size/pos */
-     delwin(hftirc->ui->nicklistwin);
-
-     hftirc->ui->nicklistwin = newwin(LINES - 3, hftirc->selcb->nickmaxlen, 1, COLS - hftirc->selcb->nickmaxlen);
-
-     wresize(hftirc->ui->mainwin, MAINWIN_LINES, COLS - hftirc->selcb->nickmaxlen);
-
-     wrefresh(hftirc->ui->nicklistwin);
-
-     ui_draw_buf(hftirc->selcb);
-
-     return;
-}
-
 void
 ui_nicklist_toggle(void)
 {
+     delwin(hftirc->ui->mainwin);
+
      if((hftirc->ui->nicklist = !hftirc->ui->nicklist))
      {
-          ui_nicklist_resize();
+          hftirc->ui->nicklistwin = newwin(LINES - 3, ROSTERSIZE, 1, COLS - ROSTERSIZE);
+          wrefresh(hftirc->ui->nicklistwin);
+          hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS - ROSTERSIZE, 1, 0);
+          hftirc->selcb->umask |= UNickListMask;
           ui_update_nicklistwin();
      }
      else
      {
           delwin(hftirc->ui->nicklistwin);
-          wresize(hftirc->ui->mainwin, MAINWIN_LINES, COLS);
-          ui_draw_buf(hftirc->selcb);
+          hftirc->ui->mainwin = newwin(MAINWIN_LINES, COLS, 1, 0);
      }
 
+     scrollok(hftirc->ui->mainwin, TRUE);
+
+     ui_draw_buf(hftirc->selcb);
 
      return;
 }
@@ -1094,7 +1075,7 @@ ui_screen_clear()
 {
      char *buf;
      int i;
-
+     
      buf = "\n";
 
      for(i = 0; i < BUFFERSIZE; ++i)
