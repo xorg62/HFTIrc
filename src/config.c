@@ -58,13 +58,8 @@ config_ignore(void)
 
      if((ignore = fetch_section_first(NULL, "ignore")))
           while(ignorebli[i++].f)
-          {
                if(fetch_opt_first(ignore, "false", (char *)ignorebli[i].name).boolp)
                     hftirc->conf.ignore |= ignorebli[i].f;
-
-               if(hftirc->conf.ignore & ignorebli[i].f)
-                    printf("--> %s\n", ignorebli[i].name);
-          }
 
      free(ignore);
 
