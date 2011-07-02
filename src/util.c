@@ -17,7 +17,7 @@
 #include "input.h"
 #include "ui.h"
 
-struct { char name[10]; int id; } colordef[9] =
+struct { char name[10]; int id; } colordef[] =
 {
      { "black",   COLOR_BLACK },
      { "red",     COLOR_RED },

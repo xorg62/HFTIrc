@@ -394,7 +394,7 @@ ui_print(WINDOW *w, char *str, int n)
 void
 ui_print_buf(ChanBuf *cb, char *format, ...)
 {
-     int i;
+     int i, j;
      va_list ap;
      char *p, *buf;
 
@@ -407,8 +407,7 @@ ui_print_buf(ChanBuf *cb, char *format, ...)
      va_end(ap);
 
      /* Clean ...[part]... we need in buffer */
-     for(i = 0; i < BUFFERSIZE; ++i)
-          cb->buffer[(cb->bufpos * BUFFERSIZE) + i] = '\0';
+     for(i = (j = cb->bufpos * BUFFERSIZE); i < BUFFERSIZE + j; cb->buffer[i++] = '\0');
 
      /* Set buffer line */
      snprintf(&cb->buffer[cb->bufpos * BUFFERSIZE], BUFFERSIZE, "%s %s\n", hftirc->date.str, p);
@@ -1075,7 +1074,7 @@ ui_screen_clear()
 {
      char *buf;
      int i;
-     
+
      buf = "\n";
 
      for(i = 0; i < BUFFERSIZE; ++i)

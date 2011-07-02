@@ -19,6 +19,18 @@
 
 #define SSTRCPY(dest, src) if(src) strcpy((dest), (src))
 
+static const struct { unsigned int f; char name[16]; } ignorebli[] =
+{
+     { IgnoreJoin,   "join"        },
+     { IgnoreQuit,   "quit"        },
+     { IgnoreMode,   "mode"        },
+     { IgnoreCtcp,   "ctcp"        },
+     { IgnoreNotice, "notice"      },
+     { IgnorePart,   "part"        },
+     { IgnoreNick,   "nick_change" },
+     { 0, "" }
+};
+
 static void
 config_misc(void)
 {
@@ -39,33 +51,20 @@ config_misc(void)
 static void
 config_ignore(void)
 {
+     int i = -1;
      struct conf_sec *ignore;
 
      hftirc->conf.ignore = 0;
 
      if((ignore = fetch_section_first(NULL, "ignore")))
-     {
-          if(fetch_opt_first(ignore, "false", "join").boolp)
-               hftirc->conf.ignore |= IgnoreJoin;
+          while(ignorebli[i++].f)
+          {
+               if(fetch_opt_first(ignore, "false", (char *)ignorebli[i].name).boolp)
+                    hftirc->conf.ignore |= ignorebli[i].f;
 
-          if(fetch_opt_first(ignore, "false", "quit").boolp)
-               hftirc->conf.ignore |= IgnoreQuit;
-
-          if(fetch_opt_first(ignore, "false", "mode").boolp)
-               hftirc->conf.ignore |= IgnoreMode;
-
-          if(fetch_opt_first(ignore, "false", "ctcp").boolp)
-               hftirc->conf.ignore |= IgnoreCtcp;
-
-          if(fetch_opt_first(ignore, "false", "notice").boolp)
-               hftirc->conf.ignore |= IgnoreNotice;
-
-          if(fetch_opt_first(ignore, "false", "part").boolp)
-               hftirc->conf.ignore |= IgnorePart;
-
-          if(fetch_opt_first(ignore, "false", "nick_change").boolp)
-               hftirc->conf.ignore |= IgnoreNick;
-     }
+               if(hftirc->conf.ignore & ignorebli[i].f)
+                    printf("--> %s\n", ignorebli[i].name);
+          }
 
      free(ignore);
 
