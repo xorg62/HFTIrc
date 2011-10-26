@@ -29,6 +29,74 @@ struct { char name[10]; int id; } colordef[] =
      { "white",   COLOR_WHITE }
 };
 
+/** calloc with error support
+ * \param nmemb Number of objects
+ * \param size size of single object
+ * \return non null void pointer
+*/
+void*
+xcalloc(size_t nmemb, size_t size)
+{
+     void *ret;
+
+     if((ret = calloc(nmemb, size)) == NULL)
+          err(EXIT_FAILURE, "calloc(%zu * %zu)", nmemb, size);
+
+     return ret;
+}
+
+void*
+xmalloc(size_t nmemb, size_t size)
+{
+     void *ret;
+
+     if(SIZE_MAX / nmemb < size)
+          err(EXIT_FAILURE, "xmalloc(%zu, %zu), "
+                    "size_t overflow detected", nmemb, size);
+
+     if((ret = malloc(nmemb * size)) == NULL)
+          err(EXIT_FAILURE, "malloc(%zu)", nmemb * size);
+
+     return ret;
+}
+
+/** asprintf wrapper
+ * \param strp target string
+ * \param fmt format
+ * \return non zero integer
+ */
+int
+xasprintf(char **strp, const char *fmt, ...)
+{
+     int ret;
+     va_list args;
+
+     va_start(args, fmt);
+     ret = vasprintf(strp, fmt, args);
+     va_end(args);
+
+     if (ret == -1)
+          err(EXIT_FAILURE, "asprintf(%s)", fmt);
+
+     return ret;
+}
+
+/** strdup with error support
+ * \param str char pointer
+ * \retun non null void pointer
+ */
+char *
+xstrdup(const char *str)
+{
+     char *ret;
+
+     if (str == NULL || (ret = strdup(str)) == NULL)
+          err(EXIT_FAILURE, "strdup(%s)", str);
+
+     return ret;
+}
+
+
 void
 update_date(void)
 {

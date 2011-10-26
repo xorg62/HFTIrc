@@ -24,7 +24,8 @@ project(${PROJECT_NAME} C)
 
 # Definition of the hftirc source
 set(hftirc_src
-  src/parse/parse.c
+  src/parse.c
+  src/parse_api.c
   src/config.c
   src/util.c
   src/ui.c

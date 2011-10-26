@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010 Philippe Pepiot <phil@philpep.org>
+ * Copyright (c) 2011 Martin Duquesnoy <xorg62@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,30 +18,37 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-#include <sys/queue.h>
+#include "hftirc.h"
 
-struct conf_opt {
+#define INCLUDE_CMD "@include"
+#define PARSE_MAX_LIST 32
+
+struct conf_opt
+{
      char *name;
-     char *val[10];
+     char *val[PARSE_MAX_LIST];
      size_t nval;
-     Bool used;
+     bool used;
      int line;
+     char *filename;
      SLIST_ENTRY(conf_opt) entry;
 };
 
-struct conf_sec {
+struct conf_sec
+{
      char *name;
      SLIST_HEAD(, conf_opt) optlist;
-     TAILQ_HEAD(, conf_sec) sub;
+     TAILQ_HEAD(cshead, conf_sec) sub;
      size_t nopt;
      size_t nsub;
      TAILQ_ENTRY(conf_sec) entry;
 };
 
-struct opt_type {
+struct opt_type
+{
      long int num;
      float fnum;
-     Bool boolp;
+     bool boolean;
      char *str;
 };
 
@@ -61,7 +69,7 @@ void print_unused(struct conf_sec *s);
  * WARNING: This make all string
  * returned by fetch_(opt|section)(_first) unusable.
  */
-void free_conf(struct conf_sec *s);
+int free_conf(void);
 
 /*
  * Get all subsection matching the given name on the given

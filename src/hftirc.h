@@ -35,9 +35,11 @@
 #include <time.h>
 #include <signal.h>
 #include <locale.h>
+#include <err.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -143,7 +145,7 @@ if(!hftirc->conf.nserv || !hftirc->selsession     \
 typedef enum { False, True } Bool;
 
 /* Internal lib */
-#include "parse/parse.h"
+#include "parse.h"
 
 /* Structures */
 typedef struct IrcSession IrcSession;
@@ -393,6 +395,10 @@ void input_clear(const char *input);
 void input_scrollclear(const char *input);
 
 /* util.c */
+void *xcalloc(size_t nmemb, size_t size);
+void *xmalloc(size_t nmemb, size_t size);
+int xasprintf(char **strp, const char *fmt, ...);
+char *xstrdup(const char *str);
 void update_date(void);
 ChanBuf *find_buf(IrcSession *s, const char *str);
 ChanBuf *find_buf_wid(int id);

@@ -39,9 +39,9 @@ config_misc(void)
      misc = fetch_section_first(NULL, "misc");
 
      SSTRCPY(hftirc->conf.datef, fetch_opt_first(misc, "%m-%d %H:%M:%S", "date_format").str);
-     hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolp;
-     hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolp;
-     hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolp;
+     hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolean;
+     hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolean;
+     hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolean;
 
      free(misc);
 
@@ -58,7 +58,7 @@ config_ignore(void)
 
      if((ignore = fetch_section_first(NULL, "ignore")))
           while(ignorebli[i++].f)
-               if(fetch_opt_first(ignore, "false", (char *)ignorebli[i].name).boolp)
+               if(fetch_opt_first(ignore, "false", (char *)ignorebli[i].name).boolean)
                     hftirc->conf.ignore |= ignorebli[i].f;
 
      free(ignore);
@@ -73,7 +73,7 @@ config_ui(void)
 
      ui = fetch_section_first(NULL, "ui");
 
-     hftirc->conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolp;
+     hftirc->conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolean;
 
      /* Colors section */
      colors = fetch_section_first(ui, "colors");
@@ -115,7 +115,7 @@ config_server(void)
           SSTRCPY(hftirc->conf.serv[i].username, fetch_opt_first(serv[i], "hftircuser", "username").str);
           SSTRCPY(hftirc->conf.serv[i].realname, fetch_opt_first(serv[i], "hftircuser", "realname").str);
           hftirc->conf.serv[i].port = fetch_opt_first(serv[i], "6667", "port").num;
-          hftirc->conf.serv[i].ipv6 = fetch_opt_first(serv[i], "false", "ipv6").boolp;
+          hftirc->conf.serv[i].ipv6 = fetch_opt_first(serv[i], "false", "ipv6").boolean;
 
           opt = fetch_opt(serv[i], "", "channel_autojoin");
 

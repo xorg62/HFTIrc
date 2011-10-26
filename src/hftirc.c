@@ -20,11 +20,13 @@ void
 signal_handler(int signal)
 {
      int b[2], u[2];
+     (void)u;
 
      switch(signal)
      {
           /* Term resize sig */
           case SIGWINCH:
+
                b[0] = LINES;
                b[1] = COLS;
                endwin();
