@@ -42,10 +42,6 @@ config_misc(void)
      hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolean;
      hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolean;
      hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolean;
-
-     free(misc);
-
-     return;
 }
 
 static void
@@ -60,10 +56,6 @@ config_ignore(void)
           while(ignorebli[i++].f)
                if(fetch_opt_first(ignore, "false", (char *)ignorebli[i].name).boolean)
                     hftirc->conf.ignore |= ignorebli[i].f;
-
-     free(ignore);
-
-     return;
 }
 
 static void
@@ -78,11 +70,6 @@ config_ui(void)
      /* Colors section */
      colors = fetch_section_first(ui, "colors");
      hftirc->conf.tcolor = color_to_id(fetch_opt_first(colors, "blue", "color_theme").str);
-
-     free(ui);
-     free(colors);
-
-     return;
 }
 
 static void
@@ -127,13 +114,7 @@ config_server(void)
                     for(j = 0; j < n; ++j)
                          SSTRCPY(hftirc->conf.serv[i].autojoin[j], opt[j].str);
           }
-
-          free(opt);
      }
-
-     free(serv);
-
-     return;
 }
 
 void
@@ -150,6 +131,8 @@ config_parse(void)
      config_ui();
      config_ignore();
      config_server();
+
+     free_conf();
 
      return;
 }
