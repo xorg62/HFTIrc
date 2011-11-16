@@ -259,7 +259,7 @@ typedef struct
 /* Config struct */
 typedef struct
 {
-     char path[512];
+     char path[FILENAME_MAX + 1];
      char datef[64];
      int nserv;
      int bell;
