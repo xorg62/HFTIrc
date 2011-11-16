@@ -57,7 +57,7 @@ main(int argc, char **argv)
 
     hftirc = malloc(sizeof(HFTIrc));
 
-    sprintf(hftirc->conf.path, "%s/"DEF_CONF, getenv("HOME"));
+    snprintf(hftirc->conf.path, FILENAME_MAX, "%s/"DEF_CONF, getenv("HOME"));
 
     while((i = getopt(argc, argv, "hvc:")) != -1)
     {
