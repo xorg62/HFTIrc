@@ -62,13 +62,13 @@
 #define COLOR_THEME_DEF  (COLOR_BLUE)
 
 #define MAINWIN_LINES  (LINES - 2)
-#define DATELEN        (strlen(hftirc->date.str))
+#define DATELEN        (strlen(hftirc.date.str))
 #define DEF_CONF        ".config/hftirc/hftirc.conf"
 
 #define C(c)         ((c) & 037)
 #define ISCHAN(c)    ((c == '#' || c ==  '&'))
 #define LEN(x)       (sizeof(x) / sizeof(x[0]))
-#define WARN(t, s)   ui_print_buf(hftirc->statuscb, "%s: %s", t, s)
+#define WARN(t, s)   ui_print_buf(hftirc.statuscb, "%s: %s", t, s)
 #define DSINPUT(i)   for(; i && i[0] == ' '; ++i)
 
 #define PRINTATTR(w, attr, s) { \
@@ -84,8 +84,8 @@
 } while(0 /*CONSTCOND*/);
 
 #define NOSERVRET(r) do {                         \
-if(!hftirc->conf.nserv || !hftirc->selsession     \
-          || !hftirc->selsession->connected)      \
+if(!hftirc.conf.nserv || !hftirc.selsession     \
+          || !hftirc.selsession->connected)      \
      {                                            \
           WARN("Error", "You're not connected");  \
           return r;                               \
@@ -278,7 +278,7 @@ typedef struct
      ConfStruct conf;
      IrcSession *selsession, *sessionhead;
      ChanBuf *prevcb, *statuscb, *selcb, *cbhead;
-     Ui *ui;
+     Ui ui;
      DateStruct date;
 } HFTIrc;
 
@@ -421,6 +421,6 @@ void nick_sort_abc(ChanBuf *cb);
 void signal_handler(int signal);
 
 /* Variables */
-HFTIrc *hftirc;
+HFTIrc hftirc;
 
 #endif /* HFTIRC_H */

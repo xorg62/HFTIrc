@@ -100,10 +100,10 @@ xstrdup(const char *str)
 void
 update_date(void)
 {
-     hftirc->date.tm = localtime(&hftirc->date.lt);
-     hftirc->date.lt = time(NULL);
+     hftirc.date.tm = localtime(&hftirc.date.lt);
+     hftirc.date.lt = time(NULL);
 
-     strftime(hftirc->date.str, sizeof(hftirc->date.str), hftirc->conf.datef, hftirc->date.tm);
+     strftime(hftirc.date.str, sizeof(hftirc.date.str), hftirc.conf.datef, hftirc.date.tm);
 
      return;
 }
@@ -115,14 +115,14 @@ find_buf(IrcSession *s, const char *str)
      ChanBuf *cb;
 
      if(!str)
-          return hftirc->statuscb;
+          return hftirc.statuscb;
 
-     for(cb = hftirc->cbhead; cb; cb = cb->next)
+     for(cb = hftirc.cbhead; cb; cb = cb->next)
           if(cb->name && strlen(cb->name) > 1)
                if(!strcasecmp(str, cb->name) && cb->session == s)
                     return cb;
 
-     return hftirc->statuscb;
+     return hftirc.statuscb;
 }
 
 /* Find buffer pointer with id */
@@ -131,10 +131,10 @@ find_buf_wid(int id)
 {
      ChanBuf *cb;
 
-     if(id < 0 || id > hftirc->nbuf - 1)
+     if(id < 0 || id > hftirc.nbuf - 1)
           return NULL;
 
-     for(cb = hftirc->cbhead; cb; cb = cb->next)
+     for(cb = hftirc.cbhead; cb; cb = cb->next)
           if(cb->id == id)
                return cb;
 
@@ -150,7 +150,7 @@ msg_sessbuf(IrcSession *session, char *str)
      if(!str)
           return;
 
-     for(cb = hftirc->cbhead->next; cb; cb = cb->next)
+     for(cb = hftirc.cbhead->next; cb; cb = cb->next)
           if(cb->session == session)
                ui_print_buf(cb, str);
 
@@ -232,7 +232,7 @@ nick_color(char *nick)
      if(!nick)
           return NULL;
 
-     if(!hftirc->conf.nickcolor)
+     if(!hftirc.conf.nickcolor)
           return nick;
 
      /* To find color number, we add all char of the nick string */

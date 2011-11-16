@@ -35,9 +35,9 @@ signal_handler(int signal)
                getmaxyx(stdscr, u[0], u[1]);
                ui_init();
                ui_get_input();
-               ui_print_buf(hftirc->statuscb, "[HFTIrc] *** Terminal resized: (%dx%d -> %dx%d)",
+               ui_print_buf(hftirc.statuscb, "[HFTIrc] *** Terminal resized: (%dx%d -> %dx%d)",
                          b[0], b[1], LINES, COLS);
-               ui_buf_set(hftirc->selcb->id);
+               ui_buf_set(hftirc.selcb->id);
 	
               break;
      }
@@ -55,9 +55,7 @@ main(int argc, char **argv)
     IrcSession *is;
     ChanBuf *cb;
 
-    hftirc = malloc(sizeof(HFTIrc));
-
-    snprintf(hftirc->conf.path, FILENAME_MAX, "%s/"DEF_CONF, getenv("HOME"));
+    snprintf(hftirc.conf.path, FILENAME_MAX, "%s/"DEF_CONF, getenv("HOME"));
 
     while((i = getopt(argc, argv, "hvc:")) != -1)
     {
@@ -69,32 +67,29 @@ main(int argc, char **argv)
                           "   -h         Show this page\n"
                           "   -v         Show version\n"
                           "   -c <file>  Load a configuration file\n", argv[0]);
-                   free(hftirc);
                    exit(EXIT_SUCCESS);
                    break;
 
               case 'v':
                    printf("HFTIrc version: "HFTIRC_VERSION"\n");
-                   free(hftirc);
                    exit(EXIT_SUCCESS);
                    break;
 
               case 'c':
-                   strcpy(hftirc->conf.path, optarg);
+                   strcpy(hftirc.conf.path, optarg);
                    break;
          }
     }
 
     /* Primary allocation / set */
-    hftirc->ui = malloc(sizeof(Ui));
-    hftirc->ft = 1;
+    hftirc.ft = 1;
 
     /* Signal initialisation */
     sig.sa_handler = signal_handler;
     sig.sa_flags   = 0;
     sigaction(SIGWINCH, &sig, NULL);
 
-    hftirc->running = 1;
+    hftirc.running = 1;
 
     config_parse();
     ui_init();
@@ -102,10 +97,10 @@ main(int argc, char **argv)
     irc_init();
     ui_refresh_curpos();
 
-    while(hftirc->running)
+    while(hftirc.running)
     {
-         if(hftirc->running < 0)
-              ++hftirc->running;
+         if(hftirc.running < 0)
+              ++hftirc.running;
 
          tv.tv_sec = 0;
          tv.tv_usec = 250000;
@@ -116,7 +111,7 @@ main(int argc, char **argv)
 
          maxfd = STDIN_FILENO;
 
-         for(n = 0, is = hftirc->sessionhead; is; is = is->next, ++n)
+         for(n = 0, is = hftirc.sessionhead; is; is = is->next, ++n)
               if(is->sock > 0 && is->connected)
               {
                    if(maxfd < is->sock)
@@ -130,7 +125,7 @@ main(int argc, char **argv)
               if(FD_ISSET(STDIN_FILENO, &iset))
                    ui_get_input();
               else
-                  for(is = hftirc->sessionhead; is; is = is->next)
+                  for(is = hftirc.sessionhead; is; is = is->next)
                        if(irc_run_process(is, &iset))
                             is->connected = 0;
          }
@@ -148,16 +143,13 @@ main(int argc, char **argv)
 
     endwin();
 
-    free(hftirc->conf.serv);
-    free(hftirc->ui);
+    free(hftirc.conf.serv);
 
-    for(is = hftirc->sessionhead; is; is = is->next)
+    for(is = hftirc.sessionhead; is; is = is->next)
          free(is);
 
-    for(cb = hftirc->cbhead; cb; cb = cb->next)
+    for(cb = hftirc.cbhead; cb; cb = cb->next)
          ui_buf_close(cb);
-
-    free(hftirc);
 
     return 0;
 }

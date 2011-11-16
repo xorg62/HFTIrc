@@ -26,7 +26,7 @@ irc_session(void)
      s->sock = -1;
      s->connected = 0;
 
-     HFTLIST_ATTACH(hftirc->sessionhead, s);
+     HFTLIST_ATTACH(hftirc.sessionhead, s);
 
      return s;
 }
@@ -387,21 +387,21 @@ irc_init(void)
      IrcSession *is;
 
      /* Connection to conf servers */
-     for(i = 0, is = hftirc->sessionhead; i < hftirc->conf.nserv; is = is->next, ++i)
+     for(i = 0, is = hftirc.sessionhead; i < hftirc.conf.nserv; is = is->next, ++i)
      {
           is = irc_session();
 
-          hftirc->selsession = is;
+          hftirc.selsession = is;
 
           if(irc_connect(is,
-                         hftirc->conf.serv[i].adress,
-                         hftirc->conf.serv[i].name,
-                         hftirc->conf.serv[i].port,
-                         hftirc->conf.serv[i].password,
-                         hftirc->conf.serv[i].nick,
-                         hftirc->conf.serv[i].username,
-                         hftirc->conf.serv[i].realname))
-               ui_print_buf(0, "Error: Can't connect to %s", hftirc->conf.serv[i].adress);
+                         hftirc.conf.serv[i].adress,
+                         hftirc.conf.serv[i].name,
+                         hftirc.conf.serv[i].port,
+                         hftirc.conf.serv[i].password,
+                         hftirc.conf.serv[i].nick,
+                         hftirc.conf.serv[i].username,
+                         hftirc.conf.serv[i].realname))
+               ui_print_buf(0, "Error: Can't connect to %s", hftirc.conf.serv[i].adress);
      }
 
      return;

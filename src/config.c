@@ -38,10 +38,10 @@ config_misc(void)
 
      misc = fetch_section_first(NULL, "misc");
 
-     SSTRCPY(hftirc->conf.datef, fetch_opt_first(misc, "%m-%d %H:%M:%S", "date_format").str);
-     hftirc->conf.bell   = fetch_opt_first(misc, "false", "bell").boolean;
-     hftirc->conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolean;
-     hftirc->conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolean;
+     SSTRCPY(hftirc.conf.datef, fetch_opt_first(misc, "%m-%d %H:%M:%S", "date_format").str);
+     hftirc.conf.bell   = fetch_opt_first(misc, "false", "bell").boolean;
+     hftirc.conf.nicklist = fetch_opt_first(misc, "false", "nicklist_enable").boolean;
+     hftirc.conf.lastlinepos = fetch_opt_first(misc, "false", "lastline_position").boolean;
 }
 
 static void
@@ -50,12 +50,12 @@ config_ignore(void)
      int i = -1;
      struct conf_sec *ignore;
 
-     hftirc->conf.ignore = 0;
+     hftirc.conf.ignore = 0;
 
      if((ignore = fetch_section_first(NULL, "ignore")))
           while(ignorebli[i++].f)
                if(fetch_opt_first(ignore, "false", (char *)ignorebli[i].name).boolean)
-                    hftirc->conf.ignore |= ignorebli[i].f;
+                    hftirc.conf.ignore |= ignorebli[i].f;
 }
 
 static void
@@ -65,11 +65,11 @@ config_ui(void)
 
      ui = fetch_section_first(NULL, "ui");
 
-     hftirc->conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolean;
+     hftirc.conf.nickcolor = fetch_opt_first(ui, "false", "nick_color_enable").boolean;
 
      /* Colors section */
      colors = fetch_section_first(ui, "colors");
-     hftirc->conf.tcolor = color_to_id(fetch_opt_first(colors, "blue", "color_theme").str);
+     hftirc.conf.tcolor = color_to_id(fetch_opt_first(colors, "blue", "color_theme").str);
 }
 
 static void
@@ -81,38 +81,38 @@ config_server(void)
      ServInfo defsi = { "Hft", "irc.freenode.net", "", 6667, "hftircuser", " ", "HFTIrcuser", "HFTIrcuser"};
 
      if(!(serv = fetch_section(fetch_section_first(NULL, "servers"), "server"))
-               || !(hftirc->conf.nserv = fetch_section_count(serv)))
+               || !(hftirc.conf.nserv = fetch_section_count(serv)))
      {
-          hftirc->conf.serv = malloc(sizeof(ServInfo));
-          hftirc->conf.serv[0] = defsi;
-          hftirc->conf.nserv = 1;
+          hftirc.conf.serv = malloc(sizeof(ServInfo));
+          hftirc.conf.serv[0] = defsi;
+          hftirc.conf.nserv = 1;
 
           return;
      }
 
-     hftirc->conf.serv = malloc(sizeof(ServInfo) * hftirc->conf.nserv);
+     hftirc.conf.serv = malloc(sizeof(ServInfo) * hftirc.conf.nserv);
 
-     for(i = 0; i < hftirc->conf.nserv; ++i)
+     for(i = 0; i < hftirc.conf.nserv; ++i)
      {
 
-          SSTRCPY(hftirc->conf.serv[i].adress,   fetch_opt_first(serv[i], "irc.hft-community.org", "adress").str);
-          SSTRCPY(hftirc->conf.serv[i].name,     fetch_opt_first(serv[i], hftirc->conf.serv[i].adress, "name").str);
-          SSTRCPY(hftirc->conf.serv[i].password, fetch_opt_first(serv[i], "", "password").str);
-          SSTRCPY(hftirc->conf.serv[i].nick,     fetch_opt_first(serv[i], "hftircuser", "nickname").str);
-          SSTRCPY(hftirc->conf.serv[i].username, fetch_opt_first(serv[i], "hftircuser", "username").str);
-          SSTRCPY(hftirc->conf.serv[i].realname, fetch_opt_first(serv[i], "hftircuser", "realname").str);
-          hftirc->conf.serv[i].port = fetch_opt_first(serv[i], "6667", "port").num;
-          hftirc->conf.serv[i].ipv6 = fetch_opt_first(serv[i], "false", "ipv6").boolean;
+          SSTRCPY(hftirc.conf.serv[i].adress,   fetch_opt_first(serv[i], "irc.hft-community.org", "adress").str);
+          SSTRCPY(hftirc.conf.serv[i].name,     fetch_opt_first(serv[i], hftirc.conf.serv[i].adress, "name").str);
+          SSTRCPY(hftirc.conf.serv[i].password, fetch_opt_first(serv[i], "", "password").str);
+          SSTRCPY(hftirc.conf.serv[i].nick,     fetch_opt_first(serv[i], "hftircuser", "nickname").str);
+          SSTRCPY(hftirc.conf.serv[i].username, fetch_opt_first(serv[i], "hftircuser", "username").str);
+          SSTRCPY(hftirc.conf.serv[i].realname, fetch_opt_first(serv[i], "hftircuser", "realname").str);
+          hftirc.conf.serv[i].port = fetch_opt_first(serv[i], "6667", "port").num;
+          hftirc.conf.serv[i].ipv6 = fetch_opt_first(serv[i], "false", "ipv6").boolean;
 
           opt = fetch_opt(serv[i], "", "channel_autojoin");
 
           if((n = fetch_opt_count(opt)))
           {
-               if((hftirc->conf.serv[i].nautojoin = n) > 127)
+               if((hftirc.conf.serv[i].nautojoin = n) > 127)
                     ui_print_buf(0, "HFTIrc configuration: section serv (%d), too many channel_autojoin (%d).", i, n);
                else
                     for(j = 0; j < n; ++j)
-                         SSTRCPY(hftirc->conf.serv[i].autojoin[j], opt[j].str);
+                         SSTRCPY(hftirc.conf.serv[i].autojoin[j], opt[j].str);
           }
      }
 }
@@ -120,11 +120,11 @@ config_server(void)
 void
 config_parse(void)
 {
-     if(get_conf(hftirc->conf.path) == -1)
+     if(get_conf(hftirc.conf.path) == -1)
      {
-          ui_print_buf(0, "parsing configuration file (%s) failed.", hftirc->conf.path);
-          sprintf(hftirc->conf.path, "%s/hftirc/hftirc.conf", XDG_CONFIG_DIR);
-          get_conf(hftirc->conf.path);
+          ui_print_buf(0, "parsing configuration file (%s) failed.", hftirc.conf.path);
+          sprintf(hftirc.conf.path, "%s/hftirc/hftirc.conf", XDG_CONFIG_DIR);
+          get_conf(hftirc.conf.path);
      }
 
      config_misc();
