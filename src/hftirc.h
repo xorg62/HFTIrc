@@ -128,7 +128,7 @@ struct hftirc
      {
           SLIST_HEAD(, session_info) session_info;
           SLIST_HEAD(, session) session;
-          TAILQ_HEAD(, buffer) buffer;
+          TAILQ_HEAD(bsub, buffer) buffer;
      } h;
 } H;
 

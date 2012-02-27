@@ -34,5 +34,6 @@ struct buffer* ui_buffer_new(struct session *session, char *name);
 void ui_buffer_remove(struct buffer *b);
 void ui_get_input(void);
 void ui_update(void);
+void ui_print_buf(struct buffer *b, char *fmt, ...);
 
 #endif

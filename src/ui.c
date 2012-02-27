@@ -11,14 +11,15 @@
 struct buffer*
 ui_buffer_new(struct session *session, char *name)
 {
-     struct buffer *b;
+     struct buffer *b, *p = TAILQ_LAST(&H.h.buffer, bsub);
 
      b = xcalloc(1, sizeof(struct buffer));
 
      b->session = session;
      b->name    = xstrdup(name);
      b->topic   = NULL;
-     b->id      = ACT_NO;
+     b->act     = ACT_NO;
+     b->id      = (p ? p->id + 1 : 0);
 
      SLIST_INIT(&b->lines);
      SLIST_INIT(&b->nicks);
@@ -44,6 +45,7 @@ ui_buffer_remove(struct buffer *b)
           free(bl);
      }
 
+     TAILQ_REMOVE(&H.h.buffer, b, next);
      free(b);
 }
 
@@ -158,8 +160,61 @@ ui_update(void)
 {
      werase(H.ui.statuswin);
      wbkgd(H.ui.statuswin, COLOR_SW);
-     mvwprintw(H.ui.statuswin, 0, 0, "[dev:4:20]");
+     mvwprintw(H.ui.statuswin, 0, 0, "[dev:4:20] (%d:%s)", H.bufsel->id, H.bufsel->name);
      wrefresh(H.ui.statuswin);
+
+     werase(H.ui.topicwin);
+     wbkgd(H.ui.topicwin, COLOR_SW);
+     waddstr(H.ui.topicwin, H.bufsel->topic);
+     wrefresh(H.ui.topicwin);
+}
+
+static void
+ui_print_line(struct buffer_line *bl)
+{
+     waddstr(H.ui.mainwin, bl->line);
+     wrefresh(H.ui.mainwin);
+}
+
+static void
+ui_update_buf(void)
+{
+     struct buffer_line *b;
+
+     SLIST_FOREACH(b, &H.bufsel->lines, next)
+          ui_print_line(b);
+}
+
+static struct buffer_line*
+ui_buffer_new_line(struct buffer *b, char *str)
+{
+     struct buffer_line *bl = xcalloc(1, sizeof(struct buffer_line));
+
+     bl->line = str;
+     SLIST_INSERT_HEAD(&b->lines, bl, next);
+
+     return bl;
+}
+
+void
+ui_print_buf(struct buffer *b, char *fmt, ...)
+{
+     struct buffer_line *bl;
+     char *str, *fstr;
+     va_list args;
+
+     va_start(args, fmt);
+     (void)vasprintf(&str, fmt, args);
+     va_end(args);
+
+     xasprintf(&fstr, "[dev:4:20] %s\n", str);
+
+     bl = ui_buffer_new_line(b, fstr);
+
+     if(b == H.bufsel)
+          ui_print_line(bl);
+
+     free(str);
 }
 
 void

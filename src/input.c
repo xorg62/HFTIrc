@@ -6,11 +6,12 @@
 #include "hftirc.h"
 #include "input.h"
 #include "util.h"
+#include "ui.h"
 
 static void
 input_say(const char *input)
 {
-     /* ui_print */
+     ui_print_buf(H.bufsel, "%s", input);
 }
 
 static void

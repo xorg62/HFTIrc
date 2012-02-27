@@ -60,9 +60,9 @@ main(int argc, char **argv)
      SLIST_INIT(&H.h.session);
      TAILQ_INIT(&H.h.buffer);
 
-     ui_init();
+     H.flags |= (HFTIRC_RUNNING | HFTIRC_FIRST_TIME);
 
-     H.flags |= HFTIRC_RUNNING;
+     ui_init();
 
      while(H.flags & HFTIRC_RUNNING)
      {
