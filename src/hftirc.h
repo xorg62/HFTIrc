@@ -25,8 +25,9 @@
     #include <ncurses/ncurses.h>
 #endif
 
-#define BUFSIZE  (4096)
-#define HISTOLEN (64)
+#define BUFSIZE     (4096)
+#define HISTOLEN    (64)
+#define BUFHISTOLEN (128)
 
 typedef unsigned long Flags;
 
@@ -68,7 +69,8 @@ struct nick
 struct buffer_line
 {
      char *line;
-     SLIST_ENTRY(buffer_line) next;
+     int id;
+     STAILQ_ENTRY(buffer_line) next;
 };
 
 struct buffer
@@ -78,10 +80,10 @@ struct buffer
 #define ACT_NO     0
 #define ACT_NORMAL 1
 #define ACT_HL     2
-     int act;
+     int act, nline;
      char *name;
      char *topic;
-     SLIST_HEAD(, buffer_line) lines;
+     STAILQ_HEAD(, buffer_line) lines;
      SLIST_HEAD(, nick) nicks;
      TAILQ_ENTRY(buffer) next;
 };

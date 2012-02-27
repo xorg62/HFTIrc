@@ -20,8 +20,9 @@ ui_buffer_new(struct session *session, char *name)
      b->topic   = NULL;
      b->act     = ACT_NO;
      b->id      = (p ? p->id + 1 : 0);
+     b->nline   = 0;
 
-     SLIST_INIT(&b->lines);
+     STAILQ_INIT(&b->lines);
      SLIST_INIT(&b->nicks);
 
      TAILQ_INSERT_TAIL(&H.h.buffer, b, next);
@@ -37,10 +38,10 @@ ui_buffer_remove(struct buffer *b)
      free(b->name);
      free(b->topic);
 
-     while(!SLIST_EMPTY(&b->lines))
+     while(!STAILQ_EMPTY(&b->lines))
      {
-          bl = SLIST_FIRST(&b->lines);
-          SLIST_REMOVE_HEAD(&b->lines, next);
+          bl = STAILQ_FIRST(&b->lines);
+          STAILQ_REMOVE_HEAD(&b->lines, next);
           free(bl->line);
           free(bl);
      }
@@ -93,6 +94,9 @@ ui_init(void)
           b->topic = xstrdup("HFTIrc2 -- status buffer");
           H.bufsel = b;
           H.flags ^= HFTIRC_FIRST_TIME;
+
+          b = ui_buffer_new(NULL, "b1");
+          b->topic = xstrdup("buffer 1");
      }
 
      setlocale(LC_ALL, "");
@@ -173,7 +177,6 @@ static void
 ui_print_line(struct buffer_line *bl)
 {
      waddstr(H.ui.mainwin, bl->line);
-     wrefresh(H.ui.mainwin);
 }
 
 static void
@@ -181,17 +184,34 @@ ui_update_buf(void)
 {
      struct buffer_line *b;
 
-     SLIST_FOREACH(b, &H.bufsel->lines, next)
+     werase(H.ui.mainwin);
+
+     STAILQ_FOREACH(b, &H.bufsel->lines, next)
           ui_print_line(b);
+
+     wrefresh(H.ui.mainwin);
 }
 
+
 static struct buffer_line*
-ui_buffer_new_line(struct buffer *b, char *str)
+ui_buffer_line_new(struct buffer *b, char *str)
 {
-     struct buffer_line *bl = xcalloc(1, sizeof(struct buffer_line));
+     struct buffer_line *h, *bl = xcalloc(1, sizeof(struct buffer_line));
 
      bl->line = str;
-     SLIST_INSERT_HEAD(&b->lines, bl, next);
+     bl->id = b->nline++;
+
+     STAILQ_INSERT_TAIL(&b->lines, bl, next);
+
+     /* Remove head if histo length is reached */
+     if(b->nline >= BUFHISTOLEN)
+     {
+          h = STAILQ_FIRST(&b->lines);
+          STAILQ_REMOVE_HEAD(&b->lines, next);
+          free(h->line);
+          free(h);
+          --b->nline;
+     }
 
      return bl;
 }
@@ -209,17 +229,34 @@ ui_print_buf(struct buffer *b, char *fmt, ...)
 
      xasprintf(&fstr, "[dev:4:20] %s\n", str);
 
-     bl = ui_buffer_new_line(b, fstr);
+     bl = ui_buffer_line_new(b, fstr);
 
      if(b == H.bufsel)
+     {
           ui_print_line(bl);
+          wrefresh(H.ui.mainwin);
+     }
 
      free(str);
 }
 
 void
+ui_buffer_set(struct buffer *b)
+{
+     b->act = ACT_NO;
+
+     H.bufsel = b;
+
+     if(b != TAILQ_FIRST(&H.h.buffer))
+          H.sessionsel = b->session;
+
+     ui_update_buf();
+}
+
+void
 ui_get_input(void)
 {
+     struct buffer *bf;
      struct inputbuffer *ib = &H.ui.ib;
      wchar_t tmpbuf[BUFSIZE], *cmp;
      char buf[BUFSIZE];
@@ -232,7 +269,6 @@ ui_get_input(void)
      default:
           switch(c)
           {
-
           case KEY_HOME:
                wmove(H.ui.inputwin, 0, 0);
                ib->pos = ib->cpos = 0;
@@ -500,9 +536,10 @@ ui_get_input(void)
      /* /<num> to go on the buffer num */
      if(buf[0] == '/' &&
         ((isdigit(buf[1]) && (n= atoi(&buf[1])) >= 0 && n < 10)  /* /n   */
-         || (buf[1] == ' ' && (n = atoi(&buf[2])) > 9)))         /* / nn */
+         || (buf[1] == ' ' && (n = atoi(&buf[2])) > 9))         /* / nn */
+        && (bf = ui_buffer_gb_id(n)))
      {
-          /*ui_buf_set(n);*/
+          ui_buffer_set(bf);
           werase(H.ui.inputwin);
           wmemset(ib->buffer, 0, BUFSIZE);
           ib->pos = ib->cpos = ib->split = ib->hits = 0;

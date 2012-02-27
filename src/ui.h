@@ -35,5 +35,18 @@ void ui_buffer_remove(struct buffer *b);
 void ui_get_input(void);
 void ui_update(void);
 void ui_print_buf(struct buffer *b, char *fmt, ...);
+void ui_buffer_set(struct buffer *b);
+
+static inline struct buffer*
+ui_buffer_gb_id(int n)
+{
+     struct buffer *b;
+
+     TAILQ_FOREACH(b, &H.h.buffer, next)
+          if(b->id == n)
+               return b;
+
+     return NULL;
+}
 
 #endif
