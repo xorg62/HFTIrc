@@ -3,6 +3,8 @@
  * For license, see COPYING
  */
 
+#include <err.h>
+
 #include "hftirc.h"
 #include "util.h"
 
@@ -48,7 +50,7 @@ void
 hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch)
 {
      cchar_t cch;
-     wchar_t wstr[2] = { wch, '\0' };
+     wchar_t wstr[2] = { wch };
 
      wattron(w, mask);
 

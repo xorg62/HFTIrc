@@ -23,7 +23,7 @@ input_quit(const char *input)
 /*
  * Input management: Index array + associativ loop
  */
-static struct
+static const struct
 {
      char *cmd;
      int len;

@@ -5,8 +5,12 @@
 
 #include <signal.h>
 #include <getopt.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "hftirc.h"
+#include "ui.h"
 
 void
 signal_handler(int signal)
@@ -25,7 +29,6 @@ main(int argc, char **argv)
      struct timeval tv;
      struct session *session;
      struct session_info *info;
-     struct buffer *buffer;
      fd_set set;
      int i, n, maxfd, nsession;
 
@@ -122,4 +125,5 @@ main(int argc, char **argv)
 
      endwin();
 
+     return 0;
 }

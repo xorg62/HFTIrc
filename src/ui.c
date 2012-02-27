@@ -3,6 +3,8 @@
  * For license, see COPYING
  */
 
+#include <ctype.h>
+
 #include "hftirc.h"
 #include "ui.h"
 #include "util.h"
@@ -65,21 +67,6 @@ ui_init_color(void)
                init_pair(++n, i, (!j ? H.ui.bg : j));
 
      H.ui.c = n;
-}
-
-static void
-ui_update_cursor(void)
-{
-     struct inputbuffer *ib = &H.ui.ib;
-     wchar_t c ;
-
-     wmove(H.ui.inputwin, 0, ib->cpos);
-
-     if(!(c = ib->buffer[ib->pos]))
-          c = ' ';
-
-     hftirc_waddwch(H.ui.inputwin, A_REVERSE, c);
-     wrefresh(H.ui.inputwin);
 }
 
 void
@@ -227,7 +214,7 @@ ui_print_buf(struct buffer *b, char *fmt, ...)
      (void)vasprintf(&str, fmt, args);
      va_end(args);
 
-     xasprintf(&fstr, "[dev:4:20] %s\n", str);
+     xasprintf(&fstr, "[dev:4:20]  %s\n", str);
 
      bl = ui_buffer_line_new(b, fstr);
 
@@ -258,9 +245,8 @@ ui_get_input(void)
 {
      struct buffer *bf;
      struct inputbuffer *ib = &H.ui.ib;
-     wchar_t tmpbuf[BUFSIZE], *cmp;
      char buf[BUFSIZE];
-     int i, j, n, b = 1, t;
+     int i, j, n, t;
      wint_t c;
 
      switch((t = get_wch(&c)))
@@ -269,6 +255,22 @@ ui_get_input(void)
      default:
           switch(c)
           {
+          case KEY_F(1):
+          case CTRLK('p'):
+               if(!(bf = TAILQ_PREV(H.bufsel, bsub, next)))
+                    bf = TAILQ_LAST(&H.h.buffer, bsub);
+
+               ui_buffer_set(bf);
+               break;
+
+          case KEY_F(2):
+          case CTRLK('n'):
+               if(!(bf = TAILQ_NEXT(H.bufsel, next)))
+                    bf = TAILQ_FIRST(&H.h.buffer);
+
+               ui_buffer_set(bf);
+               break;
+
           case KEY_HOME:
                wmove(H.ui.inputwin, 0, 0);
                ib->pos = ib->cpos = 0;
@@ -288,6 +290,15 @@ ui_get_input(void)
                }
                else
                     ib->cpos = (int)wcslen(ib->buffer);
+               break;
+
+          case KEY_DC:
+               wdelch(H.ui.inputwin);
+
+               if(ib->buffer[ib->pos] != 0 && ib->pos >= 0)
+                    for(i = ib->pos;
+                        ib->buffer[i];
+                        ib->buffer[i] = ib->buffer[i + 1], ++i);
                break;
 
           case KEY_UP:
@@ -530,22 +541,29 @@ ui_get_input(void)
      ib->prev = c;
      werase(H.ui.inputwin);
      ib->cpos = (ib->cpos < 0 ? 0 : ib->cpos);
-     mvwaddwstr(H.ui.inputwin, 0, 0, ib->buffer + ib->split);
-     wcstombs(buf, ib->buffer, BUFSIZE);
+
+     for(i = 0; (c = *(ib->buffer + ib->split + i)); ++i)
+          hftirc_waddwch(H.ui.inputwin, (i == ib->cpos ? A_REVERSE : A_NORMAL), c);
+
+     if(ib->cpos == wcslen(ib->buffer) || ib->cpos == COLS - 1 || ib->spting)
+          waddch(H.ui.inputwin, ' ' | A_REVERSE);
 
      /* /<num> to go on the buffer num */
-     if(buf[0] == '/' &&
-        ((isdigit(buf[1]) && (n= atoi(&buf[1])) >= 0 && n < 10)  /* /n   */
-         || (buf[1] == ' ' && (n = atoi(&buf[2])) > 9))         /* / nn */
-        && (bf = ui_buffer_gb_id(n)))
+     if(ib->buffer[0] == '/')
      {
-          ui_buffer_set(bf);
-          werase(H.ui.inputwin);
-          wmemset(ib->buffer, 0, BUFSIZE);
-          ib->pos = ib->cpos = ib->split = ib->hits = 0;
-          wmove(H.ui.inputwin, 0, 0);
+          if((isdigit((char)ib->buffer[1]) && (n = atoi((char*)&ib->buffer[1])) >= 0 && n < 10)  /* /n   */
+             || (ib->buffer[1] == ' ' && (n = atoi((char*)&ib->buffer[2])) > 9))                 /* / nn */
+          {
+               if((bf = ui_buffer_gb_id(n)))
+               {
+                    ui_buffer_set(bf);
+                    werase(H.ui.inputwin);
+                    wmemset(ib->buffer, 0, BUFSIZE);
+                    ib->pos = ib->cpos = ib->split = ib->hits = 0;
+                    wmove(H.ui.inputwin, 0, 0);
+               }
+          }
      }
 
-     ui_update_cursor();
-
+     wrefresh(H.ui.inputwin);
 }

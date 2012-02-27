@@ -7,6 +7,7 @@
 #define HFTIRC_H
 
 #define _XOPEN_SOURCE_EXTENDED 1
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
