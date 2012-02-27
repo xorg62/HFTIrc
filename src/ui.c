@@ -6,6 +6,7 @@
 #include "hftirc.h"
 #include "ui.h"
 #include "util.h"
+#include "input.h"
 
 struct buffer*
 ui_buffer_new(struct session *session, char *name)
@@ -61,6 +62,21 @@ ui_init_color(void)
                init_pair(++n, i, (!j ? H.ui.bg : j));
 
      H.ui.c = n;
+}
+
+static void
+ui_update_cursor(void)
+{
+     struct inputbuffer *ib = &H.ui.ib;
+     wchar_t c ;
+
+     wmove(H.ui.inputwin, 0, ib->cpos);
+
+     if(!(c = ib->buffer[ib->pos]))
+          c = ' ';
+
+     hftirc_waddwch(H.ui.inputwin, A_REVERSE, c);
+     wrefresh(H.ui.inputwin);
 }
 
 void
@@ -138,6 +154,15 @@ ui_color(int fg, int bg)
 }
 
 void
+ui_update(void)
+{
+     werase(H.ui.statuswin);
+     wbkgd(H.ui.statuswin, COLOR_SW);
+     mvwprintw(H.ui.statuswin, 0, 0, "[dev:4:20]");
+     wrefresh(H.ui.statuswin);
+}
+
+void
 ui_get_input(void)
 {
      struct inputbuffer *ib = &H.ui.ib;
@@ -207,7 +232,7 @@ ui_get_input(void)
                if(ib->nhisto && ib->histpos > 0 && ib->histpos < ib->nhisto)
                {
                     wmemset(ib->buffer, 0, BUFSIZE);
-                    wcscpy(ib->buffer, ib->histo[ib->nhisto - (--ib->histpos]));
+                    wcscpy(ib->buffer, ib->histo[ib->nhisto - (--ib->histpos)]);
                     werase(H.ui.inputwin);
                     ib->cpos = ib->pos = wcslen(ib->buffer);
 
@@ -375,7 +400,7 @@ ui_get_input(void)
                     wcscpy(ib->histo[ib->nhisto++], ib->buffer);
                     ib->histpos = 0;
                     wcstombs(buf, ib->buffer, BUFSIZE);
-                    /*input_manage(buf);*/
+                    input_manage(buf);
 
                     werase(H.ui.inputwin);
                     wmemset(ib->buffer, 0, BUFSIZE);
@@ -429,6 +454,6 @@ ui_get_input(void)
           wmove(H.ui.inputwin, 0, 0);
      }
 
-/*     ui_refresh_curpos();*/
+     ui_update_cursor();
 
 }

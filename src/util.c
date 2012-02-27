@@ -43,3 +43,17 @@ xstrdup(const char *str)
 
      return ret;
 }
+
+void
+hftirc_waddwch(WINDOW *w, unsigned int mask, wchar_t wch)
+{
+     cchar_t cch;
+     wchar_t wstr[2] = { wch, '\0' };
+
+     wattron(w, mask);
+
+     if(setcchar(&cch, wstr, A_NORMAL, 0, NULL) == OK)
+          (void)wadd_wch(w, &cch);
+
+     wattroff(w, mask);
+}

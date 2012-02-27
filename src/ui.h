@@ -28,12 +28,11 @@
 #define HFTIRC_KEY_ALTBP  (27)
 #define HFTIRC_KEY_DELALL CTRLK('u')
 
-
 void ui_init(void);
 int ui_color(int fg, int bg);
 struct buffer* ui_buffer_new(struct session *session, char *name);
 void ui_buffer_remove(struct buffer *b);
 void ui_get_input(void);
-
+void ui_update(void);
 
 #endif

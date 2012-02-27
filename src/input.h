@@ -6,4 +6,8 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#include "hftirc.h"
+
+void input_manage(char *input);
+
 #endif
