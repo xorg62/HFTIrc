@@ -318,15 +318,6 @@ ui_get_input(void)
                          ib->spting = 1;
                          ib->cpos = COLS - 1;
                     }
-
-                    /* Ctrl-key are 2 char long */
-                    for(i = 0; i < wcslen(ib->buffer); ++i)
-                         if(IS_CTRLK(ib->buffer[i]))
-                         {
-                              ++ib->cpos;
-                              if(ib->spting)
-                                   ++ib->split;
-                         }
                }
                break;
 
@@ -344,15 +335,6 @@ ui_get_input(void)
                          ib->spting = 1;
                          ib->cpos = COLS - 1;
                     }
-
-                    /* Ctrl-key are 2 char long */
-                    for(i = 0; i < wcslen(ib->buffer); ++i)
-                         if(IS_CTRLK(ib->buffer[i]))
-                         {
-                              ++ib->cpos;
-                              if(ib->spting)
-                                   ++ib->split;
-                         }
                }
                else
                     werase(H.ui.inputwin);
@@ -363,9 +345,6 @@ ui_get_input(void)
           case KEY_LEFT:
                if(ib->pos >= 1 && ib->cpos >= 1)
                {
-                    if(IS_CTRLK(ib->buffer[ib->pos - 1]))
-                         --ib->cpos;
-
                     --ib->pos;
 
                     if(ib->spting)
@@ -384,9 +363,6 @@ ui_get_input(void)
           case KEY_RIGHT:
                if(ib->buffer[ib->pos] != 0)
                {
-                    if(IS_CTRLK(ib->buffer[ib->pos]))
-                         ++ib->cpos;
-
                     ++ib->pos;
 
                     if(ib->spting)
@@ -418,13 +394,6 @@ ui_get_input(void)
                {
                     for(i = ib->pos - 1; (i + 1) && ib->buffer[i - 1] != ' '; --i)
                     {
-                         /* Ctrl-key */
-                         if(IS_CTRLK(ib->buffer[ib->pos - 1]))
-                         {
-                              wmove(H.ui.inputwin, 0, --ib->cpos);
-                              wdelch(H.ui.inputwin);
-                         }
-
                          --ib->pos;
 
                          if(ib->spting)
@@ -454,13 +423,6 @@ ui_get_input(void)
           case KEY_BACKSPACE:
                if(ib->pos > 0)
                {
-                    /* Ctrl-key */
-                    if(IS_CTRLK(ib->buffer[ib->pos - 1]))
-                    {
-                         wmove(H.ui.inputwin, 0, --ib->cpos);
-                         wdelch(H.ui.inputwin);
-                    }
-
                     --ib->pos;
 
                     if(ib->spting)
@@ -511,10 +473,6 @@ ui_get_input(void)
                break;
 
           default:
-               /* Ctrl-key */
-               if(IS_CTRLK(c))
-                    ++ib->cpos;
-
                if(ib->buffer[ib->pos] != '\0')
                     for(i = (int)wcslen(ib->buffer);
                         i != ib->pos - 1;
