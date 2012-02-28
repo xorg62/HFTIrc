@@ -21,7 +21,7 @@
 #include <wctype.h>
 
 #if !defined (__NetBSD__)
-    #include <ncurses.h>
+    #include <ncursesw.h>
 #else
     #include <ncurses/ncurses.h>
 #endif
@@ -71,7 +71,7 @@ struct buffer_line
 {
      char *line;
      int id;
-     STAILQ_ENTRY(buffer_line) next;
+     TAILQ_ENTRY(buffer_line) next;
 };
 
 struct buffer
@@ -84,7 +84,7 @@ struct buffer
      int act, nline;
      char *name;
      char *topic;
-     STAILQ_HEAD(, buffer_line) lines;
+     TAILQ_HEAD(blsub, buffer_line) lines;
      SLIST_HEAD(, nick) nicks;
      TAILQ_ENTRY(buffer) next;
 };

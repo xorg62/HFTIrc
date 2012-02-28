@@ -30,7 +30,7 @@ main(int argc, char **argv)
      struct session *session;
      struct session_info *info;
      fd_set set;
-     int i, n, maxfd, nsession;
+     int i, maxfd, nsession;
 
      while((i = getopt(argc, argv, "hvc:")) != -1)
      {
@@ -86,7 +86,7 @@ main(int argc, char **argv)
                     ++nsession;
                }
 
-          if(select(maxfd + n + 1, &set, NULL, NULL, &tv) > 0)
+          if(select(maxfd + nsession + 1, &set, NULL, NULL, &tv) > 0)
           {
                if(FD_ISSET(STDIN_FILENO, &set))
                     ui_get_input();

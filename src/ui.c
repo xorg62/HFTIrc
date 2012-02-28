@@ -24,7 +24,7 @@ ui_buffer_new(struct session *session, char *name)
      b->id      = (p ? p->id + 1 : 0);
      b->nline   = 0;
 
-     STAILQ_INIT(&b->lines);
+     TAILQ_INIT(&b->lines);
      SLIST_INIT(&b->nicks);
 
      TAILQ_INSERT_TAIL(&H.h.buffer, b, next);
@@ -40,10 +40,10 @@ ui_buffer_remove(struct buffer *b)
      free(b->name);
      free(b->topic);
 
-     while(!STAILQ_EMPTY(&b->lines))
+     while(!TAILQ_EMPTY(&b->lines))
      {
-          bl = STAILQ_FIRST(&b->lines);
-          STAILQ_REMOVE_HEAD(&b->lines, next);
+          bl = TAILQ_FIRST(&b->lines);
+          TAILQ_REMOVE(&b->lines, bl, next);
           free(bl->line);
           free(bl);
      }
@@ -173,7 +173,7 @@ ui_update_buf(void)
 
      werase(H.ui.mainwin);
 
-     STAILQ_FOREACH(b, &H.bufsel->lines, next)
+     TAILQ_FOREACH(b, &H.bufsel->lines, next)
           ui_print_line(b);
 
      wrefresh(H.ui.mainwin);
@@ -188,13 +188,13 @@ ui_buffer_line_new(struct buffer *b, char *str)
      bl->line = str;
      bl->id = b->nline++;
 
-     STAILQ_INSERT_TAIL(&b->lines, bl, next);
+     TAILQ_INSERT_TAIL(&b->lines, bl, next);
 
      /* Remove head if histo length is reached */
      if(b->nline >= BUFHISTOLEN)
      {
-          h = STAILQ_FIRST(&b->lines);
-          STAILQ_REMOVE_HEAD(&b->lines, next);
+          h = TAILQ_FIRST(&b->lines);
+          TAILQ_REMOVE(&b->lines, h, next);
           free(h->line);
           free(h);
           --b->nline;
