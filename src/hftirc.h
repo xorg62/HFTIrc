@@ -21,7 +21,7 @@
 #include <wctype.h>
 
 #if !defined (__NetBSD__)
-    #include <ncursesw.h>
+    #include <ncurses.h>
 #else
     #include <ncurses/ncurses.h>
 #endif
