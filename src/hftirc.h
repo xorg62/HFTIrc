@@ -7,7 +7,6 @@
 #define HFTIRC_H
 
 #define _XOPEN_SOURCE_EXTENDED 1
-#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,11 +76,12 @@ struct buffer_line
 struct buffer
 {
      struct session *session;
+     struct buffer_line *scrollb;
      int id;
 #define ACT_NO     0
 #define ACT_NORMAL 1
 #define ACT_HL     2
-     int act, nline;
+     int act, nline, nscroll;
      char *name;
      char *topic;
      TAILQ_HEAD(blsub, buffer_line) lines;

@@ -19,6 +19,7 @@
 
 #define NICKLIST_SIZE 20
 #define MAINWIN_LINES (LINES - 2)
+#define STATUS_BUFFER TAILQ_FIRST(&H.h.buffer)
 
 /* Test control-bind */
 #define IS_CTRLK(c)  (c > 0 && c < 32)
@@ -36,6 +37,7 @@ void ui_get_input(void);
 void ui_update(void);
 void ui_print_buf(struct buffer *b, char *fmt, ...);
 void ui_buffer_set(struct buffer *b);
+void ui_buffer_scroll(struct buffer *b, int n);
 
 static inline struct buffer*
 ui_buffer_gb_id(int n)

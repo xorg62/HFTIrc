@@ -15,9 +15,27 @@
 void
 signal_handler(int signal)
 {
+     int oc, ol, d;
+     (void)d;
+
      switch(signal)
      {
+     /* Terminal resize */
      case SIGWINCH:
+          oc = COLS;
+          ol = LINES;
+
+          endwin();
+          refresh();
+          getmaxyx(stdscr, d, d);
+
+          ui_init();
+          ui_get_input();
+          ui_print_buf(STATUS_BUFFER,
+                       "[HFTIrc] *** Terminal resized (%dx%d -> %dx%d)",
+                       ol, oc, LINES, COLS);
+          ui_buffer_set(H.bufsel);
+
           break;
      }
 }

@@ -20,9 +20,11 @@ ui_buffer_new(struct session *session, char *name)
      b->session = session;
      b->name    = xstrdup(name);
      b->topic   = NULL;
+     b->scrollb = NULL;
      b->act     = ACT_NO;
      b->id      = (p ? p->id + 1 : 0);
      b->nline   = 0;
+     b->nscroll = 0;
 
      TAILQ_INIT(&b->lines);
      SLIST_INIT(&b->nicks);
@@ -163,7 +165,7 @@ ui_update(void)
 static void
 ui_print_line(struct buffer_line *bl)
 {
-     waddstr(H.ui.mainwin, bl->line);
+     mvwaddstr(H.ui.mainwin, MAINWIN_LINES - 1, 0, bl->line);
 }
 
 static void
@@ -173,8 +175,18 @@ ui_update_buf(void)
 
      werase(H.ui.mainwin);
 
-     TAILQ_FOREACH(b, &H.bufsel->lines, next)
-          ui_print_line(b);
+     if(H.bufsel->nscroll)
+     {
+          TAILQ_FOREACH(b, &H.bufsel->lines, next)
+          {
+               if(b == H.bufsel->scrollb)
+                    break;
+               ui_print_line(b);
+          }
+     }
+     else
+          TAILQ_FOREACH(b, &H.bufsel->lines, next)
+               ui_print_line(b);
 
      wrefresh(H.ui.mainwin);
 }
@@ -218,7 +230,7 @@ ui_print_buf(struct buffer *b, char *fmt, ...)
 
      bl = ui_buffer_line_new(b, fstr);
 
-     if(b == H.bufsel)
+     if(b == H.bufsel && !b->nscroll)
      {
           ui_print_line(bl);
           wrefresh(H.ui.mainwin);
@@ -238,6 +250,38 @@ ui_buffer_set(struct buffer *b)
           H.sessionsel = b->session;
 
      ui_update_buf();
+}
+
+void
+ui_buffer_scroll(struct buffer *b, int n)
+{
+     struct buffer_line *bl;
+     int i = 0;
+
+     b->nscroll += n;
+
+     if(b->nscroll <= 0)
+     {
+          b->nscroll = 0;
+          b->scrollb = NULL;
+     }
+
+     /* Save pointer of the buffer line limit in list */
+     TAILQ_FOREACH_REVERSE(bl, &b->lines, blsub, next)
+     {
+          if(i == b->nscroll)
+          {
+               b->scrollb = bl;
+               break;
+          }
+          ++i;
+     }
+
+     if(!bl)
+          b->nscroll -= n;
+
+     if(b == H.bufsel)
+          ui_update_buf();
 }
 
 void
@@ -269,6 +313,14 @@ ui_get_input(void)
                     bf = TAILQ_FIRST(&H.h.buffer);
 
                ui_buffer_set(bf);
+               break;
+
+          case KEY_PPAGE:
+               ui_buffer_scroll(H.bufsel, (MAINWIN_LINES >> 1));
+               break;
+
+          case KEY_NPAGE:
+               ui_buffer_scroll(H.bufsel, -(MAINWIN_LINES >> 1));
                break;
 
           case KEY_HOME:
@@ -470,6 +522,9 @@ ui_get_input(void)
                     wmemset(ib->buffer, 0, BUFSIZE);
                     ib->pos = ib->cpos = ib->split = ib->hits = 0;
                }
+               break;
+
+          case KEY_RESIZE:
                break;
 
           default:
