@@ -3,10 +3,26 @@
  * For license, see COPYING
  */
 
+#include <stdint.h>
 #include <err.h>
 
 #include "hftirc.h"
 #include "util.h"
+
+void*
+xmalloc(size_t nmemb, size_t size)
+{
+     void *ret;
+
+     if(SIZE_MAX / nmemb < size)
+          err(EXIT_FAILURE, "xmalloc(%zu, %zu), "
+               "size_t overflow detected", nmemb, size);
+
+     if((ret = malloc(nmemb * size)) == NULL)
+          err(EXIT_FAILURE, "malloc(%zu)", nmemb * size);
+
+     return ret;
+}
 
 void*
 xcalloc(size_t nmemb, size_t size)

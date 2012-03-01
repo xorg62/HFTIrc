@@ -465,7 +465,6 @@ ui_get_input(void)
                               for(j = ib->pos;
                                   ib->buffer[j];
                                   ib->buffer[j] = ib->buffer[j + 1], ++j);
-                         wdelch(H.ui.inputwin);
                     }
                     ui_get_input();
                }
@@ -494,7 +493,6 @@ ui_get_input(void)
                          for(i = ib->pos;
                              ib->buffer[i];
                              ib->buffer[i] = ib->buffer[i + 1], ++i);
-                    wdelch(H.ui.inputwin);
                }
                break;
 

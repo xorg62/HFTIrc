@@ -10,6 +10,7 @@
      while(*(s) == ' ') \
           ++(s)
 
+void* xmalloc(size_t nmemb, size_t size);
 void *xcalloc(size_t nmemb, size_t size);
 int xasprintf(char **strp, const char *fmt, ...);
 char *xstrdup(const char *str);
