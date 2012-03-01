@@ -4,7 +4,6 @@
  */
 
 #include <stdint.h>
-#include <err.h>
 
 #include "hftirc.h"
 #include "util.h"
@@ -54,12 +53,12 @@ xasprintf(char **strp, const char *fmt, ...)
 char *
 xstrdup(const char *str)
 {
-     char *ret = NULL;
+     char *ret;
 
-     if(str == NULL || (ret = strdup(str)) == NULL)
-          warnx("strdup(%s)", str);
+     if(str && (ret = strdup(str)) == NULL)
+          return ret;
 
-     return ret;
+     return NULL;
 }
 
 void

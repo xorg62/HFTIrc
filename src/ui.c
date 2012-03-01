@@ -104,7 +104,9 @@ ui_init(void)
           ui_init_color();
 
      /* Init main window and the borders */
-     H.ui.mainwin = newwin(MAINWIN_LINES, COLS - (H.ui.nicklist ? NICKLIST_SIZE : 0), 1, 0);
+     H.ui.mainwin = newwin(MAINWIN_LINES,
+                           COLS - (H.flags & HFTIRC_NICKLIST ? NICKLIST_SIZE : 0),
+                           1, 0);
      scrollok(H.ui.mainwin, true);
      wrefresh(H.ui.mainwin);
 

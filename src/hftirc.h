@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <locale.h>
+#include <err.h>
 #include <sys/queue.h>
 #include <wchar.h>
 #include <wctype.h>
@@ -25,9 +26,10 @@
     #include <ncurses/ncurses.h>
 #endif
 
-#define BUFSIZE     (4096)
-#define HISTOLEN    (64)
-#define BUFHISTOLEN (128)
+#define BUFSIZE      (4096)
+#define HISTOLEN     (64)
+#define BUFHISTOLEN  (128)
+#define MAX_PATH_LEN (8192)
 
 typedef unsigned long Flags;
 
@@ -40,6 +42,8 @@ struct session_info
      char *username;
      char *realname;
      char *password;
+     char **autojoin;
+     int nautojoin;
      SLIST_ENTRY(session_info) next;
 };
 
@@ -98,7 +102,6 @@ struct ui
      WINDOW *topicwin;
      WINDOW *nicklistwin;
      int bg, c, tcolor;
-     bool nicklist;
 
      /* Input buffer struct */
      struct inputbuffer
@@ -122,9 +125,22 @@ struct hftirc
      struct ui ui;
      struct buffer *bufsel;
      struct session *sessionsel;
-#define HFTIRC_RUNNING    0x01
-#define HFTIRC_FIRST_TIME 0x02
+     char *confpath, dateformat[256];
+#define HFTIRC_RUNNING     0x01
+#define HFTIRC_FIRST_TIME  0x02
+#define HFTIRC_BELL        0x04
+#define HFTIRC_NICKLIST    0x08
+#define HFTIRC_LASTLINEPOS 0x10
+#define HFTIRC_NICKCOLOR   0x20
      Flags flags;
+#define IGNORE_JOIN   0x01
+#define IGNORE_QUIT   0x02
+#define IGNORE_MODE   0x04
+#define IGNORE_CTCP   0x08
+#define IGNORE_NOTICE 0x10
+#define IGNORE_PART   0x20
+#define IGNORE_NICK   0x40
+     Flags ignore_flags;
 
      /* Linked list heads */
      struct

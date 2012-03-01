@@ -1,12 +1,4 @@
 hftirc
 *.o
 src/*.o
-src/parse/*.o
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-cmake_uninstall.cmake
 Makefile
-build/
-src/config.h
-install_manifest.txt

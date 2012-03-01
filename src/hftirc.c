@@ -11,6 +11,7 @@
 
 #include "hftirc.h"
 #include "ui.h"
+#include "config.h"
 
 void
 signal_handler(int signal)
@@ -47,8 +48,11 @@ main(int argc, char **argv)
      struct timeval tv;
      struct session *session;
      struct session_info *info;
+     char path[MAX_PATH_LEN] = { 0 };
      fd_set set;
      int i, maxfd, nsession;
+
+     sprintf(path, "%s/.config/hftirc/hftirc.conf", getenv("HOME"));
 
      while((i = getopt(argc, argv, "hvc:")) != -1)
      {
@@ -59,7 +63,7 @@ main(int argc, char **argv)
                printf("usage: %s [-hv] [-c <file>]\n"
                           "   -h         Show this page\n"
                           "   -v         Show version\n"
-                      "   -c <file>  Load a configuration file\n", argv[0]);
+                          "   -c <file>  Load a configuration file\n", argv[0]);
                exit(EXIT_SUCCESS);
                break;
 
@@ -69,9 +73,12 @@ main(int argc, char **argv)
                break;
 
           case 'c':
+               strncpy(path, optarg, sizeof(path));
                break;
           }
      }
+
+     H.confpath = path;
 
      sig.sa_handler = signal_handler;
      sig.sa_flags   = 0;
@@ -83,6 +90,7 @@ main(int argc, char **argv)
 
      H.flags |= (HFTIRC_RUNNING | HFTIRC_FIRST_TIME);
 
+     config_init();
      ui_init();
 
      while(H.flags & HFTIRC_RUNNING)
