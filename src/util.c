@@ -55,8 +55,8 @@ xstrdup(const char *str)
 {
      char *ret;
 
-     if(str && (ret = strdup(str)) == NULL)
-          return ret;
+     if(str)
+          return strdup(str);
 
      return NULL;
 }
