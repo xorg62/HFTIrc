@@ -12,6 +12,7 @@
 #include "hftirc.h"
 #include "ui.h"
 #include "config.h"
+#include "irc.h"
 
 void
 signal_handler(int signal)
@@ -116,10 +117,11 @@ main(int argc, char **argv)
           {
                if(FD_ISSET(STDIN_FILENO, &set))
                     ui_get_input();
-               /*else
+               else
+
                     SLIST_FOREACH(session, &H.h.session, next)
-                         if(irc_run_process(session, &set))
-                         session->flags &= ~SESSION_CONNECTED;*/
+                         if(irc_process(session, &set))
+                              session->flags &= ~SESSION_CONNECTED;
           }
 
           ui_update();

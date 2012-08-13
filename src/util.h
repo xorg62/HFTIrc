@@ -8,6 +8,8 @@
 
 #include "ui.h"
 
+
+#define LEN(x) (sizeof(x) / sizeof(*x))
 #define REMOVE_SPACE(s) \
      while(*(s) == ' ') \
           ++(s)

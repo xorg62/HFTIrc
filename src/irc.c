@@ -10,10 +10,33 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include "hftirc.h"
 #include "ui.h"
 #include "irc.h"
+#include "event.h"
+#include "util.h"
+
+const static struct
+{
+     const char cmd[32];
+     int len;
+     void (*func)(struct session *, int, const char*, const char**, int);
+} event_list[] =
+{
+     { "PING",    4, event_ping },
+     /* { "QUIT",    4, event_quit },
+     { "JOIN",    4, event_join },
+     { "PART",    4, event_part },
+     { "INVITE",  6, event_invit },
+     { "TOPIC",   5, event_topic },
+     { "KICK",    4, event_kick },
+     { "NICK",    4, event_nick },
+     { "MODE",    4, event_mode },
+     { "PRIVMSG", 7, event_privmsg },
+     { "NOTICE",  6, event_notice },*/
+};
 
 ssize_t
 irc_send_raw(struct session *s, const char *format, ...)
@@ -123,4 +146,115 @@ irc_process(struct session *s, fd_set *inset)
      }
 
      return 0;
+}
+
+#define NEXT_ARG(p)                             \
+     while(*(p) && *(p) != ' ')                 \
+          ++(p);                                \
+static void
+irc_parse(char *buf,
+          const char *prefix,
+          const char *command,
+          const char **params,
+          int *code,
+          int *paramindex)
+{
+     char *p = buf;
+     char *s = NULL;
+
+     /* Prefix */
+     if(buf[0] == ':')
+     {
+          NEXT_ARG(p);
+          *(p++) = '\0';
+          strcpy((char*)prefix, buf + 1);
+     }
+
+     /* Command */
+     if(isdigit((int)p[0])
+        && isdigit((int)p[1])
+        && isdigit((int)p[2]))
+     {
+          /* Numeric */
+          p[3] = '\0';
+          *code = strtol(p, NULL, 10);
+          p += 4;
+     }
+     else
+     {
+          /* Ascii commands */
+          s = p;
+          NEXT_ARG(p);
+          *(p++) = '\0';
+
+          strcpy((char*)command, s);
+     }
+
+     /* Params */
+     while(*p && *paramindex < 10)
+     {
+          if(*p = ':')
+          {
+               params[(*paramindex)++] = p + 1;
+               break;
+          }
+          s = p;
+          NEXT_ARG(p);
+
+          params[(*paramindex)++] = s;
+
+          if(*p == '\0')
+               break;
+     }
+}
+
+
+void
+irc_manage_event(struct session *s, int plen)
+{
+     char buf[BUFSIZE], ctcp_buf[128];
+     const char command[BUFSIZE] = { 0 };
+     const char prefix[BUFSIZE] = { 0 };
+     const char *params[11];
+     int i, code = 0, paramindex = 0;
+     unsigned int msglen;
+
+     if(plen > sizeof(buf))
+          return;
+
+     memcpy(buf, s->inbuf, plen);
+     buf[plen] = '\0';
+     memset((char*)params, 0, sizeof(params));
+
+     /*
+      * \_0< QUACK!
+      *~~~~~~~~~~~~~
+      *  ~    ~   >0_/
+      */
+     irc_parse(buf, prefix, command, params, &code, &paramindex);
+
+     if(code)
+     {
+          if(!(s->flags & SESSION_MOTD) && (code == 376 || code == 422))
+          {
+               s->flags |= SESSION_MOTD;
+               //event_connect(s, code, prefix, params, paramindex);
+          }
+
+          //event_numeric(s, code, prefix, params, paramindex);
+          return;
+     }
+
+     for(i = 0; i < LEN(event_list); ++i)
+     {
+          if(!strncmp(event_list[i].cmd, command, event_list[i].len))
+          {
+               event_list[i].func(s, code, prefix, params, paramindex);
+               break;
+          }
+     }
+
+
+
+
 }
