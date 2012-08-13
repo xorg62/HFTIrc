@@ -10,4 +10,4 @@
 
 void input_manage(char *input);
 
-#endif
+#endif /* INPUT_H */

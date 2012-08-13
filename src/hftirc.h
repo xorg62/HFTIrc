@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <locale.h>
 #include <err.h>
+#include <errno.h>
 #include <sys/queue.h>
 #include <wchar.h>
 #include <wctype.h>
@@ -28,7 +29,7 @@
 
 #define BUFSIZE      (4096)
 #define HISTOLEN     (64)
-#define BUFHISTOLEN  (128)
+#define BUFHISTOLEN  (512)
 #define MAX_PATH_LEN (8192)
 
 typedef unsigned long Flags;

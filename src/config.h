@@ -10,4 +10,4 @@
 
 void config_init(void);
 
-#endif
+#endif /* CONFIG_H */
