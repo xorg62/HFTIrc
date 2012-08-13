@@ -10,8 +10,8 @@
 
 
 #define LEN(x) (sizeof(x) / sizeof(*x))
-#define REMOVE_SPACE(s) \
-     while(*(s) == ' ') \
+#define REMOVE_SPACE(s)                         \
+     while(*(s) && *(s) == ' ')                 \
           ++(s)
 
 void* xmalloc(size_t nmemb, size_t size);

@@ -148,9 +148,6 @@ irc_process(struct session *s, fd_set *inset)
      return 0;
 }
 
-#define NEXT_ARG(p)                             \
-     while(*(p) && *(p) != ' ')                 \
-          ++(p);                                \
 static void
 irc_parse(char *buf,
           const char *prefix,
@@ -165,7 +162,7 @@ irc_parse(char *buf,
      /* Prefix */
      if(buf[0] == ':')
      {
-          NEXT_ARG(p);
+          REMOVE_SPACE(p);
           *(p++) = '\0';
           strcpy((char*)prefix, buf + 1);
      }
@@ -184,7 +181,7 @@ irc_parse(char *buf,
      {
           /* Ascii commands */
           s = p;
-          NEXT_ARG(p);
+          REMOVE_SPACE(p);
           *(p++) = '\0';
 
           strcpy((char*)command, s);
@@ -199,7 +196,7 @@ irc_parse(char *buf,
                break;
           }
           s = p;
-          NEXT_ARG(p);
+          REMOVE_SPACE(p);
 
           params[(*paramindex)++] = s;
 
