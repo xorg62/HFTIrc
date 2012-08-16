@@ -51,7 +51,7 @@ main(int argc, char **argv)
      struct session_info *info;
      char path[MAX_PATH_LEN] = { 0 };
      fd_set set;
-     int i, maxfd, nsession;
+     int i, s, maxfd, nsession;
 
      sprintf(path, "%s/.config/hftirc/hftirc.conf", getenv("HOME"));
 
@@ -96,8 +96,8 @@ main(int argc, char **argv)
 
      while(H.flags & HFTIRC_RUNNING)
      {
-          tv.tv_sec = 0;
-          tv.tv_usec = 250000;
+          tv.tv_sec = 1;
+          tv.tv_usec = 0;
 
           FD_ZERO(&set);
           FD_SET(STDIN_FILENO, &set);
@@ -105,23 +105,26 @@ main(int argc, char **argv)
 
           nsession = 0;
           SLIST_FOREACH(session, &H.h.session, next)
+          {
                if(session->sock > 0 && (session->flags & SESSION_CONNECTED))
                {
                     if(maxfd < session->sock)
                          maxfd = session->sock;
                     FD_SET(session->sock, &set);
-                    ++nsession;
                }
+               ++nsession;
+          }
 
-          if(select(maxfd + nsession + 1, &set, NULL, NULL, &tv) > 0)
+          if((s = select(maxfd + nsession + 1, &set, NULL, NULL, &tv) > 0))
           {
                if(FD_ISSET(STDIN_FILENO, &set))
                     ui_get_input();
                else
-
+               {
                     SLIST_FOREACH(session, &H.h.session, next)
                          if(irc_process(session, &set))
                               session->flags &= ~SESSION_CONNECTED;
+               }
           }
 
           ui_update();

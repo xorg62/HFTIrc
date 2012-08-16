@@ -7,12 +7,14 @@
 #define HFTIRC_H
 
 #define _XOPEN_SOURCE_EXTENDED 1
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <time.h>
 #include <unistd.h>
 #include <locale.h>
 #include <err.h>
@@ -31,6 +33,7 @@
 #define HISTOLEN     (64)
 #define BUFHISTOLEN  (512)
 #define MAX_PATH_LEN (8192)
+#define TIMEOUT_IRC  (30)
 
 typedef unsigned long Flags;
 
@@ -52,6 +55,7 @@ struct session
 {
      struct session_info *info;
      int sock;
+     time_t last_response;
      char *mode;
 #define SESSION_CONNECTED 0x01
 #define SESSION_MOTD      0x02

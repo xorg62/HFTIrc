@@ -3,6 +3,8 @@
  * For license, see COPYING
  */
 
+#define _GNU_SOURCE
+
 #include <ctype.h>
 
 #include "hftirc.h"

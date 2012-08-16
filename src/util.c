@@ -3,6 +3,8 @@
  * For license, see COPYING
  */
 
+#define _GNU_SOURCE
+
 #include <stdint.h>
 
 #include "hftirc.h"
@@ -53,8 +55,6 @@ xasprintf(char **strp, const char *fmt, ...)
 char *
 xstrdup(const char *str)
 {
-     char *ret;
-
      if(str)
           return strdup(str);
 
