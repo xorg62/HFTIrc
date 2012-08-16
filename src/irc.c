@@ -28,17 +28,17 @@ const static struct
 } event_list[] =
 {
      { "PING",    4, event_ping },
-     /* { "QUIT",    4, event_quit },
+     // { "QUIT",    4, event_quit },
      { "JOIN",    4, event_join },
-     { "PART",    4, event_part },
-     { "INVITE",  6, event_invit },
-     { "TOPIC",   5, event_topic },
-     { "KICK",    4, event_kick },
-     { "NICK",    4, event_nick },
-     { "MODE",    4, event_mode },
+     // { "PART",    4, event_part },
+     //{ "INVITE",  6, event_invit },
+     //{ "TOPIC",   5, event_topic },
+     //{ "KICK",    4, event_kick },
+     //{ "NICK",    4, event_nick },
+     //{ "MODE",    4, event_mode },
      { "PRIVMSG", 7, event_privmsg },
-     { "NOTICE",  6, event_notice },
-     { "ERROR",   5, event_error }*/
+     //{ "NOTICE",  6, event_notice },
+     //{ "ERROR",   5, event_error }
 };
 
 int
@@ -83,7 +83,7 @@ irc_connect(struct session *s)
           return 1;
      }
 
-     // fcntl(s->sock, F_SETFL, O_NONBLOCK);
+     //fcntl(s->sock, F_SETFL, O_NONBLOCK);
 
      if(connect(s->sock, (const struct sockaddr*)&a, sizeof(a)) < 0)
      {
@@ -169,65 +169,56 @@ irc_process(struct session *s, fd_set *inset)
      return 0;
 }
 
-static void
-irc_parse(char *buf,
-          const char *prefix,
-          const char *command,
-          const char **params,
-          int *code,
-          int *paramindex)
+void
+irc_parse_in(char *buf,
+             const char *prefix,
+             const char *command,
+             const char **params,
+             int *code,
+             int *paramindex)
 {
      char *p = buf;
      char *s = NULL;
 
-     /* Prefix */
+     /* Parse prefix */
      if(buf[0] == ':')
      {
-          REMOVE_SPACE(p);
-          *(p++) = '\0';
-          strcpy((char*)prefix, buf + 1);
+          for(; *p && *p != ' '; ++p);
+          *p++ = '\0';
+          strcpy((char *)prefix, buf + 1);
      }
 
-     /* Command */
-     if(isdigit((int)p[0])
-        && isdigit((int)p[1])
-        && isdigit((int)p[2]))
+     /* Parse command */
+     if(isdigit((int)p[0]) && isdigit((int)p[1]) && isdigit((int)p[2]))
      {
-          /* Numeric */
           p[3] = '\0';
-          *code = strtol(p, NULL, 10);
+          *code = atoi (p);
           p += 4;
      }
      else
      {
-          /* Ascii commands */
-          s = p;
-          REMOVE_SPACE(p);
-          *(p++) = '\0';
-
-          strcpy((char*)command, s);
+          for(s = p; *p && *p != ' '; ++p);
+          *p++ = '\0';
+          strcpy((char *)command, s);
      }
 
-     /* Params */
-     while(*p && *paramindex < 10)
+     /* Parse params */
+     for(;*p && *paramindex < 10; *p++ = '\0')
      {
           if(*p == ':')
           {
                params[(*paramindex)++] = p + 1;
                break;
           }
-          s = p;
-          REMOVE_SPACE(p);
+
+          for(s = p; *p && *p != ' '; ++p);
 
           params[(*paramindex)++] = s;
 
           if(*p == '\0')
                break;
-
-          *(p++) = '\0';
      }
 }
-
 
 static void
 irc_manage_event(struct session *s, int plen)
@@ -251,7 +242,7 @@ irc_manage_event(struct session *s, int plen)
       *~~~~~~~~~~~~~
       *  ~    ~   >0_/
       */
-     irc_parse(buf, prefix, command, params, &code, &paramindex);
+     irc_parse_in(buf, prefix, command, params, &code, &paramindex);
 
      if(code)
      {
@@ -262,13 +253,13 @@ irc_manage_event(struct session *s, int plen)
           }
 
           //event_numeric(s, code, prefix, params, paramindex);
-          return;
      }
 
      for(i = 0; i < LEN(event_list); ++i)
      {
           if(!strncmp(event_list[i].cmd, command, event_list[i].len))
           {
+
                event_list[i].func(s, code, prefix, params, paramindex);
                managed_event = true;
                break;

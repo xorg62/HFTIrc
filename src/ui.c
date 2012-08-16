@@ -13,7 +13,7 @@
 #include "input.h"
 
 struct buffer*
-ui_buffer_new(struct session *session, char *name)
+ui_buffer_new(struct session *session, const char *name)
 {
      struct buffer *b, *p = TAILQ_LAST(&H.h.buffer, bsub);
 
@@ -54,6 +54,8 @@ ui_buffer_remove(struct buffer *b)
 
      TAILQ_REMOVE(&H.h.buffer, b, next);
      free(b);
+
+     ui_buffer_set(H.prevbufsel ? H.prevbufsel : STATUS_BUFFER);
 }
 
 static void
@@ -246,8 +248,12 @@ ui_print_buf(struct buffer *b, char *fmt, ...)
 void
 ui_buffer_set(struct buffer *b)
 {
+     if(b == H.bufsel)
+          return;
+
      b->act = ACT_NO;
 
+     H.prevbufsel = H.bufsel;
      H.bufsel = b;
 
      if(b != TAILQ_FIRST(&H.h.buffer))

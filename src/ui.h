@@ -31,7 +31,7 @@
 
 void ui_init(void);
 int ui_color(int fg, int bg);
-struct buffer* ui_buffer_new(struct session *session, char *name);
+struct buffer* ui_buffer_new(struct session *session, const char *name);
 void ui_buffer_remove(struct buffer *b);
 void ui_get_input(void);
 void ui_update(void);

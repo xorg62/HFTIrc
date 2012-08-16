@@ -6,6 +6,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include "hftirc.h"
 #include "ui.h"
 
 #define LEN(x) (sizeof(x) / sizeof(*x))
@@ -30,7 +31,7 @@ static const struct { char name[10]; int id; } colordef[] =
      { "magenta", COLOR_MAGENTA },
      { "cyan",    COLOR_CYAN },
      { "white",   COLOR_WHITE },
-     { "", -1 }
+     { "",      -1 }
 };
 
 static inline int
@@ -43,6 +44,21 @@ color_to_id(char *name)
                return colordef[i].id;
 
      return COLOR_THEME_DEFAULT;
+}
+
+static inline struct buffer*
+find_buffer(const char *name)
+{
+     struct buffer *b;
+
+     if(!name)
+          return STATUS_BUFFER;
+
+     TAILQ_FOREACH(b, &H.h.buffer, next)
+          if(!strcmp(b->name, name))
+               return b;
+
+     return STATUS_BUFFER;
 }
 
 #endif

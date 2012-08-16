@@ -34,6 +34,7 @@
 #define BUFHISTOLEN  (512)
 #define MAX_PATH_LEN (8192)
 #define TIMEOUT_IRC  (30)
+#define NICKLEN      (24)
 
 typedef unsigned long Flags;
 
@@ -54,6 +55,7 @@ struct session_info
 struct session
 {
      struct session_info *info;
+     struct buffer *buf_event;
      int sock;
      time_t last_response;
      char *mode;
@@ -128,7 +130,7 @@ struct input
 struct hftirc
 {
      struct ui ui;
-     struct buffer *bufsel;
+     struct buffer *bufsel, *prevbufsel;
      struct session *sessionsel;
      char *confpath, dateformat[256];
 #define HFTIRC_RUNNING     0x01
