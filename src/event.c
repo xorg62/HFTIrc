@@ -9,6 +9,16 @@
 #include "event.h"
 #include "util.h"
 
+#define SPLIT_NICK_HOST(buf, nick, host)                                \
+     do {                                                               \
+          nick = (char*)buf;                                            \
+          if((host = strchr(nick, '!')))                                \
+          {                                                             \
+               *host = '\0';                                            \
+               ++host;                                                  \
+          }                                                             \
+     } while( /* CONSTCOND */ 0);
+
 void
 event_dump(struct session *s, int code, const char *prefix, const char **params, int paramindex)
 {
@@ -36,14 +46,9 @@ event_join(struct session *s, int code, const char *prefix, const char **params,
 {
      char *p, *nick, *host;
 
-     ui_print_buf(STATUS_BUFFER, "----> %s %s", prefix, params[0]);
+     s->buf_event = ui_buffer_find(s, params[0]);
 
-     s->buf_event = find_buffer(params[0]);
-
-     nick = (char*)prefix;
-     p = strchr(nick, '!');
-     *p = '\0';
-     host = p + 1;
+     SPLIT_NICK_HOST(prefix, nick, host);
 
      if(!strcmp(nick, s->info->nick))
      {
@@ -58,4 +63,38 @@ event_join(struct session *s, int code, const char *prefix, const char **params,
 
      if(!(H.ignore_flags & IGNORE_JOIN))
           ui_print_buf(s->buf_event, " ->>>> %s (%s) has joined %s", nick, host, params[0]);
+}
+
+void
+event_privmsg(struct session *s, int code, const char *prefix, const char **params, int paramindex)
+{
+     char *nick, *host;
+
+     if(paramindex < 2)
+          return;
+
+     SPLIT_NICK_HOST(prefix, nick, host)
+
+     /*******************
+      * Private messages
+      */
+     if(!strcmp(params[0], s->info->nick))
+     {
+          /* New buffer for new private conversation */
+          if((s->buf_event = ui_buffer_find(s, nick)) == STATUS_BUFFER)
+          {
+               s->buf_event = ui_buffer_new(s, nick);
+          }
+     }
+     /*******************
+      * Channel messages
+      */
+     else
+     {
+          /* Unknown message root, print it in status buffer */
+          if(!(s->buf_event = ui_buffer_find(s, params[0])))
+               s->buf_event = STATUS_BUFFER;
+     }
+
+     ui_print_buf(s->buf_event, "<%s> %s", nick, params[1]);
 }

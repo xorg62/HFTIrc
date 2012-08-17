@@ -46,19 +46,4 @@ color_to_id(char *name)
      return COLOR_THEME_DEFAULT;
 }
 
-static inline struct buffer*
-find_buffer(const char *name)
-{
-     struct buffer *b;
-
-     if(!name)
-          return STATUS_BUFFER;
-
-     TAILQ_FOREACH(b, &H.h.buffer, next)
-          if(!strcmp(b->name, name))
-               return b;
-
-     return STATUS_BUFFER;
-}
-
 #endif

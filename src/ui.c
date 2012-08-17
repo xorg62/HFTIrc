@@ -248,15 +248,12 @@ ui_print_buf(struct buffer *b, char *fmt, ...)
 void
 ui_buffer_set(struct buffer *b)
 {
-     if(b == H.bufsel)
-          return;
-
      b->act = ACT_NO;
 
      H.prevbufsel = H.bufsel;
      H.bufsel = b;
 
-     if(b != TAILQ_FIRST(&H.h.buffer))
+     if(b != STATUS_BUFFER)
           H.sessionsel = b->session;
 
      ui_update_buf();
@@ -432,7 +429,7 @@ ui_get_input(void)
                          werase(H.ui.inputwin);
                          ++ib->split;
                     }
-                    else if(ib->cpos == COLS -1 && !ib->spting)
+                    else if(ib->cpos == COLS - 1 && !ib->spting)
                     {
                          werase(H.ui.inputwin);
                          ++ib->split;

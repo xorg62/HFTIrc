@@ -51,4 +51,19 @@ ui_buffer_gb_id(int n)
      return NULL;
 }
 
+static inline struct buffer*
+ui_buffer_find(struct session *s, const char *name)
+{
+     struct buffer *b;
+
+     if(!name)
+          return STATUS_BUFFER;
+
+     TAILQ_FOREACH(b, &H.h.buffer, next)
+          if(b->session == s && !strcmp(name, b->name))
+               return b;
+
+     return STATUS_BUFFER;
+}
+
 #endif

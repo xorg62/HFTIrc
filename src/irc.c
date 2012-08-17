@@ -163,7 +163,7 @@ irc_process(struct session *s, fd_set *inset)
                ui_print_buf(STATUS_BUFFER, "[HFTIrc] Session '%s' timed out", s->info->name);
                return 1;
           }
-          //irc_send_raw(s, "PONG %s", s->info->server);
+          irc_send_raw(s, "PING %s", s->info->server);
      }
 
      return 0;
@@ -189,7 +189,9 @@ irc_parse_in(char *buf,
      }
 
      /* Parse command */
-     if(isdigit((int)p[0]) && isdigit((int)p[1]) && isdigit((int)p[2]))
+     if(isdigit((int)p[0])
+        && isdigit((int)p[1])
+        && isdigit((int)p[2]))
      {
           p[3] = '\0';
           *code = atoi (p);
@@ -259,7 +261,6 @@ irc_manage_event(struct session *s, int plen)
      {
           if(!strncmp(event_list[i].cmd, command, event_list[i].len))
           {
-
                event_list[i].func(s, code, prefix, params, paramindex);
                managed_event = true;
                break;
